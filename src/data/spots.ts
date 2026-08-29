@@ -1474,4 +1474,72 @@ export const spots: SpotInput[] = [
     practical: { typicalDurationMins: 90 },
     sources: ["https://maps.google.com/?cid=14821864819838019815&g_mp=Cilnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaE5lYXJieRACGAQgAA"],
   },
+  /*
+    The three markets, restored (asked for after the seed rewrite dropped them).
+
+    Imported through `tools/import-places.mjs` like everything else rather than
+    typed from memory: rule 4 is that opening hours are never invented, and
+    "Central Market shuts about five" is memory, not a source. Google's hours,
+    Google's coordinates, `hoursSource: "imported"` saying so.
+
+    Two edits to what the importer produced, both noted here because a later
+    re-import would silently undo them:
+
+      · The Russian Market's official name is "Toul Tompong Market"; nobody in
+        Phnom Penh calls it that. `placeId` keeps the two joined.
+      · The Night Market came back categorised `nature`, because Google types it
+        `tourist_attraction`. It is a night market and there is a category
+        called exactly that.
+  */
+  {
+    id: "central-market",
+    slug: "central-market",
+    placeId: "ChIJVUQdpCxRCTERSA3VP5TCxZI",
+    neighbourhood: "daun-penh",
+    categories: ["market"],
+    name: { en: "Central Market" },
+    coords: [104.921002, 11.5695634],
+    blurb: { en: "Market in Daun Penh." },
+    hours: {"kind":"weekly","rules":[{"days":["mon","tue","wed","thu","fri","sat","sun"],"open":"07:00","close":"17:00"}]},
+    priceLevel: 2,
+    lastVerified: "2026-08-29",
+    hoursSource: "imported",
+    links: {"maps":"https://maps.google.com/?cid=10576073241931353416"},
+    practical: { typicalDurationMins: 60 },
+    sources: ["https://maps.google.com/?cid=10576073241931353416"],
+  },
+  {
+    id: "russian-market",
+    slug: "russian-market",
+    placeId: "ChIJ86RNwbJRCTERM48awc_s4p4",
+    neighbourhood: "toul-tom-poung",
+    categories: ["market"],
+    name: { en: "Russian Market" },
+    coords: [104.9147431, 11.540775],
+    blurb: { en: "Bustling market with vendors selling a wide array of souvenirs, clothing & other goods, plus food." },
+    hours: {"kind":"weekly","rules":[{"days":["mon","tue","wed","thu","fri"],"open":"06:00","close":"16:30"},{"days":["sat","sun"],"open":"06:00","close":"16:00"}]},
+    priceLevel: 2,
+    lastVerified: "2026-08-29",
+    hoursSource: "imported",
+    links: {"maps":"https://maps.google.com/?cid=11448973579771350835","phone":"015 222 930"},
+    practical: { typicalDurationMins: 90 },
+    sources: ["https://maps.google.com/?cid=11448973579771350835"],
+  },
+  {
+    id: "phnom-penh-night-market",
+    slug: "phnom-penh-night-market",
+    placeId: "ChIJ9Qr0h09RCTER5Ent2yE5uDs",
+    neighbourhood: "riverside",
+    categories: ["night-market", "street-food"],
+    name: { en: "Phnom Penh Night Market" },
+    coords: [104.9271937, 11.5740451],
+    blurb: { en: "Busy market with stalls offering fabrics, jewelry & crafts, plus Khmer street food." },
+    hours: {"kind":"weekly","rules":[{"days":["mon","tue","wed","thu","fri","sat","sun"],"open":"17:00","close":"23:00"}]},
+    priceLevel: 1,
+    lastVerified: "2026-08-29",
+    hoursSource: "imported",
+    links: {"maps":"https://maps.google.com/?cid=4303252261538974180"},
+    practical: { typicalDurationMins: 90 },
+    sources: ["https://maps.google.com/?cid=4303252261538974180"],
+  },
 ];

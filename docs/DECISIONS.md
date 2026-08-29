@@ -574,3 +574,63 @@ The ballot carries **how many places the night needs**, chosen when it is create
 **Consequence:** dwell time moves onto the stop itself. It had lived only in the Reorder tab, which put the number the entire schedule is computed from two taps away from the schedule. Every change retimes every arrival below it, which is the point — the day is a budget and this is the part of it a person controls (D24).
 
 **Rules out:** resolving a vote to a single winner. `Result.chosen` is the night; `Result.winner` survives as the headline of that set, not as the answer.
+
+## D38 — Four palettes on two axes, and the backgrounds have to differ
+
+**Decided 2026-08-29.** Extends D21 and D26; supersedes neither.
+
+Appearance (`auto` / `light` / `dark`) and palette (`monsoon` / `laterite` /
+`neon` / `paper`) are independent attributes on `<html>` — `data-theme` and
+`data-palette` — because they are independent wants. Somebody can prefer
+Laterite and still want it to follow the OS at night.
+
+**The first attempt was wrong in a way worth recording.** All four palettes
+passed AA and all four looked, at a glance, like the same page with a different
+button colour: their backgrounds sat within ΔE 5 of one another. A menu offering
+four choices a person cannot tell apart is worse than not offering them. The
+backgrounds now carry the palette — cream, terracotta, pink, cool grey — and
+`globals.test.ts` holds a floor on the separation so a fifth palette cannot
+quietly land back in the same place. The floor is lower in dark (4) than in
+light (6) because near-black colours are compressed in Lab, not as a concession.
+
+**Every value is measured, and now the measurement runs.** `globals.test.ts`
+reads the hexes back out of `globals.css`, resolves each palette the way a
+browser would, and puts all eight through WCAG contrast and ΔE. D21 established
+the rule; until now it was enforced by whoever remembered it. Thirteen text
+pairs per palette per appearance, plus accent-versus-gold separation.
+
+**Block order in `globals.css` is load bearing**, and there is a test for that
+too: `:root[data-palette=x]` and `:root:not([data-theme=light])` have equal
+specificity, so a light palette declared below the dark blocks wins in dark
+mode. That bug is invisible to whichever half of reviewers use the other OS
+setting — the same shape as the two-dark-blocks bug this file already guards.
+
+`--forest`, `--forest-deep` and `--forest-mid` are gone. The first two had no
+reader anywhere in the codebase; the third is now `--brand`, because a token
+named `forest-mid` holding a rust red is the same class of lie as a token with
+no job (D21).
+
+The palette control is a disclosure button rather than the D26 pill row. The
+pill row plus the header CTA overflowed a 390px viewport by 33px (C29), and
+adding a second axis to it would only have been worse.
+
+Refs: D21, D26, D27, C29
+
+## D39 — The three markets come back, through the importer
+
+**Decided 2026-08-29.** Extends D36.
+
+Central Market, the Russian Market and the Night Market were dropped when the
+seed file was rewritten around bars and restaurants. They are back, because a
+resident's evening genuinely includes them and Toul Tom Poung is named after
+one.
+
+They came in through `tools/import-places.mjs` like the other 82 rather than
+being typed from what anyone remembers. Rule 4 is that opening hours are never
+invented, and "Central Market shuts about five" is memory, not a source. Two
+fields were edited afterwards and both are commented at the entry, because a
+re-import would silently undo them: the Russian Market's official name is Toul
+Tompong Market and nobody calls it that, and Google types the Night Market
+`tourist_attraction`, which the importer mapped to `nature`.
+
+Refs: D36, R1
