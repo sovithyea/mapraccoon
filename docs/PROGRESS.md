@@ -2,7 +2,7 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (second session)
+**Last updated:** 2026-08-29 (fourth session)
 
 ## Where things stand
 
@@ -19,7 +19,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 | # | Phase | Docs | Branch | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | `phase/1-foundation` | Vithyea | **Complete** and committed, pending review, merge, and the R1 content-verification pass |
-| 2 | Itinerary builder | — | `phase/2-itinerary` | — | Not started — needs spec + plan first |
+| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **In progress** — D22–D25 accepted; executing `specs/2-itinerary/plan.md` |
 | 3 | Persistence | — | `phase/3-persistence` | — | Not started |
 | 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
 | 5 | Trip assistant | — | `phase/5-assistant` | — | Blocked: needs Phase 3 and real content |
@@ -30,19 +30,22 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 | # | Blocker | Blocks | Owner |
 |---|---|---|---|
-| B1 | No Mapbox account or token exists | Verifying pins render and click/hover sync; all of Phase 2 | User |
+| B1 | No Mapbox account or token exists | Verifying pins render and click/hover sync. **No longer blocks Phase 2** (D22) | User |
 | B2 | Content is unverified on the ground (R1) | Any public launch | Editorial |
 | B3 | Community-impact claims unconfirmed with the named organisations (R4) | Any public launch | Editorial |
-| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | Filling `km.json` | Design |
+| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6). Now an explicit open question to Claude Design — which pairing, what line height, and what replaces the uppercase eyebrow in a script with no uppercase | Filling `km.json` | Design |
 | B5 | Nothing is deployed; no hosting decided | First public URL | User |
-| B6 | Competitor detail-page, city-hub and `/plan-my-trip` HTML not yet seen | Confirming their spot-page layout and whether their itinerary offering is truly static | User |
+| B6 | Design direction for the Phase 2 itinerary builder and the spot page is out with Claude Design; nothing decided yet | Writing `specs/2-itinerary/spec.md` with any layout in it | User |
+| B7 | No field in the content schema marks a memorial site; R9 is enforced only by how the prose was written (C17) | — **closing in Phase 2 step 1** (D25) | Vithyea |
 
 ## Next session should
 
-1. Decide whether to run the R1 verification pass now or spec Phase 2 first.
-2. If Phase 2: write `specs/2-itinerary/spec.md` and `plan.md` **before** any code. It needs a Mapbox token (B1) to be testable.
-3. If a token arrives: check the PENDING row in `docs/VERIFIED.md` — pins render, click and hover sync between map and list — and restrict the token to its domains on creation (R3).
-4. Continue the UI/UX pass. Still open, in rough priority order: no focus-visible styling audit; no `prefers-reduced-motion` handling (hover translate/scale are unconditional); the constellation's Angkor cluster is still dense at 320px; `/discover` has no empty-state illustration; no skip-to-content link; dark mode is now audited for contrast in both modes but has still only been reviewed by eye at 1280px.
+1. Await the Claude Design return (itinerary builder + spot page, wireframes and rationale, 390/768/1280, both colour modes). Nothing in `specs/2-itinerary/` should be written until it lands, since the spec's acceptance criteria will reference it.
+2. Decide the memorial-site data shape (B7). The design comes back first; the schema follows it rather than guessing. This is the one schema change queued.
+3. Fix the footer caveat's visual weight (C18) once there is a direction for it.
+4. Decide whether to run the R1 verification pass now or spec Phase 2 first.
+5. If a token arrives (B1): check the PENDING row in `docs/VERIFIED.md` — pins render, click and hover sync between map and list — and restrict the token to its domains on creation (R3).
+6. Continue the UI/UX pass. Still open, in rough priority order: no focus-visible styling audit; no `prefers-reduced-motion` handling (hover translate/scale are unconditional); the constellation's Angkor cluster is still dense at 320px; `/discover` has no empty-state illustration; no skip-to-content link; dark mode is now audited for contrast in both modes but has still only been reviewed by eye at 1280px.
 
 ## Session log
 
@@ -51,3 +54,5 @@ Running ledger. Updated at the end of every working session so state survives ac
 **2026-08-29 (second session)** — Read the competitor's homepage HTML the user supplied. Its inlined RSC payload carried their whole `en.common` bundle, including a ~250-place catalogue; two of the brief's V2 differentiators already ship on their site, and their trip planning is editorial rather than a tool (D18). Rebuilt the landing page in their editorial register with our own identity and inversion (D16, D17). Then ran a mobile pass over CDP: found and fixed a 630px-wide home page at a 390px viewport caused by a single `truncate` (C8), cities unreachable on mobile (C9), the map buried below 42 cards on `/discover` (C10), and undersized touch targets throughout. Checked in `tools/probe.mjs` and `tools/shot.mjs` so the check is repeatable (D19). Clean at 320/390/768; 20 tests, build and lint green.
 
 **2026-08-29 (third session)** — User said the colouring was not good. Measured it: the first palette collided twelve ways, including `--forest-mid` and `--cat-nature` being literally the same colour, and failed WCAG AA twice. Root cause was structural — ten colours competing for meaning on one page — so category colour was cut to the map's pin layers only and the cities moved off the brand green and gold (D21). Each city gained a separate `-ink` variant for marks and text, since fills stay dark in both modes. Auditing dark mode for the first time found two near-invisible text defects (1.15:1 and 2.46:1). Added `tools/contrast.mjs`, which itself produced false failures twice before it was right (C15). Now 0 contrast failures across four routes in both modes, minimum role separation ΔE 29.2.
+
+**2026-08-29 (fourth session)** — No application code. The user supplied the competitor's spot-page, city-hub and `/plan-my-trip` HTML, closing B6, and their footer was checked in a browser. The teardown is now `docs/COMPETITOR.md` rather than session context that evaporates. Wrote a design brief for Claude Design grounded in measured values rather than the doc set: the tokens read out of `globals.css`, and the responsive system read out of the components — no custom breakpoints, and in practice a two-breakpoint design (43 `sm:`, 32 `lg:`, 2 `md:`, 1 `xl:`, no `2xl:`). Scope was cut to the Phase 2 itinerary builder and the spot page; the Phase 4 collaborative screens were deferred, since designing them now means designing against a data model three phases out. Three corrections recorded: `DESIGN-SYSTEM.md` generalised the pairing rail's snap behaviour to all three rails (C16, doc fixed); R9's memorial rule has no schema field behind it and is enforced only by the prose (C17, now B7); and the footer's unverified-content caveat — the sentence R1 and R4 rest on — is the least prominent text in the footer at `text-xs text-muted` in the last of four columns (C18). Nobody softened the wording; the layout softened it.

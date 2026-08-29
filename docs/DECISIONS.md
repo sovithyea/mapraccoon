@@ -284,3 +284,68 @@ City colours then moved off the brand's green and gold entirely, since those are
 **Also fixed here:** the picks list used a tinted grey swatch that carried no information and read as a broken image. It is now the item's rank in the off-radar order, which is the one number that list is sorted by.
 
 **Rules out:** adding a colour to this design without measuring it against the existing roles first.
+
+---
+
+## D22 — Phase 2 ships with no routing API
+
+**Date:** 2026-08-29 · **Status:** Accepted · Amends the Phase 2 row in `docs/BUILD-PLAN.md`
+
+`BUILD-PLAN.md` defined Phase 2 as "travel time via Mapbox Directions, stop reordering via Optimization API". It ships instead with a **haversine distance × 1.4 detour factor at 22 km/h**, surfaced as `est.` in every place a duration or an arrival time appears.
+
+Three reasons, all of them the repo's own:
+
+- **B1 leaves the critical path.** No Mapbox account exists. Under the original definition the entire phase was blocked on the user creating one and accepting a billable dependency for an app with no users — which is precisely what D1 refuses.
+- **Cost arrives as late as possible.** That is the governing principle of the build order, and a routing API in Phase 2 is the earliest possible moment for it rather than the latest necessary one.
+- **A labelled estimate beats an unlabelled fake.** The alternative was not "accurate times", it was a hardcoded guess presented as a routed answer. This one says what it is on screen.
+
+D10's argument for Mapbox over MapLibre is untouched — the Directions and Optimization APIs are still why the renderer choice was made. They arrive behind `estimateLeg()` in `src/lib/route/estimate.ts`, which is the entire swap surface: one function, no component changes.
+
+**Consequence:** travel times will be visibly wrong on the Bokor road, on unsealed sections and at any river crossing. This is accepted and labelled, not hidden. The phase must be fully demonstrable with `NEXT_PUBLIC_MAPBOX_TOKEN` unset, which is acceptance criterion 2.
+
+---
+
+## D23 — The route is a pane and a dock bar, never a destination route
+
+**Date:** 2026-08-29 · **Status:** Accepted
+
+Adding a stop from a spot page must not cost you the spot page. That single requirement rules out a `/plan` route you navigate to, which is what the competitor's planner is.
+
+- `/discover`'s right pane gains a third state, `[Map | Route]`, in local component state — mirroring the existing mobile List/Map toggle rather than the filter store, since it is view state and not a filter.
+- Below `lg`, a **56px dock bar** carries the day summary and the capacity bar on every page. It appears on the first add; with no day there is no chrome.
+- The bar opens a full-height sheet at `?day=open` — a **view with a URL and a back-button dismiss, not a modal**. Same reasoning that kept the mobile city list out of a drawer (C9): no focus trap to get wrong.
+- `/plan/[id]` exists only as the landing view for a shared, URL-encoded day.
+
+Splitting the `lg` remainder into route *and* map was considered and rejected: two panes at ~420px each costs the timeline its time column, and the map is absent by default anyway with no token. The mitigation is that leg rows carry distance, duration and road surface in type — the part of the map actually needed while sequencing.
+
+**Consequence:** you cannot watch the map while reordering. Accepted.
+
+---
+
+## D24 — The day budget is stated three times, and overflow is achromatic
+
+**Date:** 2026-08-29 · **Status:** Accepted
+
+One `dayBudget()` result feeds three surfaces — the day frame, the per-item add affordance, and the tail row where the next stop would land. They cannot disagree, the same way `offRadarBand()` guarantees the meter label cannot drift from the sort. A modal would be a fourth surface repeating what the other three already say.
+
+**Nothing is ever disabled.** The competitor greys out over-cap destinations because their cap is a hard rule; ours is soft, and a 75-minute overrun may be exactly the trade a traveller wants. So the affordance states its cost instead — `＋ Add · 40m over` — and stays pressable, with `aria-describedby` pointing at the line that explains it. Their disabled checkboxes carry no such association, which is the accessibility gap this deliberately avoids.
+
+"Full" is **derived, not a constant**: `min(typicalDurationMins) + min(leg)` over the dataset, so it cannot go stale when a shorter spot is added.
+
+Overflow renders as **geometry, not colour** — the frame's end rule doubles, the overrun hatches past it, and the figure sits in `--foreground` at weight 700. A `--over` accent was drawn and rejected: at `#8f3a1f` it measures ΔE 12 from `--city-battambang` and 9 from `--cat-food`, which is the collision class D21 exists to prevent. An overrun is a choice, not an error, and does not warrant the palette's first error colour.
+
+**Rules out:** adding a fifth accent to this design without measuring it against the existing roles first — a restatement of D21.
+
+---
+
+## D25 — Memorial sites become a schema field
+
+**Date:** 2026-08-29 · **Status:** Accepted · Enforces R9
+
+R9 says memorial sites are never written in the product's voice. Until now that was true only because the prose was hand-written that way. There was no field in `spotSchema` marking them, so nothing in the UI could branch on it, and any future generated blurb, badge, score or pairing would have applied to Tuol Sleng silently (C17).
+
+`sensitive: z.literal("memorial").optional()` is added to the schema, with a refinement that **rejects a `pairedWith` on a sensitive spot at build time**. `OffRadarMeter`, `PairingCard` and the card score return `null` for those spots. Inside the builder a memorial stop has square corners, sits on the page ground rather than a surface card, states dwell as a minimum rather than a duration, and carries no score — and any reordering that moves one must say so rather than optimising it silently.
+
+The day's off-radar average footnotes its denominator (`2 of 3 stops scored`) rather than quietly averaging over a smaller set.
+
+**Consequence:** R9 becomes a build error instead of a convention. This is the cheapest change in the phase and the one worth shipping even if nothing else does.
