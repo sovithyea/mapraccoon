@@ -2,11 +2,15 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (seventh session — Phase 3 built)
+**Last updated:** 2026-08-29 (seventh session — Phase 3 built and merged)
 
 ## Where things stand
 
-**The product pivoted on 2026-08-29.** It was a discovery-first tourist guide to Cambodia; it is now a tool for friends who live in Phnom Penh to decide where to go out together. Read `docs/PIVOT.md` before this file makes sense. The decisions are D27–D34; the docs are updated; **no code has changed and `specs/3-friends/` does not exist yet.**
+**The product pivoted on 2026-08-29, and Phase 3 has shipped it.** It was a discovery-first tourist guide to Cambodia; it is now a tool for friends who live in Phnom Penh to decide where to go out together. Read `docs/PIVOT.md` before this file makes sense.
+
+**The loop works end to end and is on `main`.** Build a shortlist on `/discover`, press *Ask the others*, share the link, everyone marks yes/maybe/no, it settles. Verified with two browser tabs, one with every websocket blocked to prove the poll carries it.
+
+**What it does not have is content.** Eleven tourist landmarks, no bars or restaurants (B9). Every flow was verified against markets and temples, and nobody has used the thing for real.
 
 **Phase 2 (Itinerary builder) is merged. Phase 1 (Foundation) is complete, and was executed out of order.** The scaffold, content schema, 42 curated spots, off-radar sorting, the map with its token-missing fallback, the i18n structure, the landing page and the test suite are all in and green. `npm run build`, `lint`, `typecheck` and `test` are clean; 50 pages generate statically; the dev server serves them.
 
@@ -22,7 +26,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
-| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **Code complete, all 17 criteria closed.** Step 5 (venue content) is outstanding and is the only thing between this and real use (B9) |
+| 3 | Friends platform | ✅ spec + plan | merged to `main` | Vithyea | **Complete and merged** via PR #3, all 17 criteria closed. Venue content (B9) is outstanding and is the only thing between this and real use |
 | 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
 | 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
 
