@@ -186,6 +186,8 @@
     "sharedOpen": "Open this day and edit it",
     "sharedMemorialNote": "One stop is a memorial site and is drawn without a score.",
     "sharedBadLink": "This link doesn't describe a day we can read.",
-    "noMapNeeded": "No map key configured — the route needs none"
+    "noMapNeeded": "No map key configured — the route needs none",
+    "shareDay": "Share this day",
+    "shareCopied": "Link copied"
   }
 }

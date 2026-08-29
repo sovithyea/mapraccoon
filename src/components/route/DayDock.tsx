@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { DayFrameBar } from "@/components/route/DayFrameBar";
 import { RoutePane } from "@/components/route/RoutePane";
+import { RouteReorder } from "@/components/route/RouteReorder";
 import { duration } from "@/components/route/time";
 import { useRouteStops } from "@/components/route/useRouteStops";
 import type { Dictionary } from "@/i18n/get-dictionary";
@@ -39,6 +40,8 @@ export function DayDock({ spots, dict }: { spots: readonly Spot[]; dict: Diction
   const frame = useRoute((s) => s.frame);
   const city = useRoute((s) => s.city);
   const [open, setOpen] = useState(false);
+  /** Reading and rearranging are different jobs, so they are different tabs. */
+  const [tab, setTab] = useState<"timeline" | "reorder">("timeline");
 
   useEffect(() => {
     const sync = () => setOpen(window.location.hash === SHEET_HASH);
@@ -121,8 +124,32 @@ export function DayDock({ spots, dict }: { spots: readonly Spot[]; dict: Diction
             </button>
           </div>
 
+          <div className="border-b border-border px-5 py-2">
+            <div className="inline-flex rounded-full border border-border p-0.5" role="group">
+              {(["timeline", "reorder"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={tab === t}
+                  onClick={() => setTab(t)}
+                  className={`min-h-9 rounded-full px-4 text-xs font-semibold transition-colors ${
+                    tab === t
+                      ? "bg-accent text-accent-contrast"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  {t === "timeline" ? dict.route.tabTimeline : dict.route.tabReorder}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex-1 overflow-y-auto pb-10">
-            <RoutePane candidates={spots} dict={dict} />
+            {tab === "timeline" ? (
+              <RoutePane candidates={spots} dict={dict} />
+            ) : (
+              <RouteReorder dict={dict} />
+            )}
           </div>
         </div>
       ) : null}

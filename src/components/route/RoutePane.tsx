@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
+
 import { DayTail } from "@/components/route/DayTail";
 import { RouteTimeline } from "@/components/route/RouteTimeline";
 import { DayFrameBar } from "@/components/route/DayFrameBar";
 import { clock, duration } from "@/components/route/time";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import { dayBudget, dayOffRadarAverage } from "@/lib/route/day";
+import { encodeDay } from "@/lib/route/share";
 import { getCity } from "@/lib/spots/cities";
 import type { Spot } from "@/lib/spots/schema";
 import { useRouteStops } from "@/components/route/useRouteStops";
@@ -46,6 +49,7 @@ export function RoutePane({
   const move = useRoute((s) => s.move);
   const remove = useRoute((s) => s.remove);
   const setFrameEnd = useRoute((s) => s.setFrameEnd);
+  const [copied, setCopied] = useState(false);
 
   // Rendering the empty state before localStorage has been read would flash
   // "a day with nothing in it" over a day that does exist.
@@ -165,6 +169,23 @@ export function RoutePane({
         onAdd={add}
         onRunLater={setFrameEnd}
       />
+
+      {/*
+        The day travels in its own URL (D1: nothing to save it to), so sharing
+        is a clipboard copy rather than a round trip to a server.
+      */}
+      <div className="mt-4 border-t border-border px-4 pt-4">
+        <button
+          type="button"
+          onClick={() => {
+            const url = `${window.location.origin}/en/plan/${encodeDay(stops, frame)}`;
+            void navigator.clipboard?.writeText(url).then(() => setCopied(true));
+          }}
+          className="min-h-11 rounded-full border border-border px-4 text-xs font-semibold hover:border-muted"
+        >
+          {copied ? dict.route.shareCopied : dict.route.shareDay}
+        </button>
+      </div>
     </section>
   );
 }

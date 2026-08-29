@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { CAMBODIA_BBOX } from "@/lib/spots/schema";
+import { projectCambodia } from "@/lib/geo/project";
 import { cities } from "@/lib/spots/cities";
 import type { Spot } from "@/lib/spots/schema";
-
-const [WEST, SOUTH, EAST, NORTH] = CAMBODIA_BBOX;
 
 /**
  * Every spot plotted at its real longitude/latitude inside the Cambodia
@@ -30,11 +28,7 @@ export function Constellation({
 }) {
   const [active, setActive] = useState<Spot | null>(null);
 
-  const project = (coords: readonly [number, number]) => ({
-    x: ((coords[0] - WEST) / (EAST - WEST)) * 100,
-    // SVG/CSS y grows downward, latitude grows upward.
-    y: ((NORTH - coords[1]) / (NORTH - SOUTH)) * 100,
-  });
+  const project = projectCambodia;
 
   return (
     <figure className="m-0">

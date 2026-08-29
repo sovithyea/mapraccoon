@@ -161,8 +161,19 @@ The token is unset, which is this repo's real state (B1, D11). Everything below 
 - `tools/probe.mjs` at 390, 768 and 1280 on `/en`, `/en/discover` and two spot pages: `scrollWidth - innerWidth = 0` on all twelve — **VERIFIED**
 - `tools/contrast.mjs` on `/discover`, an ordinary spot page and a memorial page, in both colour modes: 0 failures on all six — **VERIFIED**
 
+### Second pass — the design direction's layout, the reorder tab and the share view
+
+- Spot page rebuilt to the direction. Measured at 1280 on `/en/spot/tuol-sleng` against `/en/spot/trapeang-sangkae`: memorial article 596px vs 1024px, `h1` Playfair 33px/400 vs 36px/700, every section radius 0, no city dot, **0 gold elements** on the memorial page, heading "Visiting" not "Practical" — **VERIFIED**
+- The pairing and community bands bleed to the viewport: 390px against 350px for cards on a 390px screen — **VERIFIED**
+- Reading order on `/en/spot/trapeang-sangkae` at 390, measured by position rather than DOM order: score 421 → pairing 599 → practical 944 → community 1555 → map 1809 → sources 2113 — **VERIFIED**
+- `/plan/[id]` renders a shared day from the URL alone with no token and no backend: `3 places in Kampot & Kep, 08:30 to 14:45`, 3 dots and 2 dashed legs on the Constellation graticule, and `One stop is a memorial site and is drawn without a score` — **VERIFIED**
+- A malformed share link renders `This link doesn't describe a day we can read`, not a 500 — **VERIFIED**
+- The projection is now one function (`src/lib/geo/project.ts`) shared by `Constellation` and the share view, so the two cannot drift — **VERIFIED**
+- 0 overflow at 390/768/1280 and 0 contrast failures in both modes, including `/plan/[id]` — **VERIFIED**
+
 ### Not verified
 
 - Pins rendering and click/hover sync still need a token (B1, unchanged from Phase 1)
-- The route pane has been exercised by seeding `localStorage` and by reading the rendered DOM, not by driving clicks through a full add-reorder-share journey
-- `/plan/[id]` is encoded and decoded under test but has no page yet — the share view is not built
+- The builder has been exercised by seeding `localStorage` and reading the rendered DOM, not by driving a full click-through add → reorder → share journey
+- The reorder tab's controls are built and typed but have not been clicked in a browser; its underlying reorder logic is covered by tests
+- The colour of every frame in the design direction is the pre-D21 palette (543 occurrences of the old values against 17 of the shipped ones). The layout was implemented; the colours deliberately were not. The app will not match the frames' hues and is not intended to

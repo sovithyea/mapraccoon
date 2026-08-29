@@ -19,7 +19,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 | # | Phase | Docs | Branch | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | `phase/1-foundation` | Vithyea | **Complete** and committed, pending review, merge, and the R1 content-verification pass |
-| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **In progress** — plan steps 0–7 and part of 9 done and verified; steps 8 (`/plan/[id]` share view), the reorder tab, and the spot page's typographic restructure remain |
+| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **In progress** — all plan steps built and verified. Remaining: a full click-through of the builder in a browser, and the Khmer strings for the ~60 new keys (B4) |
 | 3 | Persistence | — | `phase/3-persistence` | — | Not started |
 | 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
 | 5 | Trip assistant | — | `phase/5-assistant` | — | Blocked: needs Phase 3 and real content |
