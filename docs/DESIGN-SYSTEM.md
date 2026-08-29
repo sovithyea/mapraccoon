@@ -31,7 +31,8 @@ Defined once in `src/app/globals.css` as CSS custom properties, exposed to Tailw
 | Role | Meaning |
 |---|---|
 | `--accent` | Institutional green. CTAs and links. |
-| `--gold` | "Where your visitor money goes." Community blocks only. **Phase 3:** the wording becomes "where your money goes" — the reader lives here — and `community` stops being a product mechanic while keeping the field and the colour (D29). |
+| `--brand` | The palette's mid tone. Eyebrow labels and display numerals. **Was `--forest-mid`** until D38 — `--forest` and `--forest-deep` are deleted, having had no reader anywhere in the codebase. |
+| `--gold` | **"This claim is unverified."** The provenance rule beside a fee or an opening time, and nowhere else. It meant "where your visitor money goes" until the community block was removed; re-pointed rather than retired, because a token with no job drifts into decoration (D21). |
 | `--city-*` | A city's identity, the same everywhere it appears. **REMOVED.** One city, ~9 neighbourhoods, and 9 × 2 tones is 18 role colours — D21 is the written record of that exact mistake at less than half the scale. Neighbourhoods get a text label and no colour. |
 
 Category colour is deliberately **not** a page-level role — see below.
@@ -47,8 +48,34 @@ Category colour is deliberately **not** a page-level role — see below.
 | `--muted` | `#655d51` | `#a1988a` | Secondary copy, labels |
 | `--border` | `#e1d8c6` | `#2d342c` | Dividers, card outlines |
 | `--accent` | `#123a31` | `#57b79c` | Primary actions |
-| `--forest-mid` | `#276353` | `#6cc3aa` | Eyebrows |
-| `--gold` | `#7e5a0c` | `#d9a83f` | Community impact only |
+| `--brand` | `#276353` | `#6cc3aa` | Eyebrows, display numerals |
+| `--gold` | `#7e5a0c` | `#d9a83f` | Unverified-claim rule only |
+
+Those are **Monsoon**, the default. Three more palettes ship beside it (D38) and
+each redefines all eleven role tokens, in light and dark:
+
+| Palette | Light ground | Dark ground | Accent (light) |
+|---|---|---|---|
+| Monsoon | `#faf6ef` bone | `#101310` | `#123a31` forest |
+| Laterite | `#f7e7d8` terracotta | `#1d130f` | `#7c2d12` burnt earth |
+| Neon | `#f6e9f4` pink | `#100a14` | `#8c0f5c` magenta |
+| Paper | `#e7ecee` cool grey | `#14181b` | `#1f262b` near-black |
+
+Two axes, two attributes on `<html>`: `data-theme` for appearance,
+`data-palette` for palette. Category pin colours are defined per *appearance*,
+not per palette — they identify map layers, and four of them times four palettes
+would be sixteen colours to keep separated for no gain.
+
+**`globals.test.ts` is where "measured, not chosen by eye" stops being a claim.**
+It reads the hexes back out of `globals.css`, resolves each palette the way a
+browser resolves it, and runs WCAG contrast over thirteen text pairs plus ΔE on
+accent-versus-gold, for all four palettes in both appearances. It also holds a
+floor on how far apart the four *backgrounds* are, because the first attempt at
+this shipped four palettes within ΔE 5 of each other — four choices nobody could
+tell apart. And it asserts the block ORDER in the file: `:root[data-palette=x]`
+and `:root:not([data-theme=light])` have equal specificity, so a light palette
+declared below the dark blocks wins in dark mode, invisibly to whichever half of
+reviewers use the other OS setting.
 
 ### Cities — two variants each, and why
 
@@ -95,7 +122,15 @@ The `.eyebrow` utility (12px, 700, uppercase, `0.14em` tracking, `--forest-mid`)
 
 **`OffRadarMeter`** — **REMOVED (D28)**, along with `OffRadarPanel`, `offRadarBand()` and the score itself. For a resident "almost nobody goes here" describes an empty bar rather than a find, so the signal inverted rather than weakened. Was: a 64px bar plus a band label (Famous / Well known / Quiet / Off the radar). Bands come from `offRadarBand()` in `src/lib/scoring.ts`, so the label and the sort can never drift apart. Carries an `aria-label` with the raw score.
 
-**`Constellation`** (hero) — **CHANGED.** Its dot sizing came from the off-radar score, which is gone, and a single-city dataset collapses into one corner of `CAMBODIA_BBOX`. The projection is already extracted to `src/lib/geo/project.ts` and the shared-day view depends on it, so what needs re-deciding is the sizing and the framing, not the component's existence. Was: all 42 spots plotted at their real longitude/latitude inside `CAMBODIA_BBOX`, over a plain graticule. Dot size runs 8px→20px with the off-radar score, so the least-visited places are the largest marks on the page. It is a scatter of the actual dataset, not an illustration of the country: honest, needs no Mapbox token, and cannot fail to load. Colour is the base city.
+**`Constellation`** (hero) — **REBUILT.** Every non-memorial place plotted at its real longitude and latitude over a plain graticule: a scatter of the actual dataset, not an illustration, so it is honest, needs no Mapbox token and cannot fail to load.
+
+Three things changed and each was a shipped defect (C27, C28, C30):
+
+- **The frame comes from the data**, via `boundsOf` in `src/lib/geo/project.ts`, and is squared so the north–south run of the river is not stretched. Framed on `CAMBODIA_BBOX` it had been rendering as an empty grid — 0.06° of city inside 5.4° of country.
+- **Neighbourhood names are drawn on the plot**, with a one-pass de-collision that pushes overlapping labels apart vertically. They replace a legend of nine colour chips that carried no colour, D27 having removed the thing they were showing.
+- **Memorials are not plotted.** A dot for Choeung Ek under "Let's finally plan an actual hangout, eh?" is the product's voice applied to a killing field. Held by `Constellation.test.tsx`, not by this paragraph — D33 requires each such exclusion to be a test.
+
+Dot size is uniform. It used to carry the off-radar score, which was the old product's whole thesis in one graphic; the score is gone (D28) and sizing by nothing is more honest than sizing by a leftover.
 
 **`PairingCard`** and the `PairingRail`** — **REMOVED (D29).** "Instead of Angkor Wat" is a sentence you can only say to someone who has not been. Was: — the hook is set in display type as a quotation, with the anchor named above it and the off-radar meter below. The pairing is the product; it gets the typographic weight.
 

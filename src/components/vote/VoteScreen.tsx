@@ -46,13 +46,17 @@ export function VoteScreen({
   roomId,
   slot,
   candidates,
+  stops,
   by,
   dict,
+  locale,
 }: {
   roomId: string;
   slot: Slot;
   candidates: Spot[];
+  stops: number;
   by?: string;
+  locale: string;
   dict: Dictionary;
 }) {
   const [started, setStarted] = useState(false);
@@ -171,7 +175,9 @@ export function VoteScreen({
         slot={slot}
         candidates={candidates}
         votes={votes}
+        stops={stops}
         dict={dict}
+        locale={locale}
         onBack={() => setShowResult(false)}
       />
     );

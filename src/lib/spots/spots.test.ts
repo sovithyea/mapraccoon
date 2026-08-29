@@ -11,6 +11,15 @@ import { CAMBODIA_BBOX, spotsSchema } from "@/lib/spots/schema";
  * prose: the schema catches shape errors, and these catch the referential and
  * editorial mistakes a schema cannot see (D3).
  */
+/** A minimal valid venue, for schema assertions that need a shape not content. */
+const venueInput = {
+  id: "t", slug: "t", neighbourhood: "bkk1", categories: ["bar"],
+  name: { en: "Test" }, coords: [104.92, 11.55], blurb: { en: "b" },
+  hours: { kind: "always" }, priceLevel: 2, lastVerified: "2026-08-29",
+  hoursSource: "imported", practical: { typicalDurationMins: 60 },
+  sources: ["https://example.org/x"],
+} as const;
+
 describe("seed content", () => {
   it("parses cleanly against the schema", () => {
     const result = spotsSchema.safeParse(raw);
@@ -63,20 +72,21 @@ describe("seed content", () => {
     });
 
     it("refuses unknown hours with nowhere to check", () => {
-      const base = getSpotBySlug("wat-phnom");
+      // Built, not borrowed: spreading a parsed Spot gives hours as minutes
+      // where the schema expects strings, so the parse fails for an unrelated
+      // reason and the test passes for the wrong one.
       const result = spotsSchema.safeParse([
-        { ...base, hours: { kind: "unknown" }, links: undefined },
+        { ...venueInput, hours: { kind: "unknown" }, links: undefined },
       ]);
       expect(result.success).toBe(false);
       expect(JSON.stringify(result.error?.issues)).toContain("somewhere for the reader to check");
     });
 
     it("accepts unknown hours when a link is present", () => {
-      const base = getSpotBySlug("wat-phnom");
       expect(
         spotsSchema.safeParse([
           {
-            ...base,
+            ...venueInput,
             hours: { kind: "unknown" },
             links: { facebook: "https://facebook.com/example" },
           },
@@ -142,7 +152,8 @@ describe("seed content", () => {
 
 
   it("looks spots up by slug", () => {
-    expect(getSpotBySlug("wat-phnom")?.name.en).toBe("Wat Phnom");
+    // Any real slug. Named rather than derived so the assertion says something.
+    expect(getSpotBySlug("tuol-sleng")?.name.en).toContain("Tuol Sleng");
     expect(getSpotBySlug("not-a-real-slug")).toBeUndefined();
   });
 });

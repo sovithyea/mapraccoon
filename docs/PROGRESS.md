@@ -2,7 +2,7 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (seventh session — Phase 3 built and merged)
+**Last updated:** 2026-08-29 (eighth session — real content, the landing page rebuilt, palettes, link previews)
 
 ## Where things stand
 
@@ -10,7 +10,9 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 **The loop works end to end and is on `main`.** Build a shortlist on `/discover`, press *Ask the others*, share the link, everyone marks yes/maybe/no, it settles. Verified with two browser tabs, one with every websocket blocked to prove the poll carries it.
 
-**What it does not have is content.** Eleven tourist landmarks, no bars or restaurants (B9). Every flow was verified against markets and temples, and nobody has used the thing for real.
+**It has content now.** 87 places: 82 bars, restaurants and cafés imported from Google Places, the three markets, and the two memorials. **Nobody has used the thing for real** — that is still the gap, and it is the only one that matters.
+
+**The landing page was still the old product until the eighth session, and that was not a copy problem.** It said "forty-two places across four cities, ranked by how far off the radar they are" above 84 places in one city with the score deleted; both maps rendered as empty grids because the projection was still framed on Cambodia; the legend under one of them was nine invisible colour chips; and the landing scatter plotted Choeung Ek under a headline about planning a hangout. Five shipped defects, C27–C31, none of which any test or type would have caught. See `docs/VERIFIED.md`.
 
 **Phase 2 (Itinerary builder) is merged. Phase 1 (Foundation) is complete, and was executed out of order.** The scaffold, content schema, 42 curated spots, off-radar sorting, the map with its token-missing fallback, the i18n structure, the landing page and the test suite are all in and green. `npm run build`, `lint`, `typecheck` and `test` are clean; 50 pages generate statically; the dev server serves them.
 
@@ -27,8 +29,9 @@ Running ledger. Updated at the end of every working session so state survives ac
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
 | 3 | Friends platform | ✅ spec + plan | merged to `main` | Vithyea | **Complete and merged** via PR #3, all 17 criteria closed. Venue content (B9) is outstanding and is the only thing between this and real use |
-| 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
-| 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
+| 4 | Content + finish | — | `phase/4-content` | Vithyea | **In review.** 87 places, the landing page rebuilt around the actual product, four palettes (D38), the markets restored (D39), Open Graph previews. Not merged |
+| 5 | Standing groups | — | `phase/5-groups` | — | Not started — needs Phase 4 merged and real use |
+| 6 | Content at scale | — | `phase/6-content` | — | Not started — driven by R8 |
 
 ## Open blockers
 
@@ -37,14 +40,26 @@ Running ledger. Updated at the end of every working session so state survives ac
 | B1 | No Mapbox account or token exists | Verifying pins render and click/hover sync. **No longer blocks Phase 2** (D22) | User |
 | B2 | ~~Content unverified on the ground (R1)~~ | **Largely closed by the pivot.** Residents self-correct crossing their own city; what replaces it is staleness, tracked as R8 | — |
 | B3 | ~~Community-impact claims unconfirmed (R4)~~ | **Closed by D27.** All five named organisations are outside Phnom Penh and leave with their cities | — |
-| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | **Launch (D32).** The audience is majority Khmer-speaking by construction, so this stopped being a scheduled defect. Phase 2 added ~60 English-only strings, so it grew | Design |
-| B5 | Nothing is deployed; no hosting decided | First public URL | User |
+| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | **Launch (D32).** Dropping Khmer support entirely was raised on 2026-08-29 and **deferred, not decided** — the plumbing (`{en, km?}`, the `[locale]` segment) stays until it is | Design |
+| B5 | Nothing is deployed | First public URL. **In progress** — Vercel project exists, `phase/4-content` is pushed but not merged, and the environment variables are being set. Deploy readiness verified against a production build: `npm run start` serves, the vote API round-trips, no secret in the bundle. What remains is on Vercel, not in the repo — see *Before the first deploy* below | User |
 | B10 | ~~Supabase votes table~~ | **Closed.** Table created, RLS verified denying the anon key both read and write, Realtime broadcast reaching an anon subscriber | — |
 | B6 | ~~Design direction for Phase 2 was out with Claude Design~~ | **Closed.** Returned, implemented and merged. Note it was produced against a stale commit and its colours are pre-D21 — do not take hex values out of that file | — |
 | B7 | ~~No schema field marks a memorial site (C17)~~ | **Closed in Phase 2 by D25.** But R9 got *worse* at the pivot, not better — see D33 | — |
 | B8 | No photographs, and voting between four bars from text alone is untested (R11) | A real v1 with real friends. No solution chosen | User |
-| B9 | `src/data/spots.ts` has 11 Phnom Penh places and every one is a tourist landmark — no restaurants, bars or cafés at all | All of Phase 3. `tools/import-places.mjs` drafts entries from Google Places (D36); blurbs and the hours that matter still need a person | User |
+| B9 | ~~Eleven tourist landmarks, no venues~~ | **Partly closed.** 82 real bars, restaurants and cafés imported across six neighbourhoods. **The blurbs are derived, not written**, and every hour is `hoursSource: "imported"` — fetched, never checked. Replacing those one at a time is the remaining work | User |
 | B11 | ~~No Google Places key~~ | **Closed.** Key works; a BKK1 bar import returned 20 venues that all parse | — |
+
+### Before the first deploy
+
+Verified locally on 2026-08-29 against a real production build (`npm run build && npm run start`): `/`, `/en`, `/en/discover` all 200; `POST /api/room/<malformed>` 404; `GET /api/room/<valid unused>` 200 `{"votes":[]}` — so Supabase is reachable from a production build; `npm run check:secrets` clean. Share links are built from `window.location.origin`, so they are correct on any host including a preview deployment; there is no hardcoded origin anywhere in `src/`.
+
+Four things are **not** verified because they live on Vercel and Mapbox rather than in this repo, and none of them can be checked from here:
+
+1. `phase/4-content` is pushed but not merged. Vercel builds a branch — if the project builds `main`, none of the eighth session's work is in the deployment.
+2. Four environment variables. `NEXT_PUBLIC_MAPBOX_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_KEY` **without** the prefix. C24 is the record of what the last mix-up of those two Supabase keys cost.
+3. The Mapbox token's URL restrictions must include the deployed host, or the map dies in production. Mapbox has no hard spend cap (R3), so an unrestricted token is also a billing exposure.
+4. `supabase/migrations/0001_votes.sql` must have run on whichever Supabase project those keys point at. If Vercel points at a different project than the local one, every vote 502s.
+
 
 ## Next session should
 

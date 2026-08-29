@@ -8,6 +8,7 @@ import { buildableLocales, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { DayDock } from "@/components/route/DayDock";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { siteUrl } from "@/lib/site-url";
 import { getAllSpots } from "@/lib/spots";
 import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 
@@ -36,8 +37,31 @@ export async function generateMetadata({
   const { locale } = await params;
   const dict = await getDictionary(isLocale(locale) ? locale : "en");
   return {
+    /*
+      Absolute URLs for Open Graph. A preview is fetched by Telegram's or
+      Facebook's servers, which have nothing to resolve a relative path
+      against — without this Next emits relative image URLs and every shared
+      link previews blank. This product is distributed entirely by people
+      pasting links into group chats, so that is the front door, not a detail.
+    */
+    metadataBase: siteUrl(),
     title: { default: dict.site.name, template: `%s · ${dict.site.name}` },
     description: dict.site.description,
+    openGraph: {
+      type: "website",
+      siteName: dict.site.name,
+      title: dict.site.tagline,
+      description: dict.site.description,
+      locale: locale === "km" ? "km_KH" : "en_GB",
+      // The image itself comes from opengraph-image.tsx in this segment; Next
+      // fills in og:image, its type and its dimensions. Naming it here too
+      // would give the crawler two and let them disagree.
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.site.tagline,
+      description: dict.site.description,
+    },
   };
 }
 
@@ -53,6 +77,9 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const dict = await getDictionary(locale as Locale);
+
+  const occupied = new Set(getAllSpots().map((spot) => spot.neighbourhood));
+  const covered = neighbourhoods.filter((n) => occupied.has(n.id));
 
   return (
     /*
@@ -81,8 +108,11 @@ export default async function LocaleLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=localStorage.getItem('mapraccoon:theme');" +
-              "if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}",
+              "try{var d=document.documentElement.dataset," +
+              "t=localStorage.getItem('mapraccoon:theme')," +
+              "p=localStorage.getItem('mapraccoon:palette');" +
+              "if(t==='light'||t==='dark')d.theme=t;" +
+              "if(p&&p!=='monsoon'&&/^[a-z]+$/.test(p))d.palette=p}catch(e){}",
           }}
         />
       </head>
@@ -139,10 +169,15 @@ export default async function LocaleLayout({
                 in the footer of every page. They are kept as text because
                 telling someone which parts of the city this covers is useful;
                 sending them to a filtered list from the footer is not.
+
+                Only the ones with somewhere in them. The enum has nine members
+                and the dataset covers six, so this was naming Koh Pich and Sen
+                Sok as coverage while holding nothing there — a claim about the
+                content made by a constant that does not read the content.
               */}
               <h2 className="eyebrow">{dict.footer.cities}</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                {neighbourhoods.map((n) => n.name).join(" · ")}
+                {covered.map((n) => n.name).join(" · ")}
               </p>
             </div>
 

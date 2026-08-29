@@ -43,11 +43,28 @@ export type Ballot = {
    * everything else.
    */
   roomId: string;
+  /**
+   * How many places the night needs.
+   *
+   * Set when the ballot is made, because it is the question the group is
+   * actually asking. "Where should we go?" with one answer is a different
+   * evening from "where are the three places we're going", and a vote that
+   * does not know which it is has to guess afterwards.
+   *
+   * The top `stops` candidates by approval become the itinerary (D37).
+   */
+  stops: number;
   /** Who set it up. Optional, and only ever a display name. */
   by?: string;
 };
 
-export type ResolvedBallot = { slot: Slot; candidates: Spot[]; roomId: string; by?: string };
+export type ResolvedBallot = {
+  slot: Slot;
+  candidates: Spot[];
+  roomId: string;
+  stops: number;
+  by?: string;
+};
 
 export const slotInstant = (slot: Slot): Instant => ({
   day: slot.day,
@@ -71,6 +88,7 @@ export function encodeBallot(ballot: Ballot): string {
       s: [ballot.slot.isoDate, ballot.slot.startMins, ballot.slot.day],
       c: ballot.candidateIds,
       r: ballot.roomId,
+      n: ballot.stops,
       ...(ballot.by ? { b: ballot.by } : {}),
     }),
   );
@@ -98,9 +116,12 @@ export function decodeBallot(id: string): Ballot | null {
   }
 
   if (typeof parsed !== "object" || parsed === null) return null;
-  const { v, s, c, r, b } = parsed as Record<string, unknown>;
+  const { v, s, c, r, n, b } = parsed as Record<string, unknown>;
   if (v !== 1 || !Array.isArray(s) || s.length !== 3 || !Array.isArray(c)) return null;
   if (typeof r !== "string" || !isValidRoomId(r)) return null;
+  // Older links have no `n`. One stop is the honest default for them: it is
+  // what the product did before the night had a length.
+  const stops = typeof n === "number" && n >= 1 && n <= 8 ? n : 1;
 
   const [isoDate, startMins, day] = s as [unknown, unknown, unknown];
   if (
@@ -121,6 +142,7 @@ export function decodeBallot(id: string): Ballot | null {
     slot: { isoDate, startMins, day },
     candidateIds,
     roomId: r,
+    stops,
     ...(typeof b === "string" ? { by: b } : {}),
   };
 }
@@ -143,6 +165,10 @@ export function resolveBallot(ballot: Ballot): ResolvedBallot {
     slot: ballot.slot,
     candidates,
     roomId: ballot.roomId,
+    // Never ask for more stops than there are candidates left after the
+    // memorial filter, or the planner would be short a place with no
+    // explanation.
+    stops: Math.min(ballot.stops, candidates.length),
     ...(ballot.by ? { by: ballot.by } : {}),
   };
 }
@@ -151,6 +177,7 @@ export function resolveBallot(ballot: Ballot): ResolvedBallot {
 export function createBallot(
   candidates: readonly Spot[],
   slot: Slot,
+  stops = 1,
   by?: string,
 ): Ballot {
   return {
@@ -160,6 +187,7 @@ export function createBallot(
     // means one can never even be written into a link (D33).
     candidateIds: candidates.filter((s) => !s.sensitive).map((s) => s.id),
     roomId: newRoomId(),
+    stops: Math.max(1, Math.min(stops, 8)),
     ...(by ? { by } : {}),
   };
 }

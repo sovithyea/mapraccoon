@@ -1,11 +1,15 @@
-// Contrast audit over CDP. usage: node tools/contrast.mjs <url> [dark]
+// Contrast audit over CDP. usage: node tools/contrast.mjs <url> [dark] [palette]
+//
+// The palette argument exists because D38 ships four of them and light/dark is
+// only one of the two axes: eight combinations, and the emulated media query
+// reaches exactly two of them.
 //
 // Resolves colours through a canvas rather than parsing the computed string.
 // Tailwind v4 emits `oklab(... / 0.8)` for `text-white/80`, and a regex that
 // assumes rgb() reads those numbers as near-black — which produced a confident
 // false failure the first time this ran. The canvas also composites alpha over
 // the real backdrop, which a string parse cannot do at all.
-const [, , url, mode] = process.argv;
+const [, , url, mode, palette] = process.argv;
 
 const list = await (await fetch("http://127.0.0.1:9222/json/list")).json();
 const page = list.find((t) => t.type === "page");
@@ -23,7 +27,17 @@ await send("Emulation.setEmulatedMedia", {
 });
 await send("Page.enable");
 await send("Page.navigate", { url });
-await new Promise((r) => setTimeout(r, 2500));
+await new Promise((r) => setTimeout(r, 1500));
+
+// The palette lives in localStorage and is applied by an inline script before
+// first paint, so it has to be written on the origin and the page reloaded.
+if (palette) {
+  await send("Runtime.evaluate", {
+    expression: `localStorage.setItem("mapraccoon:palette", ${JSON.stringify(palette)})`,
+  });
+  await send("Page.navigate", { url });
+}
+await new Promise((r) => setTimeout(r, 2000));
 
 const expression = `
 (() => {

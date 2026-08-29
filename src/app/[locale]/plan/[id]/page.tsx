@@ -4,13 +4,50 @@ import type { Metadata } from "next";
 import { clock } from "@/components/route/time";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { projectCambodia } from "@/lib/geo/project";
+import { boundsOf, projectInto } from "@/lib/geo/project";
 import { dayBudget } from "@/lib/route/day";
 import { decodeDay } from "@/lib/route/share";
 import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import { notFound } from "next/navigation";
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+/*
+  Same reasoning as the ballot: `noindex` for crawlers, real Open Graph tags for
+  the chat app, and nothing decoded into the preview.
+*/
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const dict = await getDictionary(isLocale(locale) ? locale : "en");
+  return {
+    robots: { index: false, follow: false },
+    title: dict.route.shareTitle,
+    description: dict.route.shareDescription,
+    openGraph: {
+      title: dict.route.shareTitle,
+      description: dict.route.shareDescription,
+      /*
+        Named explicitly. A child segment's `openGraph` REPLACES the parent's
+        rather than merging into it, so defining a title here silently dropped
+        the image the layout's `opengraph-image.tsx` contributes — on the two
+        routes that are actually shared. Verified by reading the tags off the
+        rendered page, which is the only way this is visible.
+
+        The path, not a re-export: the image is prerendered once at
+        /{locale}/opengraph-image, and giving these dynamic routes their own
+        image file would make Satori run on every preview fetch.
+      */
+      images: [`/${locale}/opengraph-image`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.route.shareTitle,
+      description: dict.route.shareDescription,
+    },
+  };
+}
 
 const fill = (t: string, v: Record<string, string | number>): string =>
   Object.entries(v).reduce((o, [k, val]) => o.replaceAll(`{${k}}`, String(val)), t);
@@ -64,10 +101,11 @@ export default async function PlanPage({
   const budget = dayBudget(day.stops, day.frame);
   const first = day.stops[0];
   const city = first ? getNeighbourhood(first.spot.neighbourhood) : undefined;
-  const points = day.stops.map((stop) => ({
-    stop,
-    ...projectCambodia(stop.spot.coords),
-  }));
+  // Framed on the night itself, not on a fixed box: three bars in BKK1 are
+  // three bars in BKK1, and on a city-sized frame they were one dot joined by
+  // a zero-length line. `boundsOf` floors the span so it cannot over-zoom.
+  const project = projectInto(boundsOf(day.stops.map((stop) => stop.spot.coords)));
+  const points = day.stops.map((stop) => ({ stop, ...project(stop.spot.coords) }));
 
   return (
     <article className="mx-auto w-full max-w-3xl px-5 py-10">
@@ -83,7 +121,7 @@ export default async function PlanPage({
 
       {/* Constellation family: same projection, same graticule, no token. */}
       <figure className="mt-8 m-0">
-        <div className="relative aspect-[5/4] w-full overflow-hidden rounded-3xl border border-border bg-surface-sunk">
+        <div className="relative aspect-square w-full overflow-hidden rounded-3xl border border-border bg-surface-sunk">
           <svg
             className="absolute inset-0 h-full w-full"
             viewBox="0 0 100 100"

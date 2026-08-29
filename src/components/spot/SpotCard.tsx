@@ -60,10 +60,6 @@ export function SpotCard({
             ))}
           </ul>
         </div>
-
-        {spot.community ? (
-          <p className="mt-2 text-xs text-accent">Community-run</p>
-        ) : null}
       </Link>
 
       {/*

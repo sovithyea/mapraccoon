@@ -27,7 +27,7 @@ const spot = (slug: string): Spot => {
 const asStop = (s: Spot): RouteStop => ({ spot: s, dwellMins: stopDwell(s) });
 
 describe("shared day links", () => {
-  const stops = [asStop(spot("wat-phnom")), asStop(spot("tuol-sleng"))];
+  const stops = [asStop(spot("choeung-ek")), asStop(spot("tuol-sleng"))];
 
   it("round-trips a day", () => {
     const decoded = decodeDay(encodeDay(stops));
@@ -50,7 +50,7 @@ describe("shared day links", () => {
   it("carries a human-readable prefix without depending on it", () => {
     const id = encodeDay(stops);
     // The prefix names the first stop's neighbourhood, not the city (D27).
-    expect(id.startsWith("daun-penh-2-stops.")).toBe(true);
+    expect(id.startsWith("out-of-town-2-stops.")).toBe(true);
     // The prefix is cosmetic: mangling it must not break the payload.
     expect(decodeDay(`anything-at-all.${id.split(".")[1]}`)).not.toBeNull();
   });
