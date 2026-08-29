@@ -1,8 +1,8 @@
 {
   "site": {
     "name": "MapRaccoon",
-    "tagline": "Cambodia, past the top five",
-    "description": "A discovery-first guide to Cambodia. Sorted by what you haven't heard of, not by what everyone already visits."
+    "tagline": "Phnom Penh, decided together",
+    "description": "Pick a few places, send one link, let everyone vote. A going-out planner for friends in Phnom Penh."
   },
   "nav": {
     "discover": "Discover",
@@ -12,30 +12,39 @@
     "theme": "Colour theme"
   },
   "hero": {
-    "eyebrow": "Cambodia, sorted backwards",
-    "headingA": "Everyone sees",
-    "headingB": "the same five places.",
-    "headingC": "Here is the rest.",
-    "lead": "Forty-two places across four cities, ranked by how far off the radar they are. The famous ones are still here — at the bottom, each one paired with the quieter place that beats it.",
-    "doorsLabel": "Choose where to start",
-    "doors": {
-      "hidden": {
-        "title": "The hidden ones",
-        "body": "Sorted least-known first"
+    "headingA": "Let's finally plan",
+    "headingB": "an actual",
+    "headingC": "hangout, eh?",
+    "lead": "Bars, restaurants and cafés across Phnom Penh, sorted by what’s open right now. Pick a few, send one link, and everyone votes on their own phone — so the night gets decided by the group, not by whoever answers the chat first.",
+    "cta": "Start a night",
+    "ctaNote": "Nothing to sign up for. The link is the whole thing.",
+    "howLabel": "How it works",
+    "steps": [
+      {
+        "title": "Pick a few places",
+        "body": "Browse what’s open and add anything that could work. Four or five is plenty to vote on."
+      },
+      {
+        "title": "Send one link",
+        "body": "Everyone opens it, puts in a name, and votes yes or no. No account, no app, no arguing in the chat."
+      },
+      {
+        "title": "Plan the night",
+        "body": "The places the group approved become a schedule. Set how long you want at each one and it retimes itself."
       }
-    },
+    ],
     "proof": {
       "label": "How this list is built",
-      "spots": "places, each one written by hand",
-      "sourced": "of them carry a source you can check",
-      "editorial": "Off-radar score is editorial, not an algorithm"
+      "spots": "places across Phnom Penh",
+      "sourced": "carry a source you can check",
+      "editorial": "Opening hours come from Google and go stale. Worth a check before you set off."
     },
-    "constellationLabel": "Every place in the guide, positioned by its real coordinates",
-    "constellationHint": "Colour marks the base city"
+    "constellationLabel": "{count} places, at their real coordinates",
+    "constellationHint": "Hover a dot to name it"
   },
   "home": {
-    "heading": "Cambodia, past the top five",
-    "intro": "Everything below is sorted by how far off the radar it is. The famous places are still here — they're just at the bottom, where you can find the quieter alternative to each one.",
+    "heading": "What’s open in Phnom Penh",
+    "intro": "Sorted by what’s open right now. Add anywhere that could work, then send the list to the group and let them vote on it.",
     "resultCount": "{count} places",
     "resultCountOne": "1 place",
     "empty": "No places match these filters yet.",
@@ -138,10 +147,10 @@
     "viewDetails": "View details"
   },
   "footer": {
-    "blurb": "A discovery-first guide to Cambodia, sorted by what you haven't heard of.",
+    "blurb": "A going-out planner for friends in Phnom Penh. Pick a few places, send one link, let everyone vote.",
     "cities": "Neighbourhoods",
     "about": "About",
-    "editorial": "Off-radar scores and hidden-gem tags on this site are editorial judgements, not algorithm output. Content is unverified on the ground — check the sources on each page before you travel."
+    "editorial": "Opening hours and prices here come from Google and from us, not from the venue, and places in Phnom Penh close and move without notice. Nothing on this site is verified on the ground — check the sources on a place's page, or ring ahead, before you set off."
   },
   "route": {
     "dayTitle": "Your day",

@@ -1,18 +1,19 @@
-import { Hero } from "@/components/home/Hero";
+import { Hero, HowItWorks } from "@/components/home/Hero";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getAllSpots } from "@/lib/spots";
 
 /**
- * A shell, and knowingly so.
+ * The landing page, rebuilt around what the product now does.
  *
- * This page existed to state the old thesis in one screen — a constellation
- * sized by off-radar score, a rail of pairings, a picker for four cities. The
- * score and the pairings went in step 0; `CityPicks` went here, because
- * choosing between cities is not a decision this product offers any more.
+ * It used to state the old thesis in one screen: a constellation sized by
+ * off-radar score, a rail of pairings, a picker for four cities. Those went
+ * with D27/D28/D29 and what was left was scaffolding — a heading about
+ * forty-two places across four cities above eighty-four places in one, and a
+ * "choose where to start" grid holding a single card.
  *
- * Step 9 of `specs/3-friends/plan.md` rebuilds it around the thing the product
- * is actually for: starting a night and getting other people to vote on it.
+ * Now: what it is, one button, and how the loop works, because someone opening
+ * a shared link has never seen this and no single screen explains it alone.
  */
 export default async function HomePage({
   params,
@@ -32,7 +33,7 @@ export default async function HomePage({
         dict={dict}
         sourcedCount={spots.filter((s) => s.sources.length > 0).length}
       />
-
+      <HowItWorks dict={dict} />
     </>
   );
 }
