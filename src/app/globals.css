@@ -1,16 +1,19 @@
 @import "tailwindcss";
 
 /*
- * Palette — "Laterite & Monsoon".
+ * Palettes.
  *
  * Every value here is verified, not chosen by eye: WCAG AA (4.5:1) for text,
  * and CIELAB deltaE > 25 between any two colours that carry different meanings
- * on the same page. The previous palette failed both — `--forest-mid` and
- * `--cat-nature` were literally the same colour, gold collided with the temple
- * category, and two of the four cities were indistinguishable. See D21.
+ * on the same page. `globals.test.ts` re-runs both checks against this file, so
+ * a palette that fails them cannot ship. The palette before D21 failed both —
+ * `--forest-mid` and `--cat-nature` were literally the same colour, gold
+ * collided with the temple category, and two of the four cities were
+ * indistinguishable.
  *
  * Three colour ROLES, and nothing else may use them:
- *   --accent   institutional green. CTAs and links.
+ *   --brand    the palette's mid tone. Eyebrow labels, display numerals.
+ *   --accent   the strong tone. Buttons and links.
  *   --gold     "this claim is unverified". The provenance rule beside a fee or
  *              an opening time, and nowhere else.
  *
@@ -26,12 +29,34 @@
  * exists because ten already collided twelve ways. A neighbourhood is a text
  * label; what makes it matter is travel time, not hue.
  *
- * The upside is real: dropping four of the seven role colours means the palette
- * has room again.
+ * `--brand` was `--forest-mid`, alongside `--forest` and `--forest-deep`. Those
+ * two had no reader anywhere in the codebase, and the name only described one
+ * of the four palettes — "forest-mid" holding a rust red is the same class of
+ * lie as a token with no job.
  *
- * Category colour is NOT a page-level role. It identifies pin layers on the
- * map and appears nowhere else — see docs/DESIGN-SYSTEM.md.
+ * Category colour is NOT a page-level role. It identifies pin layers on the map
+ * and appears nowhere else, so it is defined once per appearance rather than
+ * per palette — see docs/DESIGN-SYSTEM.md.
+ *
+ * ── How the two axes compose ────────────────────────────────────────────────
+ *
+ * Appearance (auto / light / dark) is `data-theme`; palette is `data-palette`.
+ * They are independent, which is four palettes times three appearances, and
+ * CSS resolves it by specificity, so the ORDER OF THE BLOCKS BELOW IS LOAD
+ * BEARING:
+ *
+ *   1. `:root`                                     Monsoon light, the base
+ *   2. `:root[data-palette=…]`                     the other three, light
+ *   3. `@media (prefers-color-scheme: dark)`       dark under the OS preference
+ *   4. `:root[data-theme="dark"]`                  dark under an explicit choice
+ *
+ * Inside 3 and 4 the palette-qualified rules carry one more attribute selector
+ * than the unqualified one, so they win. Move a light block below a dark one
+ * and light will win in dark mode at equal specificity — which is exactly the
+ * bug that is invisible to whichever half of reviewers use the other setting.
  */
+
+/* ── 1. Monsoon: forest green and bone. The default. ───────────────────────── */
 :root {
   --background: #faf6ef;
   --surface: #fffdf8;
@@ -41,32 +66,75 @@
   --muted: #655d51;
   --border: #e1d8c6;
 
-  --forest: #123a31;
-  --forest-deep: #0b2620;
-  --forest-mid: #276353;
+  --brand: #276353;
   --accent: #123a31;
   --accent-contrast: #fdfaf4;
   --gold: #7e5a0c;
 
-  /* Map pin layers only. */
+  /* Map pin layers only. Per appearance, not per palette. */
   --cat-temple: #b07a0f;
   --cat-nature: #2e7d48;
   --cat-food: #c2410c;
   --cat-culture: #7c4dbd;
-
 }
 
+/* ── 2. The other palettes, light. ─────────────────────────────────────────── */
+
+/* Laterite: the red stone the temples are cut from, over cream. */
+:root[data-palette="laterite"] {
+  --background: #f7e7d8;
+  --surface: #fdf3e9;
+  --surface-sunk: #eed7c2;
+  --ink: #1f1310;
+  --foreground: #2b1c16;
+  --muted: #6a5245;
+  --border: #dfc3a9;
+
+  --brand: #a13c14;
+  --accent: #7c2d12;
+  --accent-contrast: #fff7ee;
+  --gold: #63530f;
+}
+
+/* Neon: the colour a Phnom Penh bar street actually is after dark. */
+:root[data-palette="neon"] {
+  --background: #f6e9f4;
+  --surface: #fdf5fc;
+  --surface-sunk: #ecd8e9;
+  --ink: #150d14;
+  --foreground: #241722;
+  --muted: #6b5468;
+  --border: #dcc0d7;
+
+  --brand: #a3126b;
+  --accent: #8c0f5c;
+  --accent-contrast: #fff0f8;
+  --gold: #63530f;
+}
+
+/* Paper: near-greyscale, for anyone who wants the content and not the mood. */
+:root[data-palette="paper"] {
+  --background: #e7ecee;
+  --surface: #f6f9fa;
+  --surface-sunk: #d8dfe2;
+  --ink: #101414;
+  --foreground: #1e2325;
+  --muted: #575e61;
+  --border: #c4ced2;
+
+  --brand: #3b4245;
+  --accent: #1f262b;
+  --accent-contrast: #f6f9fa;
+  --gold: #63530f;
+}
+
+/* ── 3. Dark, under the OS preference. ─────────────────────────────────────── */
 /*
- * Dark mode has two triggers and one set of values.
- *
- * The OS preference is the default; an explicit choice from the theme toggle
- * wins over it in both directions, which is why the media query excludes
- * `[data-theme="light"]` rather than simply applying.
- *
- * The two blocks below MUST define the same token names. `globals.test.ts`
- * asserts it — a token defined in only one of them is the exact shape of the
- * bug D21 and C13 were about, and it would only appear for the half of users
- * who had used the toggle.
+ * The media query excludes `[data-theme="light"]` rather than simply applying,
+ * so an explicit light choice wins over a dark OS setting. Each palette repeats
+ * in block 4 with the same values; `globals.test.ts` asserts the two stay in
+ * step, because a token defined in only one of them appears solely for people
+ * who have touched the toggle and survives every review done the other way.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -80,9 +148,7 @@
     --muted: #a1988a;
     --border: #2d342c;
 
-    --forest: #57b79c;
-    --forest-deep: #08150f;
-    --forest-mid: #6cc3aa;
+    --brand: #6cc3aa;
     --accent: #57b79c;
     --accent-contrast: #08150f;
     --gold: #d9a83f;
@@ -91,33 +157,120 @@
     --cat-nature: #63c684;
     --cat-food: #f2915f;
     --cat-culture: #b6a0f2;
+  }
 
+  :root[data-palette="laterite"]:not([data-theme="light"]) {
+    --background: #1d130f;
+    --surface: #271a14;
+    --surface-sunk: #31211a;
+    --ink: #f9ece1;
+    --foreground: #f2e2d4;
+    --muted: #b09384;
+    --border: #452f24;
+
+    --brand: #e59366;
+    --accent: #e2764a;
+    --accent-contrast: #1a0d07;
+    --gold: #d3b56a;
+  }
+
+  :root[data-palette="neon"]:not([data-theme="light"]) {
+    --background: #100a14;
+    --surface: #19101e;
+    --surface-sunk: #221626;
+    --ink: #f8eef7;
+    --foreground: #ece0ea;
+    --muted: #a38da0;
+    --border: #372a3b;
+
+    --brand: #ff6db8;
+    --accent: #ff4da6;
+    --accent-contrast: #16000c;
+    --gold: #e2c04a;
+  }
+
+  :root[data-palette="paper"]:not([data-theme="light"]) {
+    --background: #14181b;
+    --surface: #1d2226;
+    --surface-sunk: #252b30;
+    --ink: #f1f4f6;
+    --foreground: #e1e6e9;
+    --muted: #959ea3;
+    --border: #343b40;
+
+    --brand: #c1c9cd;
+    --accent: #d3dbdf;
+    --accent-contrast: #141a1d;
+    --gold: #cfb75f;
   }
 }
 
+/* ── 4. Dark, under an explicit choice. Same values as block 3. ────────────── */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-    --background: #101310;
-    --surface: #171b16;
-    --surface-sunk: #1e231d;
-    --ink: #f4efe4;
-    --foreground: #ece5d8;
-    --muted: #a1988a;
-    --border: #2d342c;
+  --background: #101310;
+  --surface: #171b16;
+  --surface-sunk: #1e231d;
+  --ink: #f4efe4;
+  --foreground: #ece5d8;
+  --muted: #a1988a;
+  --border: #2d342c;
 
-    --forest: #57b79c;
-    --forest-deep: #08150f;
-    --forest-mid: #6cc3aa;
-    --accent: #57b79c;
-    --accent-contrast: #08150f;
-    --gold: #d9a83f;
+  --brand: #6cc3aa;
+  --accent: #57b79c;
+  --accent-contrast: #08150f;
+  --gold: #d9a83f;
 
-    --cat-temple: #d9a441;
-    --cat-nature: #63c684;
-    --cat-food: #f2915f;
-    --cat-culture: #b6a0f2;
+  --cat-temple: #d9a441;
+  --cat-nature: #63c684;
+  --cat-food: #f2915f;
+  --cat-culture: #b6a0f2;
+}
 
+:root[data-palette="laterite"][data-theme="dark"] {
+  --background: #1d130f;
+  --surface: #271a14;
+  --surface-sunk: #31211a;
+  --ink: #f9ece1;
+  --foreground: #f2e2d4;
+  --muted: #b09384;
+  --border: #452f24;
+
+  --brand: #e59366;
+  --accent: #e2764a;
+  --accent-contrast: #1a0d07;
+  --gold: #d3b56a;
+}
+
+:root[data-palette="neon"][data-theme="dark"] {
+  --background: #100a14;
+  --surface: #19101e;
+  --surface-sunk: #221626;
+  --ink: #f8eef7;
+  --foreground: #ece0ea;
+  --muted: #a38da0;
+  --border: #372a3b;
+
+  --brand: #ff6db8;
+  --accent: #ff4da6;
+  --accent-contrast: #16000c;
+  --gold: #e2c04a;
+}
+
+:root[data-palette="paper"][data-theme="dark"] {
+  --background: #14181b;
+  --surface: #1d2226;
+  --surface-sunk: #252b30;
+  --ink: #f1f4f6;
+  --foreground: #e1e6e9;
+  --muted: #959ea3;
+  --border: #343b40;
+
+  --brand: #c1c9cd;
+  --accent: #d3dbdf;
+  --accent-contrast: #141a1d;
+  --gold: #cfb75f;
 }
 
 :root[data-theme="light"] {
@@ -133,9 +286,7 @@
   --color-muted: var(--muted);
   --color-border: var(--border);
 
-  --color-forest: var(--forest);
-  --color-forest-deep: var(--forest-deep);
-  --color-forest-mid: var(--forest-mid);
+  --color-brand: var(--brand);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
   --color-gold: var(--gold);
@@ -160,7 +311,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--forest-mid);
+  color: var(--brand);
 }
 
 /* Horizontal card rails. Scrollbar hidden, scrolling still works. */

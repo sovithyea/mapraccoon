@@ -54,6 +54,9 @@ export default async function LocaleLayout({
 
   const dict = await getDictionary(locale as Locale);
 
+  const occupied = new Set(getAllSpots().map((spot) => spot.neighbourhood));
+  const covered = neighbourhoods.filter((n) => occupied.has(n.id));
+
   return (
     /*
       The one legitimate use of suppressHydrationWarning, scoped to this single
@@ -81,8 +84,11 @@ export default async function LocaleLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=localStorage.getItem('mapraccoon:theme');" +
-              "if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}",
+              "try{var d=document.documentElement.dataset," +
+              "t=localStorage.getItem('mapraccoon:theme')," +
+              "p=localStorage.getItem('mapraccoon:palette');" +
+              "if(t==='light'||t==='dark')d.theme=t;" +
+              "if(p&&p!=='monsoon'&&/^[a-z]+$/.test(p))d.palette=p}catch(e){}",
           }}
         />
       </head>
@@ -139,10 +145,15 @@ export default async function LocaleLayout({
                 in the footer of every page. They are kept as text because
                 telling someone which parts of the city this covers is useful;
                 sending them to a filtered list from the footer is not.
+
+                Only the ones with somewhere in them. The enum has nine members
+                and the dataset covers six, so this was naming Koh Pich and Sen
+                Sok as coverage while holding nothing there — a claim about the
+                content made by a constant that does not read the content.
               */}
               <h2 className="eyebrow">{dict.footer.cities}</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                {neighbourhoods.map((n) => n.name).join(" · ")}
+                {covered.map((n) => n.name).join(" · ")}
               </p>
             </div>
 
