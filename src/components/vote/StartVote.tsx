@@ -29,6 +29,13 @@ export function StartVote({
 }) {
   const [copied, setCopied] = useState(false);
   const [link, setLink] = useState<string | null>(null);
+  /**
+   * How many places the night needs, asked here because it is the question the
+   * group is actually putting (D37). "Where should we go?" with one answer is a
+   * different evening from "where are the three places we're going", and a vote
+   * that does not know which it is has to guess afterwards.
+   */
+  const [stops, setStops] = useState(1);
 
   // Two is the minimum that is actually a decision. One candidate is a
   // suggestion, and a vote on it is theatre.
@@ -45,11 +52,11 @@ export function StartVote({
     // The slot defaults to tonight at 20:00 rather than "now" — a group
     // deciding at 6pm is deciding about 8pm, and voting on what is open *this
     // minute* would rule out everywhere that opens later.
-    const ballot = createBallot(spots, {
-      isoDate: now.isoDate,
-      startMins: 20 * 60,
-      day: now.day,
-    });
+    const ballot = createBallot(
+      spots,
+      { isoDate: now.isoDate, startMins: 20 * 60, day: now.day },
+      stops,
+    );
 
     const url = `${window.location.origin}/${locale}/vote/${encodeBallot(ballot)}`;
     setLink(url);
@@ -59,12 +66,36 @@ export function StartVote({
     );
   };
 
+  const maxStops = Math.min(4, spots.length);
+
   return (
     <div>
+      <p className="text-xs font-semibold">{dict.route.howManyStops}</p>
+      <div className="mt-2 flex gap-2">
+        {Array.from({ length: maxStops }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-pressed={stops === n}
+            onClick={() => setStops(n)}
+            className={`min-h-11 flex-1 rounded-2xl border text-sm font-bold transition-colors ${
+              stops === n
+                ? "border-accent bg-accent text-accent-contrast"
+                : "border-border text-muted hover:border-muted"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+        {dict.route.stopsHint}
+      </p>
+
       <button
         type="button"
         onClick={start}
-        className="min-h-11 w-full rounded-full bg-accent px-5 text-sm font-bold text-accent-contrast"
+        className="mt-4 min-h-11 w-full rounded-full bg-accent px-5 text-sm font-bold text-accent-contrast"
       >
         {dict.route.putToVote}
       </button>

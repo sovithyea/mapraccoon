@@ -554,3 +554,23 @@ Two alternatives were considered and rejected for this phase: fetching at runtim
 **Consequence:** the seed file becomes machine-seeded and human-owned. Nothing in the schema changes — `hours`, `priceLevel` and `coords` are the same fields either way, which is what makes the provenance swappable.
 
 **Rules out:** nothing permanently. If the retention terms turn out to prohibit this, the fix is the runtime route that was already designed, and the `placeId` field is what makes that a swap rather than starting again.
+
+---
+
+## D37 — Vote first, then plan. The group says how many places.
+
+**Date:** 2026-08-29 · **Status:** Accepted · Refines D29 and D24
+
+The day builder was doing two jobs. It was the shortlist you voted on *and* the itinerary you sequenced, which meant the vote resolved to a single winner and then had nowhere to go — the whole thing read as a poll rather than a plan.
+
+**Voting answers *what*. The timeline answers *when and in what order*.** They are different questions and they now happen in that order.
+
+The ballot carries **how many places the night needs**, chosen when it is created. That is the question the group is actually putting: "where should we go?" with one answer is a different evening from "where are the three places we're going", and a vote that does not know which it is has to guess afterwards. The top `stops` candidates by approval become the itinerary, in approval order, and the planner opens with them loaded.
+
+**A place nobody approved is never included, even to reach the count.** A night of three should not contain somewhere every person said no to just to make up the number — the count is what the group asked for, not a quota to fill.
+
+`setStops` replaces the day wholesale rather than adding in a loop. One intent, one write; and it discards the shortlist deliberately, because the losers should not still be sitting in the planner after the vote decided against them.
+
+**Consequence:** dwell time moves onto the stop itself. It had lived only in the Reorder tab, which put the number the entire schedule is computed from two taps away from the schedule. Every change retimes every arrival below it, which is the point — the day is a budget and this is the part of it a person controls (D24).
+
+**Rules out:** resolving a vote to a single winner. `Result.chosen` is the night; `Result.winner` survives as the headline of that set, not as the answer.

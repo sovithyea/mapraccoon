@@ -1,10 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import type { Dictionary } from "@/i18n/get-dictionary";
 import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 import type { Slot } from "@/lib/vote/ballot";
 import { resolve, type Vote } from "@/lib/vote/resolve";
+import { useRoute } from "@/store/route";
 
 const fill = (t: string, v: Record<string, string | number>): string =>
   Object.entries(v).reduce((o, [k, val]) => o.replaceAll(`{${k}}`, String(val)), t);
@@ -23,16 +26,23 @@ export function VoteResult({
   slot,
   candidates,
   votes,
+  stops,
   dict,
   onBack,
+  locale,
 }: {
   slot: Slot;
   candidates: Spot[];
   votes: Vote[];
+  stops: number;
   dict: Dictionary;
   onBack: () => void;
+  locale: string;
 }) {
-  const result = resolve({ slot, candidates, roomId: "" }, votes);
+  const router = useRouter();
+  const setStops = useRoute((s) => s.setStops);
+
+  const result = resolve({ slot, candidates, roomId: "", stops }, votes);
 
   if (result.empty || !result.winner) {
     return (
@@ -77,6 +87,51 @@ export function VoteResult({
             ? dict.vote.dissentOne
             : fill(dict.vote.dissentMany, { count: result.dissent.length })}
       </p>
+
+      {/*
+        The night, and the way out of this screen.
+
+        Voting answers *what*; the timeline answers *when and in what order*
+        (D37). Before this the vote resolved to a winner and then had nowhere
+        to go, which made the whole thing feel like a poll rather than a plan.
+      */}
+      {result.chosen.length > 0 ? (
+        <div className="mt-7">
+          <h2 className="eyebrow">{dict.vote.chosenHeading}</h2>
+          <p className="mt-1 text-[11px] text-muted">
+            {fill(dict.vote.chosenOf, {
+              count: result.chosen.length,
+              total: candidates.length,
+            })}
+          </p>
+
+          <ol className="mt-3 space-y-1">
+            {result.chosen.map((spot, i) => (
+              <li
+                key={spot.id}
+                className="flex items-baseline gap-3 rounded-2xl border border-border bg-surface px-4 py-3"
+              >
+                <span className="text-xs tabular-nums text-muted">{i + 1}</span>
+                <span className="min-w-0 flex-1 text-sm">{spot.name.en}</span>
+                <span className="shrink-0 text-[11px] text-muted">
+                  {getNeighbourhood(spot.neighbourhood).name}
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <button
+            type="button"
+            onClick={() => {
+              setStops(result.chosen);
+              router.push(`/${locale}/discover#day`);
+            }}
+            className="mt-4 min-h-12 w-full rounded-full bg-accent px-5 text-sm font-bold text-accent-contrast"
+          >
+            {dict.vote.planTheNight}
+          </button>
+        </div>
+      ) : null}
 
       {result.runnerUp ? (
         <p className="mt-3 text-xs text-muted">

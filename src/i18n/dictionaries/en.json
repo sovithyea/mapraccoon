@@ -204,7 +204,11 @@
     "putToVote": "Ask the others",
     "putToVoteHint": "Sends everyone a link. They mark yes, maybe or no; it settles itself.",
     "voteLinkCopied": "Link copied — paste it in the group chat",
-    "voteNeedsTwo": "Add at least two places to vote between."
+    "voteNeedsTwo": "Add at least two places to vote between.",
+    "howManyStops": "How many places tonight?",
+    "stopsHint": "The most-approved this many become the night. You arrange the times after.",
+    "shorterAt": "Less time at {name}",
+    "longerAt": "More time at {name}"
   },
   "vote": {
     "eyebrow": "Deciding together",
@@ -241,6 +245,9 @@
     "closedAtSlot": "closed then",
     "openAtSlot": "open then",
     "hoursUnknown": "hours unknown",
-    "openLink": "Open the vote"
+    "openLink": "Open the vote",
+    "planTheNight": "Plan the night",
+    "chosenHeading": "The night",
+    "chosenOf": "{count} of {total} places, in approval order"
   }
 }

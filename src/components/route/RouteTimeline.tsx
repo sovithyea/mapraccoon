@@ -29,12 +29,14 @@ function StopRow({
   dict,
   onMove,
   onRemove,
+  onDwell,
 }: {
   stop: ScheduledStop;
   index: number;
   total: number;
   dict: Dictionary;
   onMove?: (spotId: string, direction: -1 | 1) => void;
+  onDwell?: (spotId: string, dwellMins: number) => void;
   onRemove?: (spotId: string) => void;
 }) {
   const { spot } = stop;
@@ -74,6 +76,37 @@ function StopRow({
                           </p>
           )}
         </div>
+
+        {/*
+          How long you stay, editable on the stop itself.
+
+          This used to live only in the Reorder tab, which meant the number the
+          whole schedule is computed from was two taps away from the schedule.
+          Every change here retimes every arrival below it, which is the point
+          — the day is a budget, and this is the part of it you control (D24).
+        */}
+        {onDwell && !stop.isSensitive ? (
+          <div className="flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={() => onDwell(spot.id, stop.dwellMins - 15)}
+              disabled={stop.dwellMins <= 15}
+              aria-disabled={stop.dwellMins <= 15}
+              aria-label={fill(dict.route.shorterAt, { name: spot.name.en })}
+              className="flex size-9 items-center justify-center rounded-full text-muted disabled:opacity-30"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              onClick={() => onDwell(spot.id, stop.dwellMins + 15)}
+              aria-label={fill(dict.route.longerAt, { name: spot.name.en })}
+              className="flex size-9 items-center justify-center rounded-full text-muted"
+            >
+              ＋
+            </button>
+          </div>
+        ) : null}
 
         <div className="flex shrink-0 items-center gap-2">
           {stop.isSensitive ? (
@@ -148,12 +181,14 @@ export function RouteTimeline({
   dict,
   onMove,
   onRemove,
+  onDwell,
 }: {
   budget: DayBudget;
   frame: DayFrame;
   dict: Dictionary;
   onMove?: (spotId: string, direction: -1 | 1) => void;
   onRemove?: (spotId: string) => void;
+  onDwell?: (spotId: string, dwellMins: number) => void;
 }) {
   return (
     <div>
@@ -172,6 +207,7 @@ export function RouteTimeline({
               dict={dict}
               onMove={onMove}
               onRemove={onRemove}
+              onDwell={onDwell}
             />
           </Fragment>
         ))}

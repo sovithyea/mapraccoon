@@ -42,6 +42,7 @@ export function RoutePane({
   const add = useRoute((s) => s.add);
   const move = useRoute((s) => s.move);
   const remove = useRoute((s) => s.remove);
+  const setDwell = useRoute((s) => s.setDwell);
   const setFrameEnd = useRoute((s) => s.setFrameEnd);
   const [copied, setCopied] = useState(false);
 
@@ -136,6 +137,7 @@ export function RoutePane({
           dict={dict}
           onMove={move}
           onRemove={remove}
+          onDwell={setDwell}
         />
       </div>
 

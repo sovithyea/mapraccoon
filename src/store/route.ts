@@ -35,6 +35,7 @@ type RouteState = {
   add: (spot: Spot) => void;
   remove: (spotId: string) => void;
   move: (spotId: string, direction: -1 | 1) => void;
+  setStops: (spots: readonly Spot[]) => void;
   setDwell: (spotId: string, dwellMins: number) => void;
   setStart: (startMins: number) => void;
   setFrameEnd: (endMins: number) => void;
@@ -200,6 +201,20 @@ export const useRoute = create<RouteState>()(
         const ordered = shortestDrivingOrder(resolve(stops));
         set({ stops: reindex(ordered, stops) });
       },
+
+      /**
+       * Replace the day wholesale with what a vote decided (D37).
+       *
+       * Not `add` in a loop: this is one intent, and a loop would leave a
+       * half-built day on screen if it were interrupted. It also deliberately
+       * discards whatever was there — the shortlist you voted on has served its
+       * purpose, and keeping it would mean the planner opened with the losers
+       * still in it.
+       */
+      setStops: (spots) =>
+        set({
+          stops: spots.map((spot) => ({ spotId: spot.id, dwellMins: stopDwell(spot) })),
+        }),
 
       clear: () => set({ stops: [], frame: initialFrame }),
     }),

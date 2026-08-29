@@ -35,6 +35,18 @@ export type Tally = {
 export type Result = {
   winner: Spot | null;
   runnerUp: Spot | null;
+  /**
+   * The night, in approval order — the top `ballot.stops` candidates (D37).
+   *
+   * This is what the planner receives. Voting answers *what*; the timeline
+   * answers *when and in what order*, and before this existed the vote resolved
+   * to a single winner and then had nowhere to go.
+   *
+   * A candidate nobody approved at all is excluded even if the group asked for
+   * more stops than that leaves: a night of three should not include a place
+   * every single person said no to just to reach three.
+   */
+  chosen: Spot[];
   tally: Tally[];
   /** Who marked the winner "no". Surfaced, never used to veto. */
   dissent: string[];
@@ -102,10 +114,18 @@ export function resolve(ballot: ResolvedBallot, votes: readonly Vote[]): Result 
   const anyMarks = tally.some((t) => t.yes + t.maybe + t.no > 0);
   const winner = anyMarks ? (ranked[0]?.spot ?? null) : null;
 
+  const chosen = anyMarks
+    ? ranked
+        .filter((t) => t.score > 0)
+        .slice(0, Math.max(1, ballot.stops))
+        .map((t) => t.spot)
+    : [];
+
   return {
     winner,
     runnerUp: anyMarks ? (ranked[1]?.spot ?? null) : null,
     tally: ranked,
+    chosen,
     dissent: winner
       ? votes.filter((v) => v.marks[winner.id] === "no").map((v) => v.voter)
       : [],

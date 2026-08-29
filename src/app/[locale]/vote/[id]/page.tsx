@@ -56,8 +56,10 @@ export default async function VotePage({
       roomId={resolved.roomId}
       slot={resolved.slot}
       candidates={resolved.candidates}
+      stops={resolved.stops}
       by={resolved.by}
       dict={dict}
+      locale={locale}
     />
   );
 }

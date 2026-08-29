@@ -17,11 +17,13 @@ beforeEach(resetFixtures);
 
 const FRIDAY_8PM = { isoDate: "2026-09-04", startMins: 20 * 60, day: 4 };
 const ROOM = "abcdefghijklmnop1234";
+const STOPS = 1;
 
 const ballotOf = (candidates: Spot[]): ResolvedBallot => ({
   slot: FRIDAY_8PM,
   candidates,
   roomId: ROOM,
+  stops: 1,
 });
 
 const vote = (voter: string, marks: Vote["marks"]): Vote => ({ voter, marks });
@@ -33,13 +35,14 @@ describe("ballot links", () => {
       slot: FRIDAY_8PM,
       candidateIds: ["a", "b", "c"],
       roomId: ROOM,
+      stops: STOPS,
       by: "Sok",
     };
     expect(decodeBallot(encodeBallot(ballot))).toEqual(ballot);
   });
 
   it("carries a human-readable prefix without depending on it", () => {
-    const id = encodeBallot({ v: 1, slot: FRIDAY_8PM, candidateIds: ["a", "b"], roomId: ROOM });
+    const id = encodeBallot({ v: 1, slot: FRIDAY_8PM, candidateIds: ["a", "b"], roomId: ROOM, stops: 1 });
     expect(id.startsWith("2026-09-04-20h-2-places.")).toBe(true);
     expect(decodeBallot(`anything.${id.split(".")[1]}`)).not.toBeNull();
   });
@@ -74,6 +77,7 @@ describe("memorial sites are never candidates", () => {
       slot: FRIDAY_8PM,
       candidateIds: [ordinary.id, memorial.id],
       roomId: ROOM,
+      stops: STOPS,
     });
 
     expect(resolved.candidates.map((c) => c.id)).toEqual([ordinary.id]);
@@ -86,6 +90,7 @@ describe("memorial sites are never candidates", () => {
       slot: FRIDAY_8PM,
       candidateIds: all.map((s) => s.id),
       roomId: ROOM,
+      stops: STOPS,
     });
     expect(resolved.candidates.some((c) => c.sensitive)).toBe(false);
     expect(resolved.candidates.length).toBeLessThan(all.length);
@@ -219,7 +224,65 @@ describe("createBallot", () => {
   });
 
   it("round-trips what it creates", () => {
-    const ballot = createBallot([makeSpot(), makeSpot()], FRIDAY_8PM, "Sok");
+    const ballot = createBallot([makeSpot(), makeSpot()], FRIDAY_8PM, 2, "Sok");
     expect(decodeBallot(encodeBallot(ballot))).toEqual(ballot);
+  });
+});
+
+describe("the night the vote produces", () => {
+  const spots = (n: number) =>
+    Array.from({ length: n }, (_, i) => makeSpot({ name: { en: `Place ${i}` } }));
+
+  const ballotFor = (candidates: Spot[], stops: number): ResolvedBallot => ({
+    slot: FRIDAY_8PM,
+    candidates,
+    roomId: ROOM,
+    stops,
+  });
+
+  it("returns as many places as the group asked for, in approval order", () => {
+    const [a, b, c, d] = spots(4) as [Spot, Spot, Spot, Spot];
+    const result = resolve(ballotFor([a, b, c, d], 3), [
+      vote("Sok", { [a.id]: "yes", [b.id]: "yes", [c.id]: "maybe", [d.id]: "no" }),
+      vote("Dara", { [a.id]: "yes", [b.id]: "maybe", [c.id]: "maybe", [d.id]: "no" }),
+    ]);
+    expect(result.chosen.map((s) => s.name.en)).toEqual(["Place 0", "Place 1", "Place 2"]);
+  });
+
+  it("never includes a place nobody approved, even to reach the count", () => {
+    // A night of three should not include somewhere every person said no to
+    // just to make up the number.
+    const [a, b, c] = spots(3) as [Spot, Spot, Spot];
+    const result = resolve(ballotFor([a, b, c], 3), [
+      vote("Sok", { [a.id]: "yes", [b.id]: "no", [c.id]: "no" }),
+      vote("Dara", { [a.id]: "yes", [b.id]: "no", [c.id]: "no" }),
+    ]);
+    expect(result.chosen.map((s) => s.name.en)).toEqual(["Place 0"]);
+  });
+
+  it("gives one place when one was asked for", () => {
+    const [a, b] = spots(2) as [Spot, Spot];
+    const result = resolve(ballotFor([a, b], 1), [
+      vote("Sok", { [a.id]: "yes", [b.id]: "yes" }),
+    ]);
+    expect(result.chosen).toHaveLength(1);
+    expect(result.chosen[0]?.id).toBe(result.winner?.id);
+  });
+
+  it("is empty when nobody has voted", () => {
+    expect(resolve(ballotFor(spots(3), 3), []).chosen).toEqual([]);
+  });
+
+  it("caps the ask at the number of candidates", () => {
+    // Real spots, because resolveBallot looks ids up in the seed file — a
+    // fixture id resolves to nothing and the assertion would pass for the
+    // wrong reason.
+    const two = getAllSpots().filter((s) => !s.sensitive).slice(0, 2);
+    const ballot = createBallot(two, FRIDAY_8PM, 5);
+
+    // createBallot clamps to 8; resolveBallot clamps to what survives the
+    // memorial filter. Asking for five of two is the caller's mistake, and it
+    // must not produce a night with three empty slots.
+    expect(resolveBallot(ballot).stops).toBe(2);
   });
 });
