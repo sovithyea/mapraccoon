@@ -126,7 +126,15 @@
     "visiting": "Visiting",
     "priceLevel": "Price",
     "openingHours": "Hours",
-    "lastVerified": "Checked"
+    "lastVerified": "Checked",
+    "openNow": "Open now",
+    "openUntil": "Open until {time}",
+    "closingSoon": "Closing in {mins} minutes",
+    "closedNow": "Closed",
+    "closedUntil": "Closed · opens {time}",
+    "hoursUnknownLine": "Hours unknown — check before you go",
+    "holidayWarning": "It's {name}. A lot of places close; check before you go.",
+    "weeklyHours": "Opening hours"
   },
   "pairing": {
     "heading": "Instead of {name}",
@@ -149,7 +157,7 @@
   },
   "footer": {
     "blurb": "A discovery-first guide to Cambodia, sorted by what you haven't heard of.",
-    "cities": "Cities",
+    "cities": "Neighbourhoods",
     "about": "About",
     "editorial": "Off-radar scores and hidden-gem tags on this site are editorial judgements, not algorithm output. Content is unverified on the ground — check the sources on each page before you travel."
   },
@@ -210,7 +218,11 @@
     "sharedBadLink": "This link doesn't describe a day we can read.",
     "noMapNeeded": "No map key configured — the route needs none",
     "shareDay": "Share this day",
-    "shareCopied": "Link copied"
+    "shareCopied": "Link copied",
+    "putToVote": "Ask the others",
+    "putToVoteHint": "Sends everyone a link. They mark yes, maybe or no; it settles itself.",
+    "voteLinkCopied": "Link copied — paste it in the group chat",
+    "voteNeedsTwo": "Add at least two places to vote between."
   },
   "vote": {
     "eyebrow": "Deciding together",
@@ -246,6 +258,7 @@
     "badLink": "This link doesn't describe a vote we can read.",
     "closedAtSlot": "closed then",
     "openAtSlot": "open then",
-    "hoursUnknown": "hours unknown"
+    "hoursUnknown": "hours unknown",
+    "openLink": "Open the vote"
   }
 }

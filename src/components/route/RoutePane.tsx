@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { DayTail } from "@/components/route/DayTail";
+import { StartVote } from "@/components/vote/StartVote";
 import { RouteTimeline } from "@/components/route/RouteTimeline";
 import { DayFrameBar } from "@/components/route/DayFrameBar";
 import { clock, duration } from "@/components/route/time";
@@ -149,10 +150,17 @@ export function RoutePane({
       />
 
       {/*
-        The day travels in its own URL (D1: nothing to save it to), so sharing
-        is a clipboard copy rather than a round trip to a server.
+        Two ways out of a day, and they answer different questions.
+
+        "Ask the others" is the product: you have candidates and a group that
+        cannot agree. "Share this day" is for when the decision is already made
+        and you are sending people an itinerary.
       */}
-      <div className="mt-4 border-t border-border px-4 pt-4">
+      <div className="mt-5 border-t border-border px-4 pt-5">
+        <StartVote spots={stops.map((s) => s.spot)} dict={dict} locale="en" />
+      </div>
+
+      <div className="mt-4 px-4">
         <button
           type="button"
           onClick={() => {

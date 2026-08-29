@@ -133,6 +133,7 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C23 | The theme toggle (D26) shipped a hydration mismatch on every page. Its inline script sets `data-theme` on `<html>` before paint, so the server-rendered element differs from the client one, and React logged "some attributes of the server rendered HTML didn't match" on every load | Found by reading the dev-server log while checking that `open-now` sorting hydrated cleanly — the log was never checked when D26 shipped. Fixed with `suppressHydrationWarning` scoped to the single `<html>` element, which is the documented pattern for a pre-paint attribute. It does not extend to content: a text or ordering mismatch is a real bug | 2026-08-29 |
 | C24 | Acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained. With the two Supabase keys swapped in `.env.local` it was grepping for the *publishable* key and passing for the wrong reason — while the actual secret key sat in `NEXT_PUBLIC_SUPABASE_ANON_KEY`, which Next inlines into the browser bundle | Found when writes 502'd and the direct insert returned `42501 row-level security`. **A check that depends on the thing it is checking is not a check.** Replaced with `tools/check-secrets.mjs`, which matches the *shape* of a secret (`sb_secret_`, a `service_role` JWT claim, `AIza…`, a PEM block) wherever it came from, and is proven to fail on a planted one | 2026-08-29 |
 | C25 | `VoteScreen` read `localStorage` in a lazy `useState` initialiser to prefill the voter's name. The server rendered `""` and the client rendered the saved name, so React hit a hydration mismatch and recovered into a state where the "Start voting" button was **disabled while the input visibly contained a name** — the flow was unusable and looked fine | Found by driving the flow over CDP, not by reading it. Five hydration warnings on the page. Replaced with `useSyncExternalStore`, whose third argument is the server snapshot and exists for exactly this. Notable because `useNow.ts` already documents the rule this broke, and `useRouteStops` and `ThemeToggle` had already needed the same correction | 2026-08-29 |
+| C26 | Three nav blocks — the desktop header list, the mobile rail and a footer column — linked to `/city/[city]`, which step 3 deleted. Nine dead links in the chrome of every page, all 404 | `grep -rn "locale}/city/"` after noticing the layout still mapped over neighbourhoods. The route deletion and its inbound links were done in different steps, which is how the gap opened. Header and rail removed (a neighbourhood is a filter, not a destination — D27); the footer and spot page now show the names as plain text | 2026-08-29 |
 
 ## Phase 2 — Itinerary builder
 
@@ -224,3 +225,20 @@ Four voters through `/en/vote/[id]`, three of them by HTTP and one by clicking:
 
 - **No two-browser test.** The live-update path was verified at the library level in step 7, not by watching one browser update because another voted. The polling fallback means a broken socket degrades rather than breaks, but that has not been observed either.
 - There is still no way to *create* a ballot from the UI. Every ballot above was built by a script.
+
+### Step 9 — the loop closes
+
+The whole product, driven end to end in a browser:
+
+- A day of three places on `/discover` → **Ask the others** → a link → the same three candidates in the same order → voting → `DECIDED / Central Market / Nobody objected. / Runner-up: Russian Market` — **VERIFIED**
+- The link is generated client-side and contains everything: candidates, slot and room secret. Nothing is created server-side before sharing — **VERIFIED**
+- `OpenNow` renders the live state on a spot page (`Open until 18:00`) while `WeeklyHours` renders the schedule server-side. The live state appears **only** in the RSC payload, never in the rendered markup — **VERIFIED** by stripping `<script>` blocks from the served HTML and searching what remained
+- 0 overflow at 390/768/1280 across four routes; 0 contrast failures in both modes; 0 hydration warnings — **VERIFIED**
+- 0 links to the deleted `/city/[city]` remain (C26) — **VERIFIED**
+
+### Still not verified after step 9
+
+- **No two-browser test.** Live update is verified at the library level (step 7) and the polling fallback exists, but nobody has watched one browser update because another voted.
+- **The 24-hour expiry has never been observed deleting a row.**
+- **The venue content is eleven tourist landmarks** (B9). Every flow above was exercised against markets and temples, not the bars and restaurants the product is for.
+- Passing the whole `dict` into client components ships ~10.7 KB of strings to the browser, including copy for pages the reader is not on. Not a defect; worth trimming.

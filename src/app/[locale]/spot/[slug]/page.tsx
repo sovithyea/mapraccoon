@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
 import { AddToDay } from "@/components/route/AddToDay";
 import { CommunityImpact } from "@/components/spot/CommunityImpact";
+import { OpenNow } from "@/components/spot/OpenNow";
+import { WeeklyHours } from "@/components/spot/WeeklyHours";
 import { SpotCard } from "@/components/spot/SpotCard";
 import { buildableLocales, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -69,21 +71,13 @@ export default async function SpotPage({
       </Link>
 
       <header className="mt-4">
-        <p className="text-sm text-muted">
-          <Link
-            href={`/${locale}/city/${city.id}`}
-            className="inline-flex min-h-9 items-center gap-2 hover:text-foreground"
-          >
-            {/* No city dot here: wayfinding decoration this page carries none of. */}
-            {spot.sensitive ? null : (
-              <span
-                className="size-2 rounded-full"
-                aria-hidden="true"
-              />
-            )}
-            {city.name}
-          </Link>
-        </p>
+        {/*
+          The neighbourhood is a label, not a link. It used to point at
+          /city/[city], which step 3 deleted — and there is nowhere better to
+          send someone: a neighbourhood is a filter on /discover, and a link
+          from here that silently applied one would be a worse back button.
+        */}
+        <p className="text-sm text-muted">{getNeighbourhood(spot.neighbourhood).name}</p>
         <h1
           className={
             spot.sensitive
@@ -180,6 +174,9 @@ export default async function SpotPage({
               "Morning / Free / 1.5 hr" reads in one glance where the stacked
               list takes three. Same DOM in both; one grid class.
             */}
+            {/* Live state first — it is the thing someone opened the page for. */}
+            <OpenNow hours={spot.hours} dict={dict} />
+
             <dl className="mt-4 grid grid-cols-3 gap-3 text-sm lg:grid-cols-1 lg:gap-0 lg:space-y-3">
               <div>
                 <dt className="text-[11px] text-muted">{dict.spot.priceLevel}</dt>
@@ -202,6 +199,13 @@ export default async function SpotPage({
                 {dict.spot.unverifiedCaveat}
               </p>
             ) : null}
+
+            <div className="mt-4 border-t border-border pt-3">
+              <h3 className="eyebrow">{dict.spot.weeklyHours}</h3>
+              <div className="mt-2">
+                <WeeklyHours hours={spot.hours} dict={dict} />
+              </div>
+            </div>
 
             {/*
               The practical card is where the planning decision happens, so the
