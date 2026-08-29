@@ -65,9 +65,13 @@ Invariants beyond the schema, enforced by `src/lib/spots/spots.test.ts`:
 
 ## Environment
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | No | Mapbox public token. Absent → the map renders an explanatory placeholder and everything else works (D11). |
+| Variable | Required | Exposed to the browser | Purpose |
+|---|---|---|---|
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | No | Yes, by design | Mapbox public token. Absent → the map renders a designed placeholder with real coordinates and everything else works (D11). Restrict it by domain; Mapbox has no hard spend cap (R3). |
+| `NEXT_PUBLIC_SUPABASE_URL` | Phase 3 | Yes | The vote store's project URL. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Phase 3 | Yes, by design | Safe in the browser only because the read path is Realtime Broadcast on a channel named by the unguessable room id — the anon key never reads the table directly (D35). |
+| `SUPABASE_SERVICE_KEY` | Phase 3 | **Never** | Bypasses every row-level policy. Used in one place: the route that validates a room id and inserts a vote. A build shipping this is a total compromise, so acceptance criterion 13 greps the build output for it. |
+| `GOOGLE_PLACES_KEY` | No | Never | Read only by `tools/import-places.mjs`, run by hand. Not read by the app at all (D36). Restrict to the Places API and set a daily quota — a Cloud quota 429s past the limit, which is a hard stop rather than a bill. |
 
 Documented with setup and cost-control steps in `.env.example`.
 
