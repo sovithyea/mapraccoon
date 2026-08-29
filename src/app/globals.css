@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/*
+ * Palette — "Laterite & Monsoon". Warm paper ground, deep jungle green, temple
+ * gold. Documented in docs/DESIGN-SYSTEM.md.
+ *
+ * Convergent with themapcambodia.com's forest/warm register, because that is
+ * the right register for Cambodian editorial content — but our own values, and
+ * our own accent. Deliberately not foodraccoon's Chalk Market either.
+ */
+:root {
+  --background: #faf6ef;
+  --surface: #fffdf8;
+  --surface-sunk: #f0e9dc;
+  --ink: #17211b;
+  --foreground: #1f2a23;
+  --muted: #6b6558;
+  --border: #e0d7c7;
+
+  --forest: #16453a;
+  --forest-deep: #0e2c25;
+  --forest-mid: #2f6b5b;
+  --accent: #16453a;
+  --accent-contrast: #fdfaf4;
+  --gold: #9a7415;
+
+  --cat-temple: #9a6b12;
+  --cat-nature: #2f6b5b;
+  --cat-food: #b3491d;
+  --cat-culture: #6d4aa8;
+
+  /* Per-city accents. Semantic: a city keeps its colour everywhere. */
+  --city-phnom-penh: #c2622a;
+  --city-siem-reap: #3c4a39;
+  --city-kampot-kep: #6e7a33;
+  --city-battambang: #9e4b3b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #10140f;
+    --surface: #171d18;
+    --surface-sunk: #1f2720;
+    --ink: #f4efe4;
+    --foreground: #ece5d8;
+    --muted: #a49b8a;
+    --border: #2c352d;
+
+    --forest: #4fae94;
+    --forest-deep: #0b1a16;
+    --forest-mid: #6cc3aa;
+    --accent: #4fae94;
+    --accent-contrast: #0b1a16;
+    --gold: #d9b055;
+
+    --cat-temple: #d9a441;
+    --cat-nature: #5ecfae;
+    --cat-food: #f08a55;
+    --cat-culture: #b39bf0;
+
+    --city-phnom-penh: #e0854b;
+    --city-siem-reap: #8fae87;
+    --city-kampot-kep: #b3c163;
+    --city-battambang: #d0806e;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-ink: var(--ink);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-mid: var(--forest-mid);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-gold: var(--gold);
+
+  --color-cat-temple: var(--cat-temple);
+  --color-cat-nature: var(--cat-nature);
+  --color-cat-food: var(--cat-food);
+  --color-cat-culture: var(--cat-culture);
+
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-dm-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Eyebrow label: the small tracked-out uppercase line above a section heading. */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--forest-mid);
+}
+
+/* Horizontal card rails. Scrollbar hidden, scrolling still works. */
+.rail {
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mapbox GL's stylesheet is light-only; keep its chrome on our surfaces. */
+.mapboxgl-popup-content {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+}
+.mapboxgl-popup-tip {
+  border-top-color: var(--surface);
+  border-bottom-color: var(--surface);
+}
+.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-attrib a {
+  color: var(--muted);
+}
