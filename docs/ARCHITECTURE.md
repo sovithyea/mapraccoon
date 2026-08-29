@@ -1,18 +1,22 @@
 # Architecture — MapRaccoon
 
+> **This document was rewritten on 2026-08-29 for a different product.** It described a discovery-first tourist guide to Cambodia sorted by how far off the radar a place was. See `docs/PIVOT.md` and D27–D34.
+
 ## What the product is
 
-A discovery-first guide to Cambodia. The organising idea is a single inversion: **the default sort is how far off the radar a place is, not how popular it is.** Everything else follows from that.
+A tool for **friends who live in Phnom Penh** deciding where to go out together. One city, a resident audience.
 
-Three mechanics carry it:
+The organising idea is not editorial. It is that the product **resolves an argument five people are having in a group chat**: someone shares a link, everyone votes on candidates for a slot, and it settles. The venue data is fuel for that (D29).
 
-| Mechanic | What it does | Where it lives in the data |
+What carries it:
+
+| Mechanic | What it does | Where it lives |
 |---|---|---|
-| **Off-radar sort** | The famous places sort last. Discovery is the default view, not an opt-in tab. | `Spot.offRadar` (0–100) |
-| **Narrative pairing** | Every hidden spot names the famous one it replaces — "tired of Angkor Wat crowds? try this". | `Spot.pairedWith` |
-| **Community framing** | The conversion hook is where the money goes, not the pin on the map. | `Spot.community` |
+| **The decision** | Ballot in a link, votes from several people, one resolved answer. This is the product. | `resolve(ballot, votes)` |
+| **Open now** | The default sort. It is 7pm on a Thursday; here is what is actually open. | `Spot.hours` → `isOpenAt()` |
+| **The day budget** | A night has fixed hours; each stop costs travel plus dwell, stated before it is spent. | `dayBudget()` |
 
-The competitor reference, `themapcambodia.com`, does editorial city guides and curated picks monetised through a physical map. It has no interactive itinerary building or route planning. That is the gap.
+The competitor is **the group chat** — zero friction, already installed, and genuinely bad at converging on a decision (D31). The old competitor, `themapcambodia.com`, sells a printed map to inbound visitors and is not a competitor to this at all; `docs/COMPETITOR.md` is kept as history.
 
 ## Stack
 
@@ -50,17 +54,21 @@ src/lib/spots/index.ts     getAllSpots / getSpotBySlug / getSpotsByCity / getPai
         │
         ├──▶ src/lib/scoring.ts       sortByOffRadar (the default), sortByPopularity
         │
-        ├──▶ app/[locale]/page.tsx    home: map + list, off-radar sorted
+        ├──▶ app/[locale]/page.tsx    home: map + list, open-now sorted
         └──▶ app/[locale]/spot/[slug] destination page, statically generated
 ```
 
 Content invalid against the schema fails the **build**, not a request. That property is the point of parsing at import rather than trusting a JSON file.
 
-## The seam that matters
+## The seams that matter
 
-`Spot.offRadar` is an editorial integer today. The brief defers the XGBoost hidden-gem model until there is first-party visit data to train on, because Google and OSM data is inherently biased toward already-popular places — training on it would reproduce exactly the ranking this product exists to invert.
+**Time.** Exactly one module reads the clock. Everything above it takes an explicit instant, so the primitive is `isOpenAt(hours, instant)` rather than `isOpenNow(hours)` — "open now" is one call, and "we are deciding for Friday 8pm" gets its filter free instead of a second code path. Cambodia is UTC+7 with no DST, so a fixed offset is exact, and it means a friend deciding from Bangkok still sees Phnom Penh hours (D34).
 
-`src/lib/scoring.ts` exists so that deferral is cheap to reverse: when the model arrives it replaces one function, not scattered `.sort()` calls across components. Until then "hidden gem" is an editorial tag and the UI says so.
+The consequence to remember: the pages are statically generated, so an open/closed state baked into server HTML would be computed at *build* time and disagree with the client. Open state renders only after mount.
+
+**Travel.** `estimateLeg()` is the whole swap surface for a routing API. It is a haversine distance with a detour factor and distance-banded speeds, labelled `est.` wherever it appears (D22, C20).
+
+**Ordering.** `src/lib/scoring.ts` stays the single entry point, so a change of default is one branch rather than scattered `.sort()` calls. The off-radar score it used to serve is gone — for residents "almost nobody goes here" describes an empty bar, not a find, so the signal inverted rather than weakened (D28).
 
 ## i18n
 
@@ -68,4 +76,4 @@ Routes are `app/[locale]/…` with `locales = ['en', 'km']`. English ships; Khme
 
 Content and UI copy share one shape — `{ en: string; km?: string }` — so seed data and dictionaries sit on the same translation path. No i18n library: dictionaries are JSON, loaded server-side, with per-key fallback to English. `generateStaticParams` returns only `en` until `km.json` is filled, so no half-translated routes build (D7).
 
-An English-only guide to Cambodia is a defect with a schedule, not a design choice. See R6.
+**English-only is now a launch blocker, not a scheduled defect.** A tourist product could defend shipping English-first; a product for people who *live in* Phnom Penh has a majority-Khmer-speaking user base by construction. Neither shipped typeface has Khmer coverage. See R6 and D32.

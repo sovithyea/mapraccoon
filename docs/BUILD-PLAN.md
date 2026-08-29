@@ -8,26 +8,38 @@ The sequencing comes from the project brief and has one governing principle: **c
 
 ## Phases
 
+> **Re-phased on 2026-08-29 for the pivot.** Phases 1 and 2 shipped the tourist product and are merged. From Phase 3 this is a Phnom Penh going-out platform — see `docs/PIVOT.md` and D27–D34. The old Phases 3–7 are kept below the table as the plan that was replaced.
+
 | # | Phase | Directory | Delivers | Depends on |
 |---|---|---|---|---|
-| 1 | Foundation | `specs/1-foundation/` | Next 16 + TS + Tailwind scaffold, spot schema + 42 curated entries, off-radar sort, Mapbox map with token-missing fallback, destination/city pages, i18n structure, Vitest | — |
-| 2 | Itinerary builder | `specs/2-itinerary/` | Single-day route building, travel time as a **labelled estimate — no routing API (D22)**, stop reordering client-side, held in Zustand + localStorage. Mapbox Directions and Optimization move behind `estimateLeg()` for a later phase | 1 |
-| 3 | Persistence | `specs/3-persistence/` | Supabase project, spot data migrated from the seed file to Postgres, auth, saved itineraries, admin path for editing content | 2 |
-| 4 | Day out with friends | `specs/4-collab/` | Collaborative multi-stop planner: timeline view with computed arrival/departure, swipe voting between candidates per slot, Supabase Realtime sync, match resolution | 3 |
-| 5 | Trip assistant | `specs/5-assistant/` | RAG over the verified spot DB only — Claude API + Voyage embeddings + pgvector. No open-web retrieval, no invented places | 3 |
-| 6 | Hidden-gem scoring | `specs/6-scoring/` | Replaces the editorial `offRadar` integer with a trained score, once first-party visit data exists | 3, and real usage data |
-| 7 | Growth loops | `specs/7-growth/` | Exploration streaks and badges, "suggest a place" submissions with editorial review — the latter is parity with the competitor, not a differentiator (D18) | 3 |
+| 1 | Foundation | `specs/1-foundation/` | Next 16 + TS + Tailwind scaffold, spot schema, off-radar sort, Mapbox with token-missing fallback, city pages, i18n, Vitest | — |
+| 2 | Itinerary builder | `specs/2-itinerary/` | Single-day route building, travel time as a **labelled estimate — no routing API (D22)**, stop reordering client-side, Zustand + localStorage | 1 |
+| 3 | Friends platform | `specs/3-friends/` | **The pivot.** Phnom Penh only, venue schema with opening hours, "open now" as the default sort, ballot-in-a-link, voting, match resolution, and the one KV endpoint votes need (D27–D34) | 2 |
+| 4 | Standing groups | `specs/4-groups/` | Accounts, a group you belong to, and the history that makes "where haven't we been" possible | 3, and real use |
+| 5 | Content at scale | `specs/5-content/` | Moving venues out of the seed file. Friends adding places themselves — which D31 reclassifies from parity feature to core mechanic | 3 |
 
 ## Dependency graph
 
 ```
-1 Foundation ──▶ 2 Itinerary ──▶ 3 Persistence ──┬──▶ 4 Day out with friends
-                                                 ├──▶ 5 Trip assistant
-                                                 ├──▶ 6 Hidden-gem scoring  (also needs usage data)
-                                                 └──▶ 7 Growth loops
+1 Foundation ──▶ 2 Itinerary ──▶ 3 Friends platform ──┬──▶ 4 Standing groups (also needs real use)
+                                                      └──▶ 5 Content at scale
 ```
 
-Phase 4 is the one that actually justifies Realtime, and it is the product's differentiator. Everything before it is the foundation it needs; nothing before it should be built in a way that blocks it.
+Phase 3 is the product. Everything before it turned out to be the foundation it needed, which is fortunate rather than planned — the day builder, the budget model and the travel estimates all carry over unchanged.
+
+**The sequencing principle has changed.** It was *cost arrives as late as possible*, which assumed no users. A named friend group is users on day one, so the principle is now **the smallest thing that makes the feature exist** — which is why D30 accepts one 24-hour key-value store and nothing more, with the spend cap on the same day.
+
+## The plan this replaced
+
+Kept because a dozen decisions cite these phase numbers. Do not schedule from it.
+
+| # | Phase | Delivered | Fate |
+|---|---|---|---|
+| 3 | Persistence | Supabase, spots → Postgres, auth, saved itineraries | Split. The minimum vote store is in Phase 3; real persistence is Phase 4 |
+| 4 | Day out with friends | Collaborative planner, swipe voting, Realtime, match resolution | **Became the product.** Now Phase 3 |
+| 5 | Trip assistant | RAG over the spot DB — Claude API, Voyage, pgvector | Dropped. It answered a visitor's questions |
+| 6 | Hidden-gem scoring | A trained score replacing the editorial `offRadar` integer | Dropped with the score itself (D28) |
+| 7 | Growth loops | Streaks, badges, "suggest a place" | "Suggest a place" is promoted into Phase 5; streaks and badges are unscheduled |
 
 ## Not scheduled
 

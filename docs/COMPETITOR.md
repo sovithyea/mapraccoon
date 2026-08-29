@@ -1,6 +1,10 @@
 # Competitor — The Map Cambodia
 
-`themapcambodia.com`, the competitor named in the brief. This file records what was **observed in their rendered HTML**, not what their marketing claims. Read on 2026-08-29 across five pages: a village-tour spot page, the Sosoro Museum spot page, the Phnom Penh and Siem Reap city hubs, and `/plan-my-trip`. The footer was additionally checked in a browser at desktop width.
+`themapcambodia.com`, the competitor named in the brief.
+
+> **This describes a competitor the product no longer has (D31).** After the 2026-08-29 pivot, MapRaccoon is a tool for Phnom Penh residents deciding where to go out; The Map Cambodia sells a printed guide to inbound visitors. The two no longer compete for anyone.
+>
+> Kept for two reasons. The interface observations in *Worth taking* and *Defects observed* are craft notes that outlived the positioning — the source-and-date on entrance fees, the lazy map, the ambiguous footer wrapping. And the differentiation analysis is the record of how the old product was positioned, which several decisions cite. **The new competitor is the group chat.** This file records what was **observed in their rendered HTML**, not what their marketing claims. Read on 2026-08-29 across five pages: a village-tour spot page, the Sosoro Museum spot page, the Phnom Penh and Siem Reap city hubs, and `/plan-my-trip`. The footer was additionally checked in a browser at desktop width.
 
 Source pages were pasted into the session and are gone; this file is what survives. The positioning call that came out of it is D16; the parity findings are D18 and C6.
 

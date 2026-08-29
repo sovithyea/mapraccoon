@@ -1,5 +1,7 @@
 # Verified — MapRaccoon
 
+> **Everything here remains true of the code on `main`.** The product pivoted on 2026-08-29 (`docs/PIVOT.md`) but no code changed with it, so observations like "the home page's initial sort is off-radar descending" are still accurate statements about the shipped build — they simply describe a product that is being replaced. A verified fact does not become false when the plan changes; it becomes history. The Corrections table is the most durable thing in this doc set and carries over unchanged.
+
 Evidence log. A claim goes here only when something was actually run, read, or observed — not when it was assumed or planned.
 
 Status key: **VERIFIED** (observed directly) · **ASSUMED** (taken from documentation, not confirmed against a running system) · **PENDING** (not yet attempted).

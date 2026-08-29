@@ -2,11 +2,29 @@
 
 Ordered by severity. Each has a mitigation and an owner phase.
 
+> **Re-scored on 2026-08-29 for the pivot** to a Phnom Penh going-out platform (`docs/PIVOT.md`, D27–D34). Nine of the eleven moved. The original text of each is kept below its update, because a risk that stopped applying for a stated reason is more useful to a later reader than one that quietly vanished.
+>
+> | | Moves | Because |
+> |---|---|---|
+> | R6 Khmer | **worse — now blocks launch** | The audience is majority Khmer-speaking by construction |
+> | R8 seed file | **worse, and sooner** | 80+ venues that churn, versus 42 temples that do not |
+> | R9 memorials | **worse** | The memorial share of the corpus rises as the voice becomes "swipe to pick a bar" |
+> | R11 photographs | **worse — near-blocking** | Voting between four bars from text alone is untested |
+> | R1 unverified content | better | Residents self-correct at near-zero cost and are the verification source |
+> | R5 sources are leads | better | Same shape, far lower stakes |
+> | R7 Mapbox lock-in | better | The lock-in bought country-scale route optimisation, which is gone |
+> | R2 publicising hidden places | **moot** | Every named case is outside Phnom Penh |
+> | R4 community claims | **moot** | All five named organisations leave with the dropped cities |
+>
+> Net: two content risks traded for two harder product risks. R6 and R11 became things to solve rather than schedule.
+
 ---
 
 ## R1 — The content is unverified, and the product's entire pitch is that you can trust it
 
 **Severity: high. Open, and it is the most serious item in the project.**
+
+**2026-08-29 — reduced by the pivot.** The severity argument below is about long-distance travel decisions: driving two and a half hours to Koh Ker on a claim that turns out to be wrong. Residents crossing their own city can self-correct at near-zero cost, and they are themselves the verification source. What remains is real but cheaper and different in kind: stale opening hours on a venue that closed. That is what `lastVerified` and `hours.kind: "unknown"` exist to make visible rather than silent.
 
 All 42 entries were written editorially. Coordinates, entry fees, opening times, seasonal advice, transport times and community-impact claims have **not** been checked against a primary source or on the ground. The schema guarantees each spot carries at least one source URL (D6); it does not guarantee the prose matches those sources.
 
@@ -21,6 +39,8 @@ This matters more here than on a normal content site. The product tells people t
 ## R2 — Publicising hidden places is self-defeating, and can be harmful
 
 **Severity: high. Structural — it does not go away.**
+
+**2026-08-29 — moot.** Every case this risk names — ACCB, Trapeang Sangkae, Banteay Chhmar, the Kampong Phluk boat association — is outside Phnom Penh and leaves the dataset with the three dropped cities (D27). A private friend group in one city cannot generate a visitor flow that overwhelms a village-scale programme. A vestigial version survives if the product ever sends a crowd to a small bar; the structural risk as written does not.
 
 The product's value is that these places are quiet. Succeeding at scale makes them not quiet. That is the ordinary version of the problem.
 
@@ -50,6 +70,8 @@ Free tier is 50K map loads and 100K directions requests per month — far above 
 
 **Severity: medium-high.**
 
+**2026-08-29 — moot.** All five named organisations are outside Phnom Penh and leave with their cities (D27). `community` also stops being one of the product's two mechanics (D29), so no impact claim is load-bearing any more. A residual version returns only if a Phnom Penh venue is given an impact claim.
+
 ACCB, Phare Ponleu Selpak, the Banteay Chhmar CBT programme, Trapeang Sangkae and the Kampong Phluk boat association are named on the site with specific claims about what visitor money funds. Those descriptions were written from general knowledge, not supplied or approved by them.
 
 Getting one wrong misrepresents a real organisation to prospective visitors, which is their reputational problem as much as ours. Overstating an impact claim is the failure mode that matters, and it is the exact claim the product uses to convert.
@@ -62,6 +84,8 @@ Getting one wrong misrepresents a real organisation to prospective visitors, whi
 
 **Severity: medium.** Each spot carries an OpenStreetMap link at its own coordinates plus a reference where a good one exists — mostly Wikipedia.
 
+**2026-08-29 — reduced.** Same shape as R1 and for the same reason: lower stakes, and users who can check. The Phase 5 RAG assistant this risk pointed at is dropped.
+
 OSM confirms a location exists at those coordinates. Wikipedia is a starting point, not a citation. Neither establishes an entry fee, an opening time, or that a community programme is currently running.
 
 **Mitigation:** `sources` is a provenance trail, and `docs/VERIFIED.md` marks the content **ASSUMED** rather than pretending otherwise. Phase 5 constrains RAG retrieval to this database precisely so the assistant cannot invent places — which makes the quality of these rows a correctness property of that feature, not just an editorial one.
@@ -71,6 +95,8 @@ OSM confirms a location exists at those coordinates. Wikipedia is a starting poi
 ## R6 — An English-only guide to Cambodia, with fonts that cannot render Khmer
 
 **Severity: medium, and it will read as worse than medium to a Cambodian user.**
+
+**2026-08-29 — RAISED TO BLOCKING (D32).** A tourist product could defend shipping English-first; its users were inbound visitors and Khmer was a courtesy owed on a schedule. **A product for people who live in Phnom Penh has a majority-Khmer-speaking user base by construction**, so the same gap stops being a defect with a timeline and becomes a reason the product does not work for most of the people it is for. Phase 2 added roughly sixty English-only strings, so the gap grew. B4 is re-scored accordingly.
 
 The i18n structure is in place (D7) and `km.json` is a stub. Worse than the missing translation: the shipped typefaces, Playfair Display and DM Sans, have no Khmer coverage. Filling the dictionary today would render Khmer in a fallback face against a design tuned for Latin.
 
@@ -82,6 +108,8 @@ The i18n structure is in place (D7) and `km.json` is a stub. Worse than the miss
 
 **Severity: low now, rising in Phase 2.**
 
+**2026-08-29 — reduced.** The lock-in existed to buy the Directions and Optimization APIs for multi-stop route optimisation across a country. A night out in one city does not need them, and D22 already ships without a routing API. The renderer is contained behind `SpotMap`, so what remains is a swappable dependency rather than one with no exit.
+
 D10 keeps Mapbox because the Directions and Optimization APIs *are* the itinerary builder and MapLibre has no equivalent. `ass-hub/foodraccoon` made the opposite call for its own good reasons.
 
 **Mitigation:** none, deliberately. The renderer sits behind `SpotMap`, so swapping it is contained; the routing APIs are the part with no exit.
@@ -92,6 +120,8 @@ D10 keeps Mapbox because the Directions and Optimization APIs *are* the itinerar
 
 **Severity: low, and self-limiting.**
 
+**2026-08-29 — RAISED, and it arrives much sooner.** "Self-limiting" was true of 42 temples, which do not close, move or change their hours. It is false of 80+ bars, restaurants and cafés, which do all three. Content edits still require a developer and a build, and the people best placed to notice a closure are the users. This is what Phase 5 exists for, and D31 reclassifies "suggest a place" from a parity feature to the mechanism that keeps the dataset alive.
+
 `src/data/spots.ts` is 1,100 lines for 42 spots. At a few hundred it becomes unpleasant; content edits require a developer and a build.
 
 **Mitigation:** Phase 3 moves this to Postgres with an admin path. Until then the file's size is a useful forcing function against adding unwritten places.
@@ -101,6 +131,8 @@ D10 keeps Mapbox because the Directions and Optimization APIs *are* the itinerar
 ## R9 — Genocide-memorial content sits in a discovery product
 
 **Severity: low frequency, high consequence.**
+
+**2026-08-29 — RAISED (D33).** Two things move against each other. The other cities' memorials leave with their cities while Tuol Sleng and Choeung Ek stay, so the **memorial share of the corpus rises**. And the product's voice changes from a discovery listing to "swipe to pick a bar", which is a strictly worse context for them. Dropping them was recommended and rejected; they stay, so every surface the pivot adds needs an exclusion enforced by a schema rule or a test, never by prose. C19 is the record of what happens otherwise.
 
 Tuol Sleng, Choeung Ek, Phnom Sampeau's killing caves, Kamping Puoy and the Secret Lake are all sites of mass killing or forced labour. The product's voice is breezy — "tired of the crowds? try this" — and that voice must not be applied to them.
 
@@ -119,3 +151,5 @@ Today this is handled by writing those entries plainly and, at Kamping Puoy and 
 ## R11 — There are no photographs, and image rights are unresolved
 
 **Severity: low today.** The design works without photography — the constellation, the colour system and the display type carry it. Adding images means sorting licensing for every one, which is a real cost the current design has deferred rather than solved.
+
+**2026-08-29 — RAISED to near-blocking, tracked as B8.** Both crutches named below are pivot-dependent: the constellation sized its dots by the off-radar score, which is gone (D28), and choosing between four bars for tonight is far more image-driven than choosing a temple. **Voting between candidates from text alone is untested and may simply not work.** No solution is chosen — user-submitted photos would sidestep licensing and feed R8, but need storage and moderation, so they need a backend larger than D30's.

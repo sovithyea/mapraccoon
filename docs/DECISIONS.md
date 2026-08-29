@@ -367,3 +367,125 @@ The stored choice is applied by an inline script before first paint. Applying it
 **Consequence:** the contrast audit now has a third path to cover. Verified at 0 failures across `/discover` and two spot pages under explicit `data-theme="dark"`, in addition to the existing media-query runs.
 
 **Rules out:** defining a colour in only one of the two dark blocks — the test fails.
+
+---
+
+> **Everything from D27 onward belongs to a different product.** The repo pivoted from a Cambodia tourist guide to a Phnom Penh going-out platform for friends who live there. `docs/PIVOT.md` explains the change and what it costs. D1–D26 are kept intact — several are superseded below, none are edited (rule 7).
+
+## D27 — Phnom Penh only
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes the coverage consequence of D2
+
+The other three cities and their 31 spots are deleted. Coverage goes from four cities shallow to one city deep — the dataset grows to 80+ places, all of them in Phnom Penh.
+
+D2 argued against bulk-pulling from OSM because `pairedWith`, `community`, `offRadar` and the descriptive copy "are the product". Two of those four are gone (D28, D29), so that reasoning no longer holds as written. The conclusion partly survives for a different reason: a going-out product lives or dies on opening hours and price being right, and OSM has neither reliably for Phnom Penh venues.
+
+**Consequence, worth stating because it is easy to miss:** D21 measured that four cities plus four categories plus an accent plus gold was ten colours competing for meaning on one page. One city removes four of them. The palette constraint that made an earthier design direction impossible **reopens** — see the ΔE work recorded in PR #1.
+
+---
+
+## D28 — The default sort becomes "open now", and the off-radar score is removed entirely
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes D4, and the sort half of D16, D17 and D18
+
+`CLAUDE.md` hard rule 3 read *"Off-radar is the default sort, everywhere, with no user interaction required… **It is the product, not a preference.**"* `docs/INTERFACES.md` said the initial sort *"must stay that way"*. Both are now false. This is the single largest reversal in this repo's history and it is recorded here rather than allowed to happen by drift.
+
+**The reason is not that the score became redundant. It is that it inverts.** For a jungle temple, "almost nobody goes here" means undiscovered — the thing the old product existed to surface. For a bar on a Friday night it means empty, which is bad information about a bad venue. Same number, opposite meaning, and the new dataset is overwhelmingly the second kind. A sort that ranks by it would actively surface the worst options first.
+
+The secondary reason is authoring cost: keeping it means hand-typing a calibrated 0–100 integer for every venue, on a scale nobody would sort by.
+
+**Removed:** `offRadar` from the schema, `sortByOffRadar`, `sortByPopularity`, `offRadarBand`, `OffRadarMeter`, `OffRadarPanel`, `dayOffRadarAverage`, the `Constellation` dot-sizing, and roughly fifteen tests.
+
+**Not added:** a `staffPick` boolean replacement. If the list feels arbitrary in use, that is an afternoon's work; guessing now adds a field to author across eighty venues for a problem that may not exist.
+
+**Consequence:** "open now" is time-dependent, and the pages are statically generated. The open state must render only after mount or server and client will disagree. See D34.
+
+---
+
+## D29 — Pairing and community stop being the two mechanics, and nothing replaces them
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes D5
+
+D5 made `pairedWith` and `community` first-class schema concepts because the brief named them as the conversion hooks. "Conversion" is a tourist-acquisition idea, and "instead of Angkor Wat, go here" is a sentence you can only say to someone who has not been.
+
+`pairedWith` is removed outright. `community` survives as a *field* — Romdeng, Friends and Daughters of Cambodia are real, and a resident may choose a training restaurant deliberately — but not as a mechanic. `--gold` keeps its single exclusive meaning.
+
+**What replaces them is nothing, and that is the decision.** The reason to open this product is not an editorial hook. It is that it **resolves an argument five people are having in a group chat**. The venue data is fuel for that.
+
+**Consequence, and it is a risk rather than a feature:** the entire weight of the product now rests on the voting flow being genuinely good. There is no editorial layer to fall back on if the interaction is mediocre. Nothing else in the design compensates for a bad match resolution.
+
+---
+
+## D30 — V1 ships with no accounts, but it cannot ship with no server
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes D1's sequencing and its no-backend absolute
+
+`CLAUDE.md` hard rule 6 read *"There is no backend, deliberately."* That is no longer true, and softening the wording would be worse than reversing it openly.
+
+**A URL is a one-way channel.** The organiser can push a ballot out to five friends; those five have no way to push their votes back into a shared place. With N voters you get N isolated client states and no merge point. This is a property of the medium, not a missing library.
+
+Three workarounds were examined and rejected. A self-appending vote-chain URL silently loses a vote whenever two people vote off the same link — a tally that looks correct while being wrong is worse than no tally. `localStorage` and `BroadcastChannel` are same-device. WebRTC needs a signalling server, so it is not zero-backend, at ten times the work.
+
+**The minimum is one key-value store with two operations:** append a vote, read the votes. No accounts, no user table, no schema, no Supabase. The room id *is* the secret — the same auth model the existing share links already use — and a **24-hour TTL** makes "v1 has no history" an architectural property rather than a policy anyone has to remember. Roughly sixty lines as a route handler.
+
+The ballot stays in the URL even with the server. The store holds only votes, so it can be wiped without losing anything an organiser cannot regenerate by re-sending their link.
+
+**D1's cost principle is kept, not abandoned.** This is not standing up a backend so it is ready; it is the smallest piece that makes the feature exist at all. Per hard rule 6's own last sentence, **the spend cap goes in on day one of the phase that needs it**, which is now.
+
+**Recorded alternative:** a genuinely zero-backend version exists — each voter's app encodes their marks into a ~40-character code they paste into the group chat, and the organiser's device tallies. It works for four friends in one thread. It is also tedious enough that it is probably why people would stop using it.
+
+**Consequence:** `resolve(ballot, votes)` is a pure function with no I/O, so it is testable without infrastructure and the fallback stays available.
+
+---
+
+## D31 — The competitor is the group chat
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes D16's positioning and D18
+
+`themapcambodia.com` is an editorial guide monetised through a printed map at 220+ distribution points, sold to inbound visitors. It is not a competitor to a tool for residents deciding where to go tonight. `docs/COMPETITOR.md` is kept as history; its interface observations remain useful and its differentiation analysis has no target.
+
+**The competitor is the group chat.** Zero friction, already installed, everyone is already in it. The opening is that group chats are genuinely bad at converging on a decision. The bar is *"better than someone typing where should we go tonight"*, and it has to be cleared on the first use — nobody opens a second time out of politeness.
+
+**Consequence:** D18 ranked the roadmap by what the tourist competitor lacked. That ranking is void. "Suggest a place", which D18 called parity rather than a differentiator, becomes a plausible core mechanic instead: friends adding the venues they already know is how the dataset stays alive (see R8).
+
+---
+
+## D32 — Khmer moves from a scheduled defect to a launch blocker
+
+**Date:** 2026-08-29 · **Status:** Accepted · Escalates R6
+
+A tourist product can defend shipping English-first: its users are inbound visitors and Khmer is a courtesy owed on a schedule. **A product for people who live in Phnom Penh has a majority-Khmer-speaking user base by construction**, so the same gap stops being a defect with a timeline and becomes a reason the product does not work for most of the people it is for.
+
+Neither shipped typeface — Playfair Display or DM Sans — has Khmer coverage, and Phase 2 added roughly sixty English-only strings, so the gap grew rather than shrank.
+
+**Consequence:** B4 is re-scored in `docs/PROGRESS.md` from "blocks filling `km.json`" to "blocks launch". The order is unchanged and still matters: choose a Khmer face and check the layout at Khmer line heights **before** populating `km.json`, or the translation renders in a fallback face against a design tuned for Latin.
+
+---
+
+## D33 — Memorial sites stay, and `sensitive` gets stronger
+
+**Date:** 2026-08-29 · **Status:** Accepted · Extends D25
+
+Tuol Sleng and Choeung Ek are in Phnom Penh, so D27 does not remove them. Dropping them was recommended — "where should we go out tonight" has no correct answer that is a genocide memorial — and the call was to keep them. They stay.
+
+**R9 therefore gets worse, and must be actively managed rather than watched.** The other cities' memorials leave with their cities, so the memorial share of the corpus rises. It rises at exactly the moment the product's voice changes from a discovery listing to "swipe to pick a bar", which is a strictly worse context for them.
+
+A `sensitive` spot must never appear as a swipe candidate, in a suggestion tray, or in a match result. **Each exclusion is enforced by a schema rule or a test, never by prose.** C19 is the record of what happens otherwise: Kamping Puoy shipped paired to Phnom Sampeau, one forced-labour site framed as the alternative to another, and it survived review because the rule lived only in how the copy happened to be written.
+
+`specs/3-friends/spec.md` MUST carry an acceptance criterion per exclusion, not a general instruction to be careful.
+
+**Interaction with D28:** removing the off-radar score also removes `dayOffRadarAverage`, so one of D25's existing exclusions disappears along with the thing it was excluding from. That is a reduction in surface area, not a relaxation of the rule.
+
+---
+
+## D34 — Opening hours use a fixed UTC+7 offset, not `Intl`
+
+**Date:** 2026-08-29 · **Status:** Accepted
+
+Cambodia is UTC+7 and has no daylight saving, so `new Date(t + 7 * 3600_000)` read through `getUTC*` is exactly correct, cheaper than `Intl.DateTimeFormat` with a `timeZone`, and returns numbers rather than strings that must be re-parsed.
+
+Recorded because "just use `Intl`" will come up in review and the justification is not visible in the code.
+
+**The consequence that actually matters is not performance.** The computation must be in Phnom Penh time *regardless of the viewer's device*. A friend deciding from Bangkok, or on a phone with a wrong clock, must still see Phnom Penh opening hours. A fixed offset gives that; `date.getHours()` would not.
+
+**Consequence:** only one module reads the clock. Everything above it takes an explicit instant, so the hours test suite is table-driven with no fake timers and no midnight-boundary flakes. The primitive is `isOpenAt(hours, instant)` rather than `isOpenNow(hours)` — "open now" is then one call, and "we are deciding for Friday 8pm" gets its filter for free rather than needing a second code path.

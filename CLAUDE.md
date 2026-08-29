@@ -6,9 +6,11 @@ Humans should start at [`README.md`](README.md).
 
 ## What this repo is
 
-MapRaccoon — a discovery-first guide to Cambodia. The organising idea is one inversion: **the default sort is how far off the radar a place is, not how popular it is.** Standalone, separate from FoodRaccoon; shares conventions with `rocket/athena` and `ass-hub/foodraccoon` and nothing else.
+MapRaccoon — a tool for **friends who live in Phnom Penh** to decide where to go out together. Someone shares a link, everyone votes on candidates for a slot, and it settles. Standalone, separate from FoodRaccoon; shares conventions with `rocket/athena` and `ass-hub/foodraccoon` and nothing else.
 
-**Current state: Phase 1 (Foundation) is complete.** 42 hand-curated places across four base cities, statically generated, no backend. Build, lint, typecheck and tests are green. Phases 2–7 have no docs yet. **Do not write feature code for a phase unless the user asks for that phase to be executed.**
+**It was a discovery-first tourist guide to Cambodia until 2026-08-29.** Read [`docs/PIVOT.md`](docs/PIVOT.md) before anything else — the old thesis is still visible in the code and in older parts of the doc set, and mistaking it for current is the most likely way to get this repo wrong.
+
+**Current state: Phases 1 and 2 are merged to `main`.** 42 places across four cities, statically generated, plus a single-day itinerary builder. Build, lint, typecheck and 70 tests are green. **The pivot is decided and documented (D27–D34) but not specced and not built** — `specs/3-friends/` does not exist yet. **Do not write feature code for a phase unless the user asks for that phase to be executed.**
 
 ## Commands
 
@@ -29,7 +31,8 @@ Run `build` and `lint` after every step of a plan, not just at the end. Plan ste
 | `docs/ARCHITECTURE.md` | What the product is, and why Mapbox rather than MapLibre |
 | `docs/BUILD-PLAN.md` | Seven phases, dependency graph, sequencing |
 | `docs/PROGRESS.md` | Where things stand, who owns what, open blockers |
-| `docs/DECISIONS.md` | Every settled call, D1–D21 |
+| `docs/PIVOT.md` | **Read first.** Why the product changed, and what it cost |
+| `docs/DECISIONS.md` | Every settled call, D1–D34 |
 | `docs/VERIFIED.md` | Observed fact vs. assumption, plus corrections |
 | `docs/RISKS.md` | R1–R11, ordered by severity |
 | `docs/WORKFLOW.md` | Branching, commits, definition of done |
@@ -43,13 +46,19 @@ Run `build` and `lint` after every step of a plan, not just at the end. Plan ste
 
 **2. Documentation is a lead, not evidence.** This repo's own docs and code have been wrong four times already (C1–C4 in `docs/VERIFIED.md`): the Next 15 middleware convention, a non-existent `LayoutProps` global, a wrong spot count, and a wrong claim about which component reads the filter store. Read the actual source. Record what you observe in `docs/VERIFIED.md` marked **VERIFIED**, with the command or file that showed it. Never promote a claim because a document said so, including a document in this repo.
 
-**3. Off-radar is the default sort, everywhere, with no user interaction required.** `sortSpots(spots, "off-radar")` is the initial state on the landing page, `/discover`, city pages and nearby lists. It is the product, not a preference. `src/lib/scoring.ts` is the single ordering entry point so the Phase 6 model replaces one branch and not scattered `.sort()` calls.
+**3. `src/lib/scoring.ts` is the single ordering entry point.** Never scatter `.sort()` calls across components — a change of default must be one branch.
 
-**4. The content is unverified and it describes real places people will travel to.** Fees, times, seasonal advice and community claims are editorial and unchecked (R1). Several entries name real organisations and describe what visitor money funds, without their confirmation (R4). Do not add a spot you cannot source; `sources` is `min(1)` and the build enforces it. Do not soften the caveats in the README or the footer.
+~~Off-radar is the default sort, everywhere. It is the product, not a preference.~~ **That rule is reversed (D28).** The default is now what is open right now. The off-radar score is removed entirely, because for someone who lives in a city "almost nobody goes here" describes an empty bar rather than a find — the signal inverts rather than weakens. The old rule is struck through rather than deleted because it appears throughout the older docs and a reader needs to find out here that it is gone.
 
-**5. Memorial sites are not written in the product's voice.** Tuol Sleng, Choeung Ek, the Phnom Sampeau killing caves, Kamping Puoy and the Secret Lake are sites of mass killing or forced labour. No "tired of the crowds? try this" framing, no badges, no generated blurbs. See R9.
+**4. The content is unverified, and after the pivot it goes stale rather than being merely unchecked.** Fees, times and community claims are editorial (R1, R4). The pivot lowers the stakes — a resident crossing their own city self-corrects where someone driving three hours could not — and raises the frequency, because bars and restaurants close, move and change their hours in a way temples do not (R8). Do not add a place you cannot source; `sources` is `min(1)` and the build enforces it. **Never invent opening hours**: the schema has an explicit unknown state for exactly that reason. Do not soften the caveats in the README or the footer.
 
-**6. There is no backend, deliberately.** No Supabase, no Claude API, no Google Cloud, no auth. Phase 1 touches one paid service on its free tier. Standing one up "so it's ready" puts a billable account behind an app with no users (D1). Spend caps go in on day one of the phase that needs them.
+**5. Memorial sites are not written in the product's voice, and this rule got STRONGER at the pivot, not weaker.** Tuol Sleng, Choeung Ek, the Phnom Sampeau killing caves, Kamping Puoy and the Secret Lake are sites of mass killing or forced labour. No "tired of the crowds? try this" framing, no badges, no generated blurbs.
+
+Dropping Tuol Sleng and Choeung Ek from the dataset was recommended and rejected; they stay (D33). So the memorial share of the corpus **rises** as the other cities leave, at exactly the moment the voice becomes "swipe to pick a bar". A `sensitive` spot must never appear as a swipe candidate, in a suggestion tray, or in a match result — **each exclusion enforced by a schema rule or a test, never by prose.** C19 is what happens otherwise: Kamping Puoy shipped paired to Phnom Sampeau, one forced-labour site offered as the alternative to another, and it survived review because the rule lived only in how the copy happened to be written. See R9.
+
+**6. There is almost no backend, and the exception is exact.** No Supabase, no Claude API, no Google Cloud, no auth, no database. Standing one up "so it's ready" puts a billable account behind an app with no users (D1).
+
+~~There is no backend, deliberately.~~ **Phase 3 adds exactly one thing (D30):** a key-value store with two operations, append a vote and read the votes, keyed by an unguessable room id with a 24-hour TTL. That is not preparation — a URL is one-way, so without it several people cannot vote on the same ballot at all. Nothing else. **Spend caps go in on day one of the phase that needs them, which is now.**
 
 **7. Append to `docs/DECISIONS.md`, never rewrite it.** Reversals get a new entry superseding the old one. Fixing a stale status or a wrong cross-reference is not a rewrite — leaving a wrong pointer is worse.
 
@@ -86,9 +95,11 @@ src/data/spots.ts → lib/spots/schema.ts (zod) → lib/spots/index.ts → lib/s
 
 ## Design
 
-Laterite & Monsoon palette, Playfair Display over DM Sans, per-city accent colours, eyebrow labels, horizontal rails. The editorial register is taken from `themapcambodia.com`, the competitor named in the brief; the identity and the inversion are ours (D16).
+Laterite & Monsoon palette, Playfair Display over DM Sans, eyebrow labels. The editorial register came from `themapcambodia.com`; that is now a former competitor (D31) but the register is fine and stays.
 
-Colour is semantic here, not decoration: category colour identifies a map pin layer, city colour follows a city everywhere it appears, and gold means "this is about where the money goes" and appears nowhere else. Tokens live once in `globals.css` with full light and dark sets — never define a colour only inside the dark block.
+Colour is semantic here, not decoration: category colour identifies a map pin layer, and gold means "this is about where the money goes" and appears nowhere else. Tokens live once in `globals.css` with full light and dark sets — **never define a colour only inside the dark block**, and note there are now two dark blocks (OS preference and explicit toggle) which `globals.test.ts` asserts stay in step (D26).
+
+**Per-city colour is removed at the pivot (D27).** One city, ~9 neighbourhoods, and 9 × 2 tones would be 18 role colours — D21 is the written record of that exact mistake at less than half the scale. Neighbourhoods get a text label and no colour. The upside: dropping four city colours frees four of the seven roles D21 was fighting to separate, so **the palette constraint reopens**.
 
 `docs/DESIGN-SYSTEM.md` describes what shipped. If it disagrees with the CSS, the CSS is right and the doc is a bug.
 
