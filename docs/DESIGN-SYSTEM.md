@@ -142,6 +142,11 @@ The absence is stated rather than left silent — a reader who has seen five sco
 
 ## Dark mode
 
+**Two triggers, one set of values (D26).** The OS preference applies through `@media (prefers-color-scheme: dark)` scoped to `:root:not([data-theme="light"])`; an explicit choice from the header's auto/light/dark control applies through `:root[data-theme="dark"]` and wins in both directions. The two blocks must define the same tokens, and `src/app/globals.test.ts` fails if they drift — a token present in only one would break solely for people who had used the toggle, and would survive every review done with the OS setting.
+
+The stored choice is applied by an inline script before first paint.
+
+
 Every token is redefined under `@media (prefers-color-scheme: dark)`. Surfaces, text, accent, gold, city `-ink` variants and category pins all move; **city fills do not**, because they always carry white text.
 
 That asymmetry is the trap. A colour that flips paired against a surface that does not is the one dark-mode bug this design can produce, and it produced two of them on first attempt. When putting text on a city fill, use a value that is dark in both modes (`--forest-deep`) or light in both (`white`) — never `--ink` or `--accent-contrast`.

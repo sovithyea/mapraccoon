@@ -8,7 +8,8 @@
     "discover": "Discover",
     "cities": "Cities",
     "backToDiscover": "Back to the map",
-    "openMap": "Open the map"
+    "openMap": "Open the map",
+    "theme": "Colour theme"
   },
   "hero": {
     "eyebrow": "Cambodia, sorted backwards",

@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { buildableLocales, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { DayDock } from "@/components/route/DayDock";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAllSpots } from "@/lib/spots";
 import { cities } from "@/lib/spots/cities";
 
@@ -58,6 +59,19 @@ export default async function LocaleLayout({
       lang={locale}
       className={`${playfair.variable} ${dmSans.variable} h-full antialiased`}
     >
+      {/*
+        Applied before first paint. Doing this in a component instead would
+        flash the light palette on every load for anyone who chose dark.
+      */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('mapraccoon:theme');" +
+              "if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}",
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
           <nav
@@ -90,12 +104,15 @@ export default async function LocaleLayout({
               ))}
             </ul>
 
-            <Link
-              href={`/${locale}/discover`}
-              className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-accent px-4 text-sm font-bold text-accent-contrast transition-opacity hover:opacity-90"
-            >
-              {dict.nav.openMap}
-            </Link>
+            <div className="flex shrink-0 items-center gap-3">
+              <ThemeToggle label={dict.nav.theme} />
+              <Link
+                href={`/${locale}/discover`}
+                className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-accent px-4 text-sm font-bold text-accent-contrast transition-opacity hover:opacity-90"
+              >
+                {dict.nav.openMap}
+              </Link>
+            </div>
           </nav>
 
           {/*

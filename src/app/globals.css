@@ -55,8 +55,22 @@
   --city-battambang-ink: #7d3a5c;
 }
 
+/*
+ * Dark mode has two triggers and one set of values.
+ *
+ * The OS preference is the default; an explicit choice from the theme toggle
+ * wins over it in both directions, which is why the media query excludes
+ * `[data-theme="light"]` rather than simply applying.
+ *
+ * The two blocks below MUST define the same token names. `globals.test.ts`
+ * asserts it — a token defined in only one of them is the exact shape of the
+ * bug D21 and C13 were about, and it would only appear for the half of users
+ * who had used the toggle.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
     --background: #101310;
     --surface: #171b16;
     --surface-sunk: #1e231d;
@@ -83,6 +97,40 @@
     --city-kampot-kep-ink: #5cbcd9;
     --city-battambang-ink: #dc93b8;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+    --background: #101310;
+    --surface: #171b16;
+    --surface-sunk: #1e231d;
+    --ink: #f4efe4;
+    --foreground: #ece5d8;
+    --muted: #a1988a;
+    --border: #2d342c;
+
+    --forest: #57b79c;
+    --forest-deep: #08150f;
+    --forest-mid: #6cc3aa;
+    --accent: #57b79c;
+    --accent-contrast: #08150f;
+    --gold: #d9a83f;
+
+    --cat-temple: #d9a441;
+    --cat-nature: #63c684;
+    --cat-food: #f2915f;
+    --cat-culture: #b6a0f2;
+
+    /* Fills keep their dark values — they always carry white text. */
+    --city-phnom-penh-ink: #e08a6c;
+    --city-siem-reap-ink: #8fabec;
+    --city-kampot-kep-ink: #5cbcd9;
+    --city-battambang-ink: #dc93b8;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 @theme inline {

@@ -171,6 +171,14 @@ The token is unset, which is this repo's real state (B1, D11). Everything below 
 - The projection is now one function (`src/lib/geo/project.ts`) shared by `Constellation` and the share view, so the two cannot drift — **VERIFIED**
 - 0 overflow at 390/768/1280 and 0 contrast failures in both modes, including `/plan/[id]` — **VERIFIED**
 
+### Theme toggle (D26)
+
+- The header control moves the palette in all three states: `dark` sets `data-theme="dark"` and `body` background `rgb(16, 19, 16)`; `light` sets `#faf6ef`; `auto` removes the attribute and follows the system — **VERIFIED**
+- A stored dark choice is applied at load with the attribute already present on first evaluation, so there is no light flash — **VERIFIED**
+- All 17 palette tokens resolve to their dark values under explicit `data-theme="dark"` — **VERIFIED**
+- Contrast under explicit dark: 0 failures across 363, 72 and 56 text nodes on `/discover`, an ordinary spot page and a memorial page — **VERIFIED**
+- 0 overflow at 390/768/1280 with the control added to the header — **VERIFIED**
+
 ### Not verified
 
 - Pins rendering and click/hover sync still need a token (B1, unchanged from Phase 1)

@@ -349,3 +349,21 @@ R9 says memorial sites are never written in the product's voice. Until now that 
 The day's off-radar average footnotes its denominator (`2 of 3 stops scored`) rather than quietly averaging over a smaller set.
 
 **Consequence:** R9 becomes a build error instead of a convention. This is the cheapest change in the phase and the one worth shipping even if nothing else does.
+
+---
+
+## D26 — Light and dark become a choice, not only an OS preference
+
+**Date:** 2026-08-29 · **Status:** Accepted · Extends the dark-mode section of D21
+
+Dark mode had one trigger, `@media (prefers-color-scheme: dark)`, and no user control. That is defensible for a site with no account, but it makes the palette impossible to *look at* deliberately — you had to change your operating system to see the other half of a design that was measured in both.
+
+A three-state control — **auto / light / dark** — sits in the header. Three rather than two, because a plain flip permanently loses the ability to follow the system again, and "auto" is the honest default when there is nothing to remember a preference against.
+
+**The palette now has two dark triggers and must have one set of values.** `@media (prefers-color-scheme: dark)` is scoped to `:root:not([data-theme="light"])` so an explicit choice wins in both directions, and `:root[data-theme="dark"]` repeats the same declarations. That duplication is a real hazard: a token defined in only one of them would appear broken solely for people who had touched the toggle, which is worse than the bug C13 caught, because it would survive every review done with the OS setting. `src/app/globals.test.ts` asserts the two blocks define identical token names, and that every dark token also exists in the light `:root`.
+
+The stored choice is applied by an inline script before first paint. Applying it from a component instead flashes the light palette on every load for anyone who chose dark.
+
+**Consequence:** the contrast audit now has a third path to cover. Verified at 0 failures across `/discover` and two spot pages under explicit `data-theme="dark"`, in addition to the existing media-query runs.
+
+**Rules out:** defining a colour in only one of the two dark blocks — the test fails.
