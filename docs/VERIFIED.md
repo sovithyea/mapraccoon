@@ -131,6 +131,7 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C21 | `MapPlaceholder` printed `NEXT_PUBLIC_MAPBOX_TOKEN` in a `<code>` block to travellers. The token-missing state is this repo's default deployed state (D11), so this was the normal experience, not an edge case | Read off the rendered page at 390px. Replaced with the spot's real coordinates and an outbound maps link; the `SpotMap` test now asserts the variable name is *absent* rather than present | 2026-08-29 |
 | C22 | The route suggestion tray offered spots from other cities — a Battambang spot priced itself at "28h 20m over" inside a Kampot day. `AddToDay` guarded on city; the tray did not | Read off the rendered tail row at 1280px. Tray now filtered to the day's city | 2026-08-29 |
 | C23 | The theme toggle (D26) shipped a hydration mismatch on every page. Its inline script sets `data-theme` on `<html>` before paint, so the server-rendered element differs from the client one, and React logged "some attributes of the server rendered HTML didn't match" on every load | Found by reading the dev-server log while checking that `open-now` sorting hydrated cleanly — the log was never checked when D26 shipped. Fixed with `suppressHydrationWarning` scoped to the single `<html>` element, which is the documented pattern for a pre-paint attribute. It does not extend to content: a text or ordering mismatch is a real bug | 2026-08-29 |
+| C24 | Acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained. With the two Supabase keys swapped in `.env.local` it was grepping for the *publishable* key and passing for the wrong reason — while the actual secret key sat in `NEXT_PUBLIC_SUPABASE_ANON_KEY`, which Next inlines into the browser bundle | Found when writes 502'd and the direct insert returned `42501 row-level security`. **A check that depends on the thing it is checking is not a check.** Replaced with `tools/check-secrets.mjs`, which matches the *shape* of a secret (`sb_secret_`, a `service_role` JWT claim, `AIza…`, a PEM block) wherever it came from, and is proven to fail on a planted one | 2026-08-29 |
 
 ## Phase 2 — Itinerary builder
 
@@ -188,3 +189,19 @@ The token is unset, which is this repo's real state (B1, D11). Everything below 
 - The builder has been exercised by seeding `localStorage` and reading the rendered DOM, not by driving a full click-through add → reorder → share journey
 - The reorder tab's controls are built and typed but have not been clicked in a browser; its underlying reorder logic is covered by tests
 - The colour of every frame in the design direction is the pre-D21 palette (543 occurrences of the old values against 17 of the shipped ones). The layout was implemented; the colours deliberately were not. The app will not match the frames' hues and is not intended to
+
+### Step 7 — the vote store, verified against the live project
+
+- Three people POST votes to `/api/room/:id`; all three return 200, are stored, and read back in submission order — **VERIFIED**
+- `resolve()` turns those stored votes into `Winner: Wat Phnom, dissent: Mei`, with the runner-up and full tally — **VERIFIED** end to end, HTTP through to decision
+- A short or malformed room id returns 404, identically to an unknown one, so the endpoint cannot be used to probe which rooms exist — **VERIFIED**
+- A missing store returns 502 rather than an empty array. An empty array reads as "nobody has voted yet" and a group would wait on it forever — **VERIFIED**
+- **The anon key cannot read the votes table** (`[]` — RLS hides every row) and **cannot write to it** (`42501`), while the same key **does** receive Realtime broadcasts. That is the entire reason D35 chose Broadcast over `postgres_changes` — **VERIFIED**, all three
+- A live update reached a subscriber holding only the anon key within 3 seconds of a vote landing — **VERIFIED**
+- `npm run check:secrets`: 23 client files scanned, no secrets. Proven to fail on a planted `sb_secret_` — **VERIFIED**
+
+### Not verified in step 7
+
+- The 24-hour expiry has not been observed expiring anything. Both the scheduled sweep and the route's own sweep are written; neither has been watched delete a real row.
+- The rate limiter is per-instance and has not been tested across a cold start, because it cannot survive one by design.
+- No UI. Every vote above was placed with `curl`.
