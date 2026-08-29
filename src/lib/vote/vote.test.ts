@@ -7,6 +7,7 @@ import {
   decodeBallot,
   encodeBallot,
   resolveBallot,
+  createBallot,
   type Ballot,
   type ResolvedBallot,
 } from "@/lib/vote/ballot";
@@ -15,10 +16,12 @@ import { resolve, type Vote } from "@/lib/vote/resolve";
 beforeEach(resetFixtures);
 
 const FRIDAY_8PM = { isoDate: "2026-09-04", startMins: 20 * 60, day: 4 };
+const ROOM = "abcdefghijklmnop1234";
 
 const ballotOf = (candidates: Spot[]): ResolvedBallot => ({
   slot: FRIDAY_8PM,
   candidates,
+  roomId: ROOM,
 });
 
 const vote = (voter: string, marks: Vote["marks"]): Vote => ({ voter, marks });
@@ -29,13 +32,14 @@ describe("ballot links", () => {
       v: 1,
       slot: FRIDAY_8PM,
       candidateIds: ["a", "b", "c"],
+      roomId: ROOM,
       by: "Sok",
     };
     expect(decodeBallot(encodeBallot(ballot))).toEqual(ballot);
   });
 
   it("carries a human-readable prefix without depending on it", () => {
-    const id = encodeBallot({ v: 1, slot: FRIDAY_8PM, candidateIds: ["a", "b"] });
+    const id = encodeBallot({ v: 1, slot: FRIDAY_8PM, candidateIds: ["a", "b"], roomId: ROOM });
     expect(id.startsWith("2026-09-04-20h-2-places.")).toBe(true);
     expect(decodeBallot(`anything.${id.split(".")[1]}`)).not.toBeNull();
   });
@@ -45,11 +49,11 @@ describe("ballot links", () => {
     expect(decodeBallot("not-base64!!!")).toBeNull();
     expect(decodeBallot("prefix.")).toBeNull();
     expect(decodeBallot(`x.${btoa("[1,2,3]")}`)).toBeNull();
-    expect(decodeBallot(`x.${btoa(JSON.stringify({ v: 2, s: [], c: [] }))}`)).toBeNull();
+    expect(decodeBallot(`x.${btoa(JSON.stringify({ v: 2, s: [], c: [], r: ROOM }))}`)).toBeNull();
   });
 
   it("rejects an out-of-range day rather than producing a broken instant", () => {
-    const bad = btoa(JSON.stringify({ v: 1, s: ["2026-09-04", 1200, 9], c: ["a"] }));
+    const bad = btoa(JSON.stringify({ v: 1, s: ["2026-09-04", 1200, 9], c: ["a"], r: ROOM }));
     expect(decodeBallot(`x.${bad}`)).toBeNull();
   });
 });
@@ -69,6 +73,7 @@ describe("memorial sites are never candidates", () => {
       v: 1,
       slot: FRIDAY_8PM,
       candidateIds: [ordinary.id, memorial.id],
+      roomId: ROOM,
     });
 
     expect(resolved.candidates.map((c) => c.id)).toEqual([ordinary.id]);
@@ -80,6 +85,7 @@ describe("memorial sites are never candidates", () => {
       v: 1,
       slot: FRIDAY_8PM,
       candidateIds: all.map((s) => s.id),
+      roomId: ROOM,
     });
     expect(resolved.candidates.some((c) => c.sensitive)).toBe(false);
     expect(resolved.candidates.length).toBeLessThan(all.length);
@@ -190,5 +196,30 @@ describe("resolve", () => {
     // votes and returns a result. If this ever needs a fetch, the zero-backend
     // fallback in D30 dies with it.
     expect(resolve.length).toBe(2);
+  });
+});
+
+describe("createBallot", () => {
+  it("gives every ballot its own unguessable room", () => {
+    // The room id carries its own 128 bits rather than hashing the ballot. A
+    // ballot payload is a date plus a few ids from a public dataset, so a hash
+    // of it would be guessable — anyone could compute the room for a plausible
+    // Friday-night ballot and read or stuff it.
+    const a = createBallot([makeSpot()], FRIDAY_8PM);
+    const b = createBallot([makeSpot()], FRIDAY_8PM);
+    expect(a.roomId).not.toBe(b.roomId);
+    expect(a.roomId.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it("refuses to put a memorial site in a link at all", () => {
+    const memorial = makeMemorial();
+    const ordinary = makeSpot();
+    const ballot = createBallot([ordinary, memorial], FRIDAY_8PM);
+    expect(ballot.candidateIds).toEqual([ordinary.id]);
+  });
+
+  it("round-trips what it creates", () => {
+    const ballot = createBallot([makeSpot(), makeSpot()], FRIDAY_8PM, "Sok");
+    expect(decodeBallot(encodeBallot(ballot))).toEqual(ballot);
   });
 });

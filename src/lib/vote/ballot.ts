@@ -1,5 +1,6 @@
 import type { Instant } from "@/lib/hours/open";
 import { getSpotById } from "@/lib/spots";
+import { isValidRoomId, newRoomId } from "@/lib/vote/validate";
 import type { Spot } from "@/lib/spots/schema";
 
 /**
@@ -29,11 +30,24 @@ export type Ballot = {
   v: 1;
   slot: Slot;
   candidateIds: string[];
+  /**
+   * The room this ballot's votes are stored under, and the only secret in the
+   * system.
+   *
+   * It carries its own 128 bits rather than being derived from the ballot,
+   * which was the first design and was wrong: a ballot payload is a date plus a
+   * few ids from a public dataset, so a hash of it is *guessable*. Anyone could
+   * compute the room for a plausible Friday-night ballot and read or stuff it.
+   *
+   * Generated once when the ballot is made, and travels in the link with
+   * everything else.
+   */
+  roomId: string;
   /** Who set it up. Optional, and only ever a display name. */
   by?: string;
 };
 
-export type ResolvedBallot = { slot: Slot; candidates: Spot[]; by?: string };
+export type ResolvedBallot = { slot: Slot; candidates: Spot[]; roomId: string; by?: string };
 
 export const slotInstant = (slot: Slot): Instant => ({
   day: slot.day,
@@ -56,6 +70,7 @@ export function encodeBallot(ballot: Ballot): string {
       v: 1,
       s: [ballot.slot.isoDate, ballot.slot.startMins, ballot.slot.day],
       c: ballot.candidateIds,
+      r: ballot.roomId,
       ...(ballot.by ? { b: ballot.by } : {}),
     }),
   );
@@ -83,8 +98,9 @@ export function decodeBallot(id: string): Ballot | null {
   }
 
   if (typeof parsed !== "object" || parsed === null) return null;
-  const { v, s, c, b } = parsed as Record<string, unknown>;
+  const { v, s, c, r, b } = parsed as Record<string, unknown>;
   if (v !== 1 || !Array.isArray(s) || s.length !== 3 || !Array.isArray(c)) return null;
+  if (typeof r !== "string" || !isValidRoomId(r)) return null;
 
   const [isoDate, startMins, day] = s as [unknown, unknown, unknown];
   if (
@@ -104,6 +120,7 @@ export function decodeBallot(id: string): Ballot | null {
     v: 1,
     slot: { isoDate, startMins, day },
     candidateIds,
+    roomId: r,
     ...(typeof b === "string" ? { by: b } : {}),
   };
 }
@@ -122,5 +139,27 @@ export function resolveBallot(ballot: Ballot): ResolvedBallot {
     .map((id) => getSpotById(id))
     .filter((s): s is Spot => s !== undefined && s.sensitive === undefined);
 
-  return { slot: ballot.slot, candidates, ...(ballot.by ? { by: ballot.by } : {}) };
+  return {
+    slot: ballot.slot,
+    candidates,
+    roomId: ballot.roomId,
+    ...(ballot.by ? { by: ballot.by } : {}),
+  };
+}
+
+/** A ballot for a set of spots at a moment. Generates the room id. */
+export function createBallot(
+  candidates: readonly Spot[],
+  slot: Slot,
+  by?: string,
+): Ballot {
+  return {
+    v: 1,
+    slot,
+    // Memorial sites are filtered at resolve time too, but excluding them here
+    // means one can never even be written into a link (D33).
+    candidateIds: candidates.filter((s) => !s.sensitive).map((s) => s.id),
+    roomId: newRoomId(),
+    ...(by ? { by } : {}),
+  };
 }

@@ -132,6 +132,7 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C22 | The route suggestion tray offered spots from other cities — a Battambang spot priced itself at "28h 20m over" inside a Kampot day. `AddToDay` guarded on city; the tray did not | Read off the rendered tail row at 1280px. Tray now filtered to the day's city | 2026-08-29 |
 | C23 | The theme toggle (D26) shipped a hydration mismatch on every page. Its inline script sets `data-theme` on `<html>` before paint, so the server-rendered element differs from the client one, and React logged "some attributes of the server rendered HTML didn't match" on every load | Found by reading the dev-server log while checking that `open-now` sorting hydrated cleanly — the log was never checked when D26 shipped. Fixed with `suppressHydrationWarning` scoped to the single `<html>` element, which is the documented pattern for a pre-paint attribute. It does not extend to content: a text or ordering mismatch is a real bug | 2026-08-29 |
 | C24 | Acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained. With the two Supabase keys swapped in `.env.local` it was grepping for the *publishable* key and passing for the wrong reason — while the actual secret key sat in `NEXT_PUBLIC_SUPABASE_ANON_KEY`, which Next inlines into the browser bundle | Found when writes 502'd and the direct insert returned `42501 row-level security`. **A check that depends on the thing it is checking is not a check.** Replaced with `tools/check-secrets.mjs`, which matches the *shape* of a secret (`sb_secret_`, a `service_role` JWT claim, `AIza…`, a PEM block) wherever it came from, and is proven to fail on a planted one | 2026-08-29 |
+| C25 | `VoteScreen` read `localStorage` in a lazy `useState` initialiser to prefill the voter's name. The server rendered `""` and the client rendered the saved name, so React hit a hydration mismatch and recovered into a state where the "Start voting" button was **disabled while the input visibly contained a name** — the flow was unusable and looked fine | Found by driving the flow over CDP, not by reading it. Five hydration warnings on the page. Replaced with `useSyncExternalStore`, whose third argument is the server snapshot and exists for exactly this. Notable because `useNow.ts` already documents the rule this broke, and `useRouteStops` and `ThemeToggle` had already needed the same correction | 2026-08-29 |
 
 ## Phase 2 — Itinerary builder
 
@@ -205,3 +206,21 @@ The token is unset, which is this repo's real state (B1, D11). Everything below 
 - The 24-hour expiry has not been observed expiring anything. Both the scheduled sweep and the route's own sweep are written; neither has been watched delete a real row.
 - The rate limiter is per-instance and has not been tested across a cold start, because it cannot survive one by design.
 - No UI. Every vote above was placed with `curl`.
+
+### Step 8 — the voting UI, driven end to end
+
+Four voters through `/en/vote/[id]`, three of them by HTTP and one by clicking:
+
+- Name is asked once and remembered; the button enables and 0 hydration warnings remain (C25) — **VERIFIED**
+- Three candidates, one card at a time, in ballot order — **VERIFIED**
+- A card states the venue's state at the *slot*, not now: Wat Phnom shows `Daun Penh · $ · closed then` for a Friday 8pm ballot — **VERIFIED**
+- Votes send, `role="status"` reports `3 voted so far`, and the count rises as others vote — **VERIFIED**
+- The result reads `DECIDED / Russian Market / Toul Tom Poung · $ / 1 person said no. / Runner-up: Central Market`, with the full tally beneath — **VERIFIED**
+- **The dissent is named on screen**, which is the point of having no veto (D30) — **VERIFIED**
+- A malformed ballot renders "This link doesn't describe a vote we can read", not a crash — **VERIFIED**
+- 0 overflow at 390/768/1280; 0 contrast failures in both colour modes — **VERIFIED**
+
+### Not verified in step 8
+
+- **No two-browser test.** The live-update path was verified at the library level in step 7, not by watching one browser update because another voted. The polling fallback means a broken socket degrades rather than breaks, but that has not been observed either.
+- There is still no way to *create* a ballot from the UI. Every ballot above was built by a script.
