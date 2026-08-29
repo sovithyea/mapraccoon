@@ -85,6 +85,34 @@ function toHours(regular) {
   return { kind: "weekly", rules };
 }
 
+const HOOD_NAME = {
+  bkk1: "BKK1", riverside: "the riverside", "daun-penh": "Daun Penh",
+  "toul-tom-poung": "Toul Tom Poung", "toul-kork": "Toul Kork",
+  "chroy-changvar": "Chroy Changvar", "koh-pich": "Koh Pich",
+  "sen-sok": "Sen Sok", "out-of-town": "out of town",
+};
+
+/**
+ * A factual line, derived — never an opinion.
+ *
+ * Google has no editorial summary for Phnom Penh venues, so the honest limit of
+ * what an import knows is the primary type and the neighbourhood: "Beer garden
+ * in BKK1." That is true, useful on a card, and unmistakably not a
+ * recommendation from someone who has been.
+ *
+ * Writing "a cosy favourite among locals" here would be inventing a claim about
+ * a real business, which is the failure R1 and R4 are about. These are meant to
+ * be replaced, one at a time, by someone who has actually gone.
+ */
+function blurb(p, hood) {
+  const summary = p.editorialSummary?.text;
+  if (summary) return summary;
+
+  const type = p.primaryTypeDisplayName?.text ?? "Place";
+  const where = HOOD_NAME[hood] ?? hood;
+  return `${type} in ${where}.`;
+}
+
 const slugify = (s) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48);
@@ -98,6 +126,7 @@ const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", 
       "places.id", "places.displayName", "places.location", "places.types",
       "places.priceLevel", "places.regularOpeningHours", "places.websiteUri",
       "places.googleMapsUri", "places.nationalPhoneNumber",
+      "places.primaryTypeDisplayName", "places.editorialSummary",
     ].join(","),
   },
   body: JSON.stringify({
@@ -145,7 +174,7 @@ for (const p of places) {
     categories: ${JSON.stringify(cats)},
     name: { en: ${JSON.stringify(name)} },
     coords: [${p.location.longitude}, ${p.location.latitude}],
-    blurb: { en: "TODO — one line, in your words." },
+    blurb: { en: ${JSON.stringify(blurb(p, hood))} },
     hours: ${JSON.stringify(hours)},
     priceLevel: ${price},
     lastVerified: ${JSON.stringify(today)},

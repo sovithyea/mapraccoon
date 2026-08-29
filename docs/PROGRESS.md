@@ -37,13 +37,13 @@ Running ledger. Updated at the end of every working session so state survives ac
 | B1 | No Mapbox account or token exists | Verifying pins render and click/hover sync. **No longer blocks Phase 2** (D22) | User |
 | B2 | ~~Content unverified on the ground (R1)~~ | **Largely closed by the pivot.** Residents self-correct crossing their own city; what replaces it is staleness, tracked as R8 | — |
 | B3 | ~~Community-impact claims unconfirmed (R4)~~ | **Closed by D27.** All five named organisations are outside Phnom Penh and leave with their cities | — |
-| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | **Launch (D32).** The audience is majority Khmer-speaking by construction, so this stopped being a scheduled defect. Phase 2 added ~60 English-only strings, so it grew | Design |
+| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | **Launch (D32).** Dropping Khmer support entirely was raised on 2026-08-29 and **deferred, not decided** — the plumbing (`{en, km?}`, the `[locale]` segment) stays until it is | Design |
 | B5 | Nothing is deployed; no hosting decided | First public URL | User |
 | B10 | ~~Supabase votes table~~ | **Closed.** Table created, RLS verified denying the anon key both read and write, Realtime broadcast reaching an anon subscriber | — |
 | B6 | ~~Design direction for Phase 2 was out with Claude Design~~ | **Closed.** Returned, implemented and merged. Note it was produced against a stale commit and its colours are pre-D21 — do not take hex values out of that file | — |
 | B7 | ~~No schema field marks a memorial site (C17)~~ | **Closed in Phase 2 by D25.** But R9 got *worse* at the pivot, not better — see D33 | — |
 | B8 | No photographs, and voting between four bars from text alone is untested (R11) | A real v1 with real friends. No solution chosen | User |
-| B9 | `src/data/spots.ts` has 11 Phnom Penh places and every one is a tourist landmark — no restaurants, bars or cafés at all | All of Phase 3. `tools/import-places.mjs` drafts entries from Google Places (D36); blurbs and the hours that matter still need a person | User |
+| B9 | ~~Eleven tourist landmarks, no venues~~ | **Partly closed.** 82 real bars, restaurants and cafés imported across six neighbourhoods. **The blurbs are derived, not written**, and every hour is `hoursSource: "imported"` — fetched, never checked. Replacing those one at a time is the remaining work | User |
 | B11 | ~~No Google Places key~~ | **Closed.** Key works; a BKK1 bar import returned 20 venues that all parse | — |
 
 ## Next session should
