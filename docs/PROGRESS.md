@@ -2,11 +2,11 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (fifth session)
+**Last updated:** 2026-08-29 (fifth session, Phase 2 merged)
 
 ## Where things stand
 
-**Phase 1 (Foundation) is essentially complete, and was executed out of order.** The scaffold, content schema, 42 curated spots, off-radar sorting, the map with its token-missing fallback, the i18n structure, the landing page and the test suite are all in and green. `npm run build`, `lint`, `typecheck` and `test` are clean; 50 pages generate statically; the dev server serves them.
+**Phase 2 (Itinerary builder) is merged. Phase 1 (Foundation) is complete, and was executed out of order.** The scaffold, content schema, 42 curated spots, off-radar sorting, the map with its token-missing fallback, the i18n structure, the landing page and the test suite are all in and green. `npm run build`, `lint`, `typecheck` and `test` are clean; 50 pages generate statically; the dev server serves them.
 
 **The process deviation is the thing to know about.** Code was written before `specs/1-foundation/spec.md` existed, which breaks this repo's core working rule. The user's call was to keep the work and back-fill the docs rather than revert. So the Phase 1 spec documents a phase already executed, and D14 records the deviation. **Phases 2 onward follow the rule.**
 
@@ -19,7 +19,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 | # | Phase | Docs | Branch | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | `phase/1-foundation` | Vithyea | **Complete** and committed, pending review, merge, and the R1 content-verification pass |
-| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **In progress** — all plan steps built and verified. Remaining: a full click-through of the builder in a browser, and the Khmer strings for the ~60 new keys (B4) |
+| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **Complete** — merged into `phase/1-foundation` via PR #1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
 | 3 | Persistence | — | `phase/3-persistence` | — | Not started |
 | 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
 | 5 | Trip assistant | — | `phase/5-assistant` | — | Blocked: needs Phase 3 and real content |
@@ -40,12 +40,12 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 ## Next session should
 
-1. Await the Claude Design return (itinerary builder + spot page, wireframes and rationale, 390/768/1280, both colour modes). Nothing in `specs/2-itinerary/` should be written until it lands, since the spec's acceptance criteria will reference it.
-2. Decide the memorial-site data shape (B7). The design comes back first; the schema follows it rather than guessing. This is the one schema change queued.
-3. Fix the footer caveat's visual weight (C18) once there is a direction for it.
-4. Decide whether to run the R1 verification pass now or spec Phase 2 first.
-5. If a token arrives (B1): check the PENDING row in `docs/VERIFIED.md` — pins render, click and hover sync between map and list — and restrict the token to its domains on creation (R3).
-6. Continue the UI/UX pass. Still open, in rough priority order: no focus-visible styling audit; no `prefers-reduced-motion` handling (hover translate/scale are unconditional); the constellation's Angkor cluster is still dense at 320px; `/discover` has no empty-state illustration; no skip-to-content link; dark mode is now audited for contrast in both modes but has still only been reviewed by eye at 1280px.
+1. **Drive the builder through a real click-through** at 390 and 1280 — add, reorder, share. It has only been exercised by seeding `localStorage` and reading the rendered DOM, and the reorder tab's controls have never been clicked in a browser. This is the largest open gap in Phase 2.
+2. Decide the palette question. It is genuinely open: the user prefers the design direction's earthier look, and a search over 400,000 combinations found no four-city set that keeps that character and separates by ΔE 25 against accent, gold and forest-mid. The interesting option is not a repaint but changing what carries city identity, so hue stops being one of seven competing roles — that wants a spec (see D21, D26).
+3. Choose a Khmer face and check the design at Khmer line heights **before** filling `km.json` (R6, B4). Phase 2 added ~60 English-only strings, so this gap is larger than it was.
+4. Decide whether to run the R1 content-verification pass before anything else ships publicly.
+5. If a token arrives (B1): close acceptance criterion 9 in `docs/VERIFIED.md` — pins render, click and hover sync between map and list — and restrict the token to its domains on creation (R3).
+6. Continue the UI/UX pass. Still open: no focus-visible audit; no `prefers-reduced-motion` handling (hover translate/scale are unconditional); the constellation's Angkor cluster is dense at 320px; `/discover` has no empty-state illustration; no skip-to-content link.
 
 ## Session log
 
