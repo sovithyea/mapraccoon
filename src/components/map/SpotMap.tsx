@@ -9,7 +9,7 @@ import { MapPlaceholder } from "@/components/map/MapPlaceholder";
 import { groupColor, groupOrder } from "@/components/ui/category-style";
 import { groupLabel, groupOf } from "@/lib/spots/categories";
 import { PHNOM_PENH_VIEW } from "@/lib/spots/neighbourhoods";
-import type { Category, NeighbourhoodId, Spot } from "@/lib/spots/schema";
+import type { Category, Spot } from "@/lib/spots/schema";
 
 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
