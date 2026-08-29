@@ -68,6 +68,18 @@ export function DiscoverView({
   const [pane, setPane] = useState<Pane | null>(null);
   const activePane: Pane = pane ?? (stops.length > 0 || !hasToken ? "route" : "map");
 
+  /*
+    Only the neighbourhoods that hold something. The enum has nine members and
+    the dataset covers seven, so Koh Pich and Sen Sok were offering a filter
+    that could only ever return "no places match these filters" — the footer had
+    the same bug, from the same cause: a constant describing the content without
+    reading it.
+  */
+  const occupied = useMemo(() => {
+    const ids = new Set(spots.map((spot) => spot.neighbourhood));
+    return neighbourhoods.filter((n) => ids.has(n.id));
+  }, [spots]);
+
   const visible = useMemo(() => {
     const filtered = spots.filter((spot) => {
       if (city && spot.neighbourhood !== city) return false;
@@ -103,7 +115,7 @@ export function DiscoverView({
             <Chip active={city === null} onClick={() => setCity(null)}>
               {dict.filters.allCities}
             </Chip>
-            {neighbourhoods.map((c) => (
+            {occupied.map((c) => (
               <Chip key={c.id} active={city === c.id} onClick={() => setCity(c.id)}>
                 {c.name}
               </Chip>

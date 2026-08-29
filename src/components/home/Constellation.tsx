@@ -126,7 +126,13 @@ export function Constellation({
           <span
             key={area.id}
             aria-hidden="true"
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-muted/55"
+            /*
+              Full `--muted`, not `--muted/55`. At 55% these measured 2.25:1
+              against the panel — the tint that made them sit behind the dots
+              was the tint that made them unreadable, and 9px uppercase gets no
+              large-text exemption.
+            */
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
             style={{ left: `${area.x}%`, top: `${area.y}%` }}
           >
             {area.name}
