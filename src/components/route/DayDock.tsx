@@ -9,7 +9,7 @@ import { duration } from "@/components/route/time";
 import { useRouteStops } from "@/components/route/useRouteStops";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import { dayBudget } from "@/lib/route/day";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 import { useRoute } from "@/store/route";
 
@@ -38,7 +38,6 @@ const SHEET_HASH = "#day";
 export function DayDock({ spots, dict }: { spots: readonly Spot[]; dict: Dictionary }) {
   const { stops, hydrated } = useRouteStops();
   const frame = useRoute((s) => s.frame);
-  const city = useRoute((s) => s.city);
   const [open, setOpen] = useState(false);
   /** Reading and rearranging are different jobs, so they are different tabs. */
   const [tab, setTab] = useState<"timeline" | "reorder">("timeline");
@@ -67,7 +66,11 @@ export function DayDock({ spots, dict }: { spots: readonly Spot[]; dict: Diction
   if (!hydrated || stops.length === 0) return null;
 
   const budget = dayBudget(stops, frame);
-  const cityName = city ? getCity(city).name : "";
+  // Named by where it actually goes. A night that crosses neighbourhoods is
+  // normal now, so the label lists them rather than picking one.
+  const cityName = [...new Set(stops.map((s) => s.spot.neighbourhood))]
+    .map((id) => getNeighbourhood(id).name)
+    .join(" & ");
 
   const summary =
     budget.state === "over"

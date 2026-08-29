@@ -51,7 +51,7 @@ export function DayTail({
   const chosen = new Set(stops.map((s) => s.spot.id));
   const suggestions = sortSpots(
     candidates.filter((spot) => !chosen.has(spot.id)),
-    "off-radar",
+    "name",
   ).slice(0, 6);
 
   const longest = [...stops].sort((a, b) => b.dwellMins - a.dwellMins)[0];
@@ -128,9 +128,6 @@ export function DayTail({
               >
                 <span aria-hidden="true">＋</span>
                 <span className="font-medium">{spot.name.en}</span>
-                {spot.sensitive ? null : (
-                  <span className="tabular-nums text-muted">{spot.offRadar}</span>
-                )}
                 <span className="text-muted">
                   ·{" "}
                   {cost.fits

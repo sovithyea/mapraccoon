@@ -1,10 +1,14 @@
 # MapRaccoon
 
-A discovery-first guide to Cambodia. The default sort is how far off the radar a place is, not how popular it is — the famous places are still here, at the bottom, each one paired with the quieter place that beats it.
+A tool for friends who live in Phnom Penh to decide where to go out together. Someone shares a link, everyone votes on the candidates for a slot, and it settles the argument.
 
-Standalone project, separate from FoodRaccoon. Full brief in [`cambodia-tourism-app-brief.md`](cambodia-tourism-app-brief.md).
+Standalone project, separate from FoodRaccoon.
 
-**Status: Phase 1 (Foundation) complete.** 42 hand-curated places across four base cities, statically generated, no backend. The content has **not** been verified on the ground — see [Content accuracy](#content-accuracy) below.
+**Status: Phases 1 and 2 are merged. The pivot to Phase 3 is decided and documented; its spec is not written yet, and no code for it exists.**
+
+What is on `main` today is the product this used to be: a discovery-first tourist guide to Cambodia, 42 hand-curated places across four base cities, statically generated, with a single-day itinerary builder. It works. It is not what this is becoming.
+
+**Read [`docs/PIVOT.md`](docs/PIVOT.md) first** — it explains the change, what it gains and what it costs. The original brief is kept at [`cambodia-tourism-app-brief.md`](cambodia-tourism-app-brief.md) as the historical source of the tourist framing; a dozen decisions cite it.
 
 ## Quick start
 
@@ -42,11 +46,13 @@ The free tier is 50K map loads and 100K directions requests per month, far above
 
 ## What's here
 
+What is on `main` today, which is the tourist product. Phase 3 changes all four rows.
+
 | Route | What it is |
 |---|---|
 | `/en` | Landing — the constellation of all 42 places, city picks, the pairing rail, community-run places |
-| `/en/discover` | The map and the filterable list, off-radar sorted |
-| `/en/city/[city]` | One base city, least-visited first |
+| `/en/discover` | The map and the filterable list, off-radar sorted — becomes open-now sorted in Phase 3 |
+| `/en/city/[city]` | One base city, least-visited first — removed in Phase 3 |
 | `/en/spot/[slug]` | A place: what it is, what famous place it replaces, where your money goes, sources |
 
 ## Structure
@@ -57,7 +63,7 @@ src/
   components/        home/ · map/ · spot/ · ui/
   data/spots.ts      the 42 curated places
   lib/spots/         zod schema, city metadata, query helpers
-  lib/scoring.ts     off-radar sorting — the seam a trained model replaces later
+  lib/scoring.ts     the single ordering entry point — off-radar today, open-now in Phase 3
   i18n/              locale config and JSON dictionaries
   store/filters.ts   Zustand: city, categories, sort, selection
   proxy.ts           Next 16 proxy (not middleware.ts) — locale redirect
@@ -69,9 +75,11 @@ specs/N-name/        spec.md + plan.md per phase
 
 Every place carries at least one source, enforced by the schema. **That is provenance, not verification.** Entry fees, opening times, seasonal advice, transport times and community-impact claims were written editorially and have not been checked against a primary source or on the ground.
 
-This matters because the product's whole proposition is telling people to travel somewhere less obvious. Several entries name real organisations — ACCB, Phare Ponleu Selpak, the Banteay Chhmar and Trapeang Sangkae community programmes — and describe what visitor money funds; those descriptions have not been confirmed with them. See R1 and R4 in `docs/RISKS.md`. Both block a public launch.
+This mattered most under the old product, whose whole proposition was telling people to travel somewhere less obvious. Several entries name real organisations — ACCB, Phare Ponleu Selpak, the Banteay Chhmar and Trapeang Sangkae community programmes — and describe what visitor money funds without confirmation from them. See R1 and R4 in `docs/RISKS.md`.
 
-The "off-radar score" is an editorial 0–100 integer, not an algorithm output. The brief defers a trained model until there is first-party visit data, because Google and OSM data is biased toward already-popular places — training on it would reproduce the ranking this product exists to invert.
+**The pivot changes the shape of this problem rather than solving it.** Those organisations are all outside Phnom Penh and leave with the three dropped cities, and residents crossing their own city can self-correct where someone driving three hours could not. What replaces it is cheaper but constant: opening hours and prices on venues that close, move and change. That is why the new schema carries a `lastVerified` date and an explicit "hours unknown" state — a stale claim should be visible rather than silent.
+
+The "off-radar score" was an editorial 0–100 integer, not an algorithm output. **It is removed in Phase 3** (D28): for someone who lives in a city, "almost nobody goes here" describes an empty bar rather than a find, so the signal inverts rather than weakens.
 
 ## Working here
 

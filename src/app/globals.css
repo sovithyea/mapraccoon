@@ -12,7 +12,15 @@
  * Three colour ROLES, and nothing else may use them:
  *   --accent   institutional green. CTAs and links.
  *   --gold     "where your visitor money goes". Community blocks only.
- *   --city-*   a city's identity, the same everywhere it appears.
+ *
+ * There used to be a third role: --city-*, a city's identity carried everywhere
+ * it appeared. It left with the four-city model (D27). Nine neighbourhoods
+ * times two tones would have been eighteen role colours, and this comment block
+ * exists because ten already collided twelve ways. A neighbourhood is a text
+ * label; what makes it matter is travel time, not hue.
+ *
+ * The upside is real: dropping four of the seven role colours means the palette
+ * has room again.
  *
  * Category colour is NOT a page-level role. It identifies pin layers on the
  * map and appears nowhere else — see docs/DESIGN-SYSTEM.md.
@@ -39,20 +47,6 @@
   --cat-food: #c2410c;
   --cat-culture: #7c4dbd;
 
-  /*
-   * Two variants per city, because one colour cannot do both jobs:
-   *   --city-*      large fill behind white text (stays dark in both modes)
-   *   --city-*-ink  small marks and text on the page background (adapts)
-   */
-  --city-phnom-penh: #a83c22;
-  --city-siem-reap: #2f5296;
-  --city-kampot-kep: #0e6b8a;
-  --city-battambang: #7d3a5c;
-
-  --city-phnom-penh-ink: #a83c22;
-  --city-siem-reap-ink: #2f5296;
-  --city-kampot-kep-ink: #0e6b8a;
-  --city-battambang-ink: #7d3a5c;
 }
 
 /*
@@ -91,11 +85,6 @@
     --cat-food: #f2915f;
     --cat-culture: #b6a0f2;
 
-    /* Fills keep their dark values — they always carry white text. */
-    --city-phnom-penh-ink: #e08a6c;
-    --city-siem-reap-ink: #8fabec;
-    --city-kampot-kep-ink: #5cbcd9;
-    --city-battambang-ink: #dc93b8;
   }
 }
 
@@ -122,11 +111,6 @@
     --cat-food: #f2915f;
     --cat-culture: #b6a0f2;
 
-    /* Fills keep their dark values — they always carry white text. */
-    --city-phnom-penh-ink: #e08a6c;
-    --city-siem-reap-ink: #8fabec;
-    --city-kampot-kep-ink: #5cbcd9;
-    --city-battambang-ink: #dc93b8;
 }
 
 :root[data-theme="light"] {

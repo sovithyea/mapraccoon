@@ -5,13 +5,14 @@ import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
 import { AddToDay } from "@/components/route/AddToDay";
 import { CommunityImpact } from "@/components/spot/CommunityImpact";
-import { OffRadarPanel } from "@/components/spot/OffRadarPanel";
-import { PairingCard } from "@/components/spot/PairingCard";
+import { OpenNow } from "@/components/spot/OpenNow";
+import { WeeklyHours } from "@/components/spot/WeeklyHours";
 import { SpotCard } from "@/components/spot/SpotCard";
 import { buildableLocales, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { getAllSpots, getPairedSpot, getSpotBySlug, getSpotsByCity } from "@/lib/spots";
-import { getCity } from "@/lib/spots/cities";
+import { sortSpots } from "@/lib/scoring";
+import { getAllSpots, getSpotBySlug, getSpotsByNeighbourhood } from "@/lib/spots";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 
 export function generateStaticParams() {
   return buildableLocales.flatMap((locale) =>
@@ -40,12 +41,13 @@ export default async function SpotPage({
   if (!spot) notFound();
 
   const dict = await getDictionary(isLocale(locale) ? locale : "en");
-  const city = getCity(spot.city);
-  const anchor = getPairedSpot(spot);
-  const nearby = getSpotsByCity(spot.city)
-    .filter((s) => s.id !== spot.id)
-    .sort((a, b) => b.offRadar - a.offRadar)
-    .slice(0, 3);
+  const city = getNeighbourhood(spot.neighbourhood);
+  // Was ordered by off-radar score, which is gone (D28). Name order until the
+  // hours model lands and this becomes "what else is open near here".
+  const nearby = sortSpots(
+    getSpotsByNeighbourhood(spot.neighbourhood).filter((s) => s.id !== spot.id),
+    "name",
+  ).slice(0, 3);
 
   return (
     /*
@@ -69,22 +71,13 @@ export default async function SpotPage({
       </Link>
 
       <header className="mt-4">
-        <p className="text-sm text-muted">
-          <Link
-            href={`/${locale}/city/${city.id}`}
-            className="inline-flex min-h-9 items-center gap-2 hover:text-foreground"
-          >
-            {/* No city dot here: wayfinding decoration this page carries none of. */}
-            {spot.sensitive ? null : (
-              <span
-                className="size-2 rounded-full"
-                style={{ background: city.ink }}
-                aria-hidden="true"
-              />
-            )}
-            {city.name}
-          </Link>
-        </p>
+        {/*
+          The neighbourhood is a label, not a link. It used to point at
+          /city/[city], which step 3 deleted — and there is nowhere better to
+          send someone: a neighbourhood is a filter on /discover, and a link
+          from here that silently applied one would be a worse back button.
+        */}
+        <p className="text-sm text-muted">{getNeighbourhood(spot.neighbourhood).name}</p>
         <h1
           className={
             spot.sensitive
@@ -105,7 +98,7 @@ export default async function SpotPage({
           never a filter here — that is /discover's job.
         */}
         <p className="mt-3 text-xs text-muted">
-          {spot.categories.map((category) => dict.categories[category]).join(" · ")}
+          {spot.categories.map((c) => dict.categories[c] ?? c).join(" · ")}
           {spot.community ? (
             <>
               {" · "}
@@ -116,10 +109,6 @@ export default async function SpotPage({
           ) : null}
         </p>
 
-        {/* The score is the reason to be on the page, so it gets a panel. */}
-        <div className="mt-4 max-w-md">
-          <OffRadarPanel spot={spot} caveat={dict.spot.offRadarHint} />
-        </div>
         {spot.sensitive ? (
           /*
             R9/D25. A reader who has seen five scored pages reads a missing
@@ -143,19 +132,10 @@ export default async function SpotPage({
         description → community → map → sources.
       */}
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
-        {anchor && spot.pairedWith ? (
-          <div className="order-1 lg:order-1 lg:col-start-1">
-            <PairingCard
-              anchor={anchor}
-              hook={spot.pairedWith.hook}
-              dict={dict}
-              locale={locale}
-            />
-          </div>
-        ) : null}
 
         <div className="order-3 space-y-6 lg:order-3 lg:col-start-1">
-          {spot.description.en.split("\n\n").map((para, i) => (
+          {/* Optional now — most venues ship on a blurb alone (D27 note in the schema). */}
+          {spot.description?.en.split("\n\n").map((para, i) => (
             <p key={i} className="leading-relaxed">
               {para}
             </p>
@@ -194,18 +174,17 @@ export default async function SpotPage({
               "Morning / Free / 1.5 hr" reads in one glance where the stacked
               list takes three. Same DOM in both; one grid class.
             */}
+            {/* Live state first — it is the thing someone opened the page for. */}
+            <OpenNow hours={spot.hours} dict={dict} />
+
             <dl className="mt-4 grid grid-cols-3 gap-3 text-sm lg:grid-cols-1 lg:gap-0 lg:space-y-3">
               <div>
-                <dt className="text-[11px] text-muted">{dict.spot.bestTime}</dt>
-                <dd className="mt-0.5 leading-snug">{spot.practical.bestTime.en}</dd>
+                <dt className="text-[11px] text-muted">{dict.spot.priceLevel}</dt>
+                <dd className="mt-0.5 leading-snug">{"$".repeat(spot.priceLevel)}</dd>
               </div>
               <div>
-                <dt className="text-[11px] text-muted">{dict.spot.entryFee}</dt>
-                <dd className="mt-0.5 leading-snug">
-                  {spot.practical.entryFeeUsd === 0
-                    ? dict.spot.free
-                    : `$${spot.practical.entryFeeUsd}`}
-                </dd>
+                <dt className="text-[11px] text-muted">{dict.spot.lastVerified}</dt>
+                <dd className="mt-0.5 leading-snug tabular-nums">{spot.lastVerified}</dd>
               </div>
               <div>
                 <dt className="text-[11px] text-muted">{dict.spot.duration}</dt>
@@ -220,6 +199,13 @@ export default async function SpotPage({
                 {dict.spot.unverifiedCaveat}
               </p>
             ) : null}
+
+            <div className="mt-4 border-t border-border pt-3">
+              <h3 className="eyebrow">{dict.spot.weeklyHours}</h3>
+              <div className="mt-2">
+                <WeeklyHours hours={spot.hours} dict={dict} />
+              </div>
+            </div>
 
             {/*
               The practical card is where the planning decision happens, so the

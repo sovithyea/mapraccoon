@@ -1,5 +1,4 @@
 import { estimateLeg, type Leg } from "@/lib/route/estimate";
-import { offRadarBand } from "@/lib/scoring";
 import { getAllSpots } from "@/lib/spots";
 import type { Spot } from "@/lib/spots/schema";
 
@@ -80,12 +79,12 @@ export function fullThresholdMins(spots: readonly Spot[] = getAllSpots()): numbe
   let minDwell = Infinity;
   for (const spot of spots) minDwell = Math.min(minDwell, stopDwell(spot));
 
-  // Shortest hop between two spots in the same city — a day is one city, so a
-  // cross-country pair is not a leg anyone would actually add.
+  // Shortest hop between any two spots. The same-city filter that used to be
+  // here went with the four-city model (D27) — every pair is now in Phnom Penh.
   let minLeg = Infinity;
   for (const a of spots) {
     for (const b of spots) {
-      if (a.id === b.id || a.city !== b.city) continue;
+      if (a.id === b.id) continue;
       const { minutes } = estimateLeg(a, b);
       if (minutes > 0) minLeg = Math.min(minLeg, minutes);
     }
@@ -171,30 +170,3 @@ export function costOfAdding(
   };
 }
 
-/**
- * The day's off-radar average, with an honest denominator. Memorial sites are
- * excluded from the mean but counted in the total, so the UI can say "2 of 3
- * stops scored" rather than quietly averaging over a smaller set (D25).
- */
-export function dayOffRadarAverage(stops: readonly RouteStop[]): {
-  average: number | null;
-  band: ReturnType<typeof offRadarBand> | null;
-  scoredCount: number;
-  totalCount: number;
-} {
-  const scored = stops.filter((stop) => stop.spot.sensitive === undefined);
-
-  if (scored.length === 0) {
-    return { average: null, band: null, scoredCount: 0, totalCount: stops.length };
-  }
-
-  const total = scored.reduce((sum, stop) => sum + stop.spot.offRadar, 0);
-  const average = Math.round(total / scored.length);
-
-  return {
-    average,
-    band: offRadarBand(average),
-    scoredCount: scored.length,
-    totalCount: stops.length,
-  };
-}

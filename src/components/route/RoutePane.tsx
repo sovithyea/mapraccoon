@@ -3,13 +3,14 @@
 import { useState } from "react";
 
 import { DayTail } from "@/components/route/DayTail";
+import { StartVote } from "@/components/vote/StartVote";
 import { RouteTimeline } from "@/components/route/RouteTimeline";
 import { DayFrameBar } from "@/components/route/DayFrameBar";
 import { clock, duration } from "@/components/route/time";
 import type { Dictionary } from "@/i18n/get-dictionary";
-import { dayBudget, dayOffRadarAverage } from "@/lib/route/day";
+import { dayBudget } from "@/lib/route/day";
 import { encodeDay } from "@/lib/route/share";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 import { useRouteStops } from "@/components/route/useRouteStops";
 import { useRoute } from "@/store/route";
@@ -20,12 +21,6 @@ const fill = (template: string, values: Record<string, string | number>): string
     template,
   );
 
-const bandLabel: Record<string, string> = {
-  famous: "Famous",
-  known: "Well known",
-  quiet: "Quiet",
-  remote: "Off the radar",
-};
 
 /**
  * The route as a pane. D23: this is the third state of /discover's existing
@@ -44,7 +39,6 @@ export function RoutePane({
 }) {
   const { stops, hydrated } = useRouteStops();
   const frame = useRoute((s) => s.frame);
-  const city = useRoute((s) => s.city);
   const add = useRoute((s) => s.add);
   const move = useRoute((s) => s.move);
   const remove = useRoute((s) => s.remove);
@@ -56,18 +50,17 @@ export function RoutePane({
   if (!hydrated) return <div className="min-h-[24rem]" aria-busy="true" />;
 
   const budget = dayBudget(stops, frame);
-  const average = dayOffRadarAverage(stops);
-  const cityName = city ? getCity(city).name : "";
+  // Named by where it actually goes. A night that crosses neighbourhoods is
+  // normal now, so the label lists them rather than picking one.
+  const cityName = [...new Set(stops.map((s) => s.spot.neighbourhood))]
+    .map((id) => getNeighbourhood(id).name)
+    .join(" & ");
 
-  /**
-   * A day is one city (D22 scope). Without this the tray offers whatever
-   * /discover happens to be showing — which, unfiltered, is all 42 spots, and
-   * a Battambang spot suggested for a Kampot day priced itself at "28h 20m
-   * over". Found by running it, not by reading it.
-   */
-  const inCity = city
-    ? candidates.filter((spot) => spot.city === city)
-    : candidates;
+  // The tray used to be filtered to the day's city, because an unfiltered one
+  // offered a Battambang spot for a Kampot day at "28h 20m over" (C22). With a
+  // single city that filter is meaningless — every candidate is a short leg
+  // away, and crossing neighbourhoods is the point (D27).
+  const inCity = candidates;
 
   if (stops.length === 0) {
     return (
@@ -135,20 +128,6 @@ export function RoutePane({
             })}
       </p>
 
-      {average.average !== null ? (
-        <p className="mt-1 text-[11px] text-muted">
-          {fill(dict.route.dayAverage, {
-            average: average.average,
-            band: bandLabel[average.band ?? "quiet"] ?? "",
-          })}{" "}
-          {average.scoredCount !== average.totalCount
-            ? fill(dict.route.dayAverageDenominator, {
-                scored: average.scoredCount,
-                total: average.totalCount,
-              })
-            : null}
-        </p>
-      ) : null}
 
       <div className="mt-4">
         <RouteTimeline
@@ -171,10 +150,17 @@ export function RoutePane({
       />
 
       {/*
-        The day travels in its own URL (D1: nothing to save it to), so sharing
-        is a clipboard copy rather than a round trip to a server.
+        Two ways out of a day, and they answer different questions.
+
+        "Ask the others" is the product: you have candidates and a group that
+        cannot agree. "Share this day" is for when the decision is already made
+        and you are sending people an itinerary.
       */}
-      <div className="mt-4 border-t border-border px-4 pt-4">
+      <div className="mt-5 border-t border-border px-4 pt-5">
+        <StartVote spots={stops.map((s) => s.spot)} dict={dict} locale="en" />
+      </div>
+
+      <div className="mt-4 px-4">
         <button
           type="button"
           onClick={() => {

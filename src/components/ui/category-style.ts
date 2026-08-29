@@ -1,18 +1,26 @@
+import { categoryGroup, type CategoryGroup } from "@/lib/spots/categories";
 import type { Category } from "@/lib/spots/schema";
 
 /**
- * Category colour identifies pin layers ON THE MAP and appears nowhere else
- * (D21). Elsewhere a category is a text label in neutral chrome.
+ * Pin colour identifies a category GROUP on the map, and appears nowhere else
+ * (D21).
  *
- * Four cities, four categories, an accent and a gold role is ten colours
- * competing on one page; measured, they collided twelve ways. Cutting category
- * colour to the one place it distinguishes items from each other fixed it.
+ * Eighteen categories cannot each have a colour — that is the ten-colours
+ * problem D21 measured, more than doubled. Colouring by group keeps the count
+ * at four, which is exactly what the old four-category system used, so the
+ * existing tokens carry over with their measured separation intact.
+ *
+ * Everywhere off the map a category is a text label in neutral chrome.
  */
-export const categoryColor: Record<Category, string> = {
-  temple: "var(--cat-temple)",
-  nature: "var(--cat-nature)",
-  food: "var(--cat-food)",
-  culture: "var(--cat-culture)",
+export const groupColor: Record<CategoryGroup, string> = {
+  eat: "var(--cat-food)",
+  drink: "var(--cat-temple)",
+  do: "var(--cat-culture)",
+  see: "var(--cat-nature)",
 };
 
-export const categoryOrder: Category[] = ["temple", "nature", "food", "culture"];
+export function categoryColorFor(category: Category): string {
+  return groupColor[categoryGroup[category] ?? "see"];
+}
+
+export const groupOrder: CategoryGroup[] = ["eat", "drink", "do", "see"];

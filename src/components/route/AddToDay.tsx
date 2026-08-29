@@ -4,7 +4,7 @@ import { clock, duration } from "@/components/route/time";
 import { useRouteStops } from "@/components/route/useRouteStops";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import { costOfAdding } from "@/lib/route/day";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 import { useRoute } from "@/store/route";
 
@@ -36,15 +36,15 @@ export function AddToDay({
 }) {
   const { stops, hydrated } = useRouteStops();
   const frame = useRoute((s) => s.frame);
-  const routeCity = useRoute((s) => s.city);
   const add = useRoute((s) => s.add);
   const remove = useRoute((s) => s.remove);
 
   if (!hydrated) return null;
 
-  // A day is one city (D22 scope). Offering to add a Battambang spot to a
-  // Kampot day would produce a four-hour leg presented as a suggestion.
-  if (routeCity !== null && routeCity !== spot.city) return null;
+  // The cross-city guard that used to be here is gone with D27. Adding a BKK1
+  // bar and a Riverside restaurant to the same night is the point of the
+  // product, not a mistake to prevent — and inside one city the legs are short
+  // enough that the day budget is the only constraint that matters.
 
   const index = stops.findIndex((s) => s.spot.id === spot.id);
   const describedBy = `add-cost-${spot.id}`;
@@ -76,7 +76,7 @@ export function AddToDay({
         <span aria-hidden="true">＋</span>
         {stops.length === 0
           ? fill(dict.route.addStartDay, {
-              city: getCity(spot.city).name,
+              city: getNeighbourhood(spot.neighbourhood).name,
               duration: duration(cost.dwellMins),
             })
           : cost.fits

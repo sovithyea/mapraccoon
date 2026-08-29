@@ -2,9 +2,9 @@
 
 Threat model and trust boundaries. Written at Phase 1, when there is very little to defend, so the shape exists before the risk does (D13).
 
-**Current state: there is no user data, no authentication, no database and no server-side mutation.** Every page is statically generated at build time from a file in the repo. The attack surface is a static site plus one public Mapbox token.
+**Current state on `main`: there is no user data, no authentication, no database and no server-side mutation.** Every page is statically generated at build time from a file in the repo. The attack surface is a static site plus one public Mapbox token.
 
-That will not be true after Phase 3. This document is written to be filled in, not to look complete.
+> **Phase 3 makes the sentence above false, and it is the first time this document has real content to hold.** Voting needs a server (D30) and it is Supabase with Realtime (D35). Written before that phase is built, so the shape exists before the risk does — see *What Phase 3 introduces* below. It is still true of `main` today.
 
 ## Trust boundaries today
 
@@ -39,16 +39,36 @@ The one thing this site can currently do to a user is tell them something false 
 
 This becomes a genuine security property in Phase 5. The brief constrains RAG retrieval to the app's own verified spot database specifically so the assistant cannot hallucinate places. That guarantee is worth exactly as much as the integrity of these rows, and prompt injection through user-submitted content (Phase 7's "suggest a place") would attack it directly.
 
-## What arrives with Phase 3, and must be specced before any code
+## Standing requirements, whenever the thing they guard arrives
 
-- **Authentication.** Supabase Auth. Session handling belongs in `src/proxy.ts`, which today only redirects locales.
-- **Row-level security.** Every user-scoped table needs RLS, and any client that bypasses PostgREST bypasses RLS with it. `ass-hub/foodraccoon`'s D16/R12 is the cautionary case: adding a user-scoped query to a direct-Postgres layer is a security defect even when the query is correct.
-- **Spend caps, on day one of that phase.** Supabase Pro with **Spend Cap ON** (the default — do not turn it off), or the free plan, which throttles rather than bills. Claude API: an org-level monthly spend limit in the Console before the first call, since there is no free tier. Google Cloud: per-API daily quota, which 429s past the limit and is a true hard stop.
-- **Rate limiting** on any mutation route.
+Written at Phase 1 against the original phase order. The **pivot moved Phase 3 to voting**, so the two items that apply now are marked; the rest wait for Phase 4.
 
-## What arrives with Phase 4
+- **Spend caps, on day one of the phase that needs them. — APPLIES NOW.** Supabase free plan throttles rather than bills; Pro keeps **Spend Cap ON** (the default — do not turn it off). Claude API and Google Cloud are no longer scheduled.
+- **Rate limiting on any mutation route. — APPLIES NOW.** The vote insert is the only mutation surface and has no auth in front of it.
+- **Authentication.** Supabase Auth, session handling in `src/proxy.ts`, which today only redirects locales. **Phase 4** — Phase 3 has no accounts (D30).
+- **Row-level security.** Every user-scoped table needs RLS, and any client bypassing PostgREST bypasses RLS with it. `ass-hub/foodraccoon`'s D16/R12 is the cautionary case. **Phase 4** — Phase 3 deliberately has no user-scoped tables, and uses Broadcast specifically to avoid needing a policy (see below).
 
-Collaborative voting is the first feature where one user's action changes what another user sees. That needs its own threat model: channel authorisation (who may join a session), vote integrity (one vote per person per candidate), and the fact that Realtime broadcasts are only as private as the channel policy makes them.
+## What Phase 3 introduces
+
+Collaborative voting is the first feature where one person's action changes what another sees. It arrives in Phase 3 rather than Phase 4 (D30, D35), so this section is now near-term.
+
+**The secret is the room id.** 128 bits, unguessable, the same model the shared-day links already use. There is no authentication in Phase 3, so possession of the link *is* the authorisation. That is a deliberate trade and its consequence should be stated rather than discovered: anyone the link reaches can vote, and a link forwarded outside the group is a vote from outside the group. For five friends in a thread that is acceptable; it stops being acceptable the moment anything is at stake beyond dinner.
+
+**The service key never reaches the browser.** Writes go through an API route that validates the room id and inserts with the service key held server-side. A build that ships the service key is a total compromise of the project, so it is an acceptance criterion verified by grepping the build output rather than by inspection.
+
+**Reads use Realtime Broadcast, not `postgres_changes`.** This is a security choice, not a performance one. `postgres_changes` would need an RLS policy expressing "knows the room id" — which is not an auth claim, and is exactly the policy shape that gets written permissively and reviewed as fine. Broadcast keeps table reads away from the anon key entirely.
+
+**Realtime broadcasts are only as private as the channel policy makes them.** The channel is named by the room id, so channel names must never be logged, enumerated, or included in error messages or analytics.
+
+**Vote integrity is weak in Phase 3, deliberately.** With no accounts there is nothing to bind a voter to, so a determined participant can vote twice under two names. That is a real limitation and it is the right trade at this size — the failure mode is a friend being annoying, not a breach. Phase 4's accounts are what make one-vote-per-person enforceable.
+
+**Rate limiting on the insert route** is required, not optional. It is the only mutation surface and there is no auth in front of it.
+
+**Expiry is a scheduled delete.** Postgres has no TTL. The 24-hour window is what keeps the store near-empty and makes "no history" architectural, so a job that silently stops running is a data-retention problem nobody would notice.
+
+## What still arrives with Phase 4
+
+Accounts, group membership, and RLS policy design — including the row-level security notes above, which do not apply until there are user-scoped tables. One-vote-per-person becomes enforceable here.
 
 ## Reporting
 

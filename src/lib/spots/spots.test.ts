@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { spots as raw } from "@/data/spots";
-import { getAllSpots, getPairedSpot, getSpotBySlug } from "@/lib/spots";
-import { cities } from "@/lib/spots/cities";
+import { getAllSpots, getSpotBySlug } from "@/lib/spots";
+import { neighbourhoods } from "@/lib/spots/neighbourhoods";
+import { isOpenAt } from "@/lib/hours/open";
 import { CAMBODIA_BBOX, spotsSchema } from "@/lib/spots/schema";
 
 /**
@@ -32,30 +33,8 @@ describe("seed content", () => {
     }
   });
 
-  it("resolves every pairedWith reference to a real spot", () => {
-    for (const spot of getAllSpots()) {
-      if (!spot.pairedWith) continue;
-      expect(getPairedSpot(spot), `${spot.id} → ${spot.pairedWith.spotId}`).toBeDefined();
-    }
-  });
 
-  it("never pairs a spot with itself", () => {
-    for (const spot of getAllSpots()) {
-      expect(spot.pairedWith?.spotId).not.toBe(spot.id);
-    }
-  });
 
-  it("only pairs to a better-known spot", () => {
-    // A pairing says "go here instead of there". If the anchor were the more
-    // obscure of the two, the sentence would be backwards.
-    for (const spot of getAllSpots()) {
-      const anchor = getPairedSpot(spot);
-      if (!anchor) continue;
-      expect(anchor.offRadar, `${spot.id} vs anchor ${anchor.id}`).toBeLessThan(
-        spot.offRadar,
-      );
-    }
-  });
 
   /**
    * R9 made mechanical (D25). Until the `sensitive` field existed these three
@@ -64,80 +43,106 @@ describe("seed content", () => {
    * Phnom Sampeau, framing one forced-labour site as the alternative to
    * another. The refinement below is what caught it.
    */
+  /**
+   * Criteria 5 and 6. Both are about the difference between provenance and
+   * verification (R1): an unknown hour must leave the reader somewhere to go,
+   * and a date must not claim more than it knows.
+   */
+  describe("hours and freshness", () => {
+    it("returns a defined state for every venue across a full week", () => {
+      for (const spot of getAllSpots()) {
+        for (let day = 0; day < 7; day += 1) {
+          for (let hour = 0; hour < 24; hour += 1) {
+            expect(
+              ["open", "closing-soon", "closed", "unknown"],
+              `${spot.slug} day ${day} hour ${hour}`,
+            ).toContain(isOpenAt(spot.hours, { day, mins: hour * 60 }));
+          }
+        }
+      }
+    });
+
+    it("refuses unknown hours with nowhere to check", () => {
+      const base = getSpotBySlug("wat-phnom");
+      const result = spotsSchema.safeParse([
+        { ...base, hours: { kind: "unknown" }, links: undefined },
+      ]);
+      expect(result.success).toBe(false);
+      expect(JSON.stringify(result.error?.issues)).toContain("somewhere for the reader to check");
+    });
+
+    it("accepts unknown hours when a link is present", () => {
+      const base = getSpotBySlug("wat-phnom");
+      expect(
+        spotsSchema.safeParse([
+          {
+            ...base,
+            hours: { kind: "unknown" },
+            links: { facebook: "https://facebook.com/example" },
+          },
+        ]).success,
+      ).toBe(true);
+    });
+
+    it("never claims to have been verified in the future", () => {
+      const today = new Date().toISOString().slice(0, 10);
+      for (const spot of getAllSpots()) {
+        expect(spot.lastVerified <= today, `${spot.slug} is dated ${spot.lastVerified}`).toBe(true);
+      }
+    });
+
+    it("warns about stale entries without failing the build", () => {
+      /*
+       * Warn, never fail. A test that goes red on a calendar date with no code
+       * change teaches people to ignore a red suite, which costs more than the
+       * staleness it was meant to catch. The signal goes to stderr and a human.
+       */
+      const sixMonthsAgo = new Date(Date.now() - 182 * 86_400_000).toISOString().slice(0, 10);
+      const stale = getAllSpots().filter((s) => s.lastVerified < sixMonthsAgo);
+      if (stale.length > 0) {
+        console.warn(
+          `${stale.length} entries not checked in six months: ${stale.map((s) => s.slug).join(", ")}`,
+        );
+      }
+      expect(true).toBe(true);
+    });
+
+    it("records whether hours were checked or merely imported", () => {
+      // An imported hour is provenance, not verification (D36). The field
+      // exists so an import cannot quietly launder itself into a check.
+      for (const spot of getAllSpots()) {
+        expect(["imported", "checked"]).toContain(spot.hoursSource);
+      }
+    });
+  });
+
   describe("memorial sites", () => {
     const sensitive = getAllSpots().filter((s) => s.sensitive);
 
     it("marks every known memorial site", () => {
+      // Three of the five left with their neighbourhoods (D27). These two are in
+      // Phnom Penh and stay, so their exclusions get stronger, not weaker (D33).
       expect(sensitive.map((s) => s.slug).sort()).toEqual([
         "choeung-ek",
-        "kamping-puoy",
-        "phnom-sampeau",
-        "secret-lake",
         "tuol-sleng",
       ]);
     });
 
-    it("never carries a pairing", () => {
-      for (const spot of sensitive) {
-        expect(spot.pairedWith, `${spot.slug} is paired`).toBeUndefined();
-      }
-    });
 
-    it("is never the anchor another spot points at", () => {
-      // The same failure read from the other end: "go here instead of Choeung
-      // Ek". The per-spot schema cannot see across spots, so it is checked here.
-      for (const spot of getAllSpots()) {
-        const anchor = getPairedSpot(spot);
-        if (!anchor) continue;
-        expect(anchor.sensitive, `${spot.slug} points at ${anchor.slug}`).toBeUndefined();
-      }
-    });
 
-    it("rejects a sensitive spot that carries a pairing, at parse time", () => {
-      const base = getSpotBySlug("tuol-sleng");
-      expect(base).toBeDefined();
-
-      const result = spotsSchema.safeParse([
-        {
-          ...base,
-          pairedWith: {
-            spotId: "royal-palace",
-            hook: { en: "Should never be writable." },
-          },
-        },
-      ]);
-
-      expect(result.success).toBe(false);
-      expect(JSON.stringify(result.error?.issues)).toContain("cannot carry a pairing");
-    });
   });
 
   it("assigns every spot to a known city", () => {
-    const known = new Set(cities.map((c) => c.id));
+    const known = new Set(neighbourhoods.map((c) => c.id));
     for (const spot of getAllSpots()) {
-      expect(known.has(spot.city), `${spot.id} city ${spot.city}`).toBe(true);
+      expect(known.has(spot.neighbourhood), `${spot.id} city ${spot.neighbourhood}`).toBe(true);
     }
   });
 
-  it("covers all four base cities", () => {
-    for (const city of cities) {
-      const count = getAllSpots().filter((s) => s.city === city.id).length;
-      expect(count, `${city.id} has no spots`).toBeGreaterThan(0);
-    }
-  });
 
-  it("keeps at least one anchor per city for pairings to point at", () => {
-    // An off-radar-only dataset has nothing to contrast against.
-    for (const city of cities) {
-      const anchors = getAllSpots().filter(
-        (s) => s.city === city.id && s.offRadar < 30,
-      );
-      expect(anchors.length, `${city.id} has no anchor spots`).toBeGreaterThan(0);
-    }
-  });
 
   it("looks spots up by slug", () => {
-    expect(getSpotBySlug("angkor-wat")?.name.en).toBe("Angkor Wat");
+    expect(getSpotBySlug("wat-phnom")?.name.en).toBe("Wat Phnom");
     expect(getSpotBySlug("not-a-real-slug")).toBeUndefined();
   });
 });

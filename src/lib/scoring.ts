@@ -1,49 +1,80 @@
+import { isOpenAt, type Instant, type OpenState } from "@/lib/hours/open";
 import type { Spot } from "@/lib/spots/schema";
 
-export type SortMode = "off-radar" | "popularity" | "name";
+/**
+ * The single entry point for ordering. Never scatter `.sort()` calls across
+ * components — a change of default must be one branch (CLAUDE.md rule 3).
+ *
+ * The off-radar sort that used to live here is gone (D28). It was the product's
+ * central idea for a visitor audience and it inverts for a resident one: for a
+ * jungle temple "almost nobody goes here" means undiscovered, for a bar on a
+ * Friday it means empty.
+ *
+ * **`sortSpots` stays pure and never reads the clock.** The instant comes in
+ * through the context, which is what lets "open now" and "open at 8pm on
+ * Friday" be the same code path — and what keeps this testable at a fixed
+ * instant with no fake timers.
+ */
 
-/** The default, everywhere. Discovery is the default view, not an opt-in tab. */
-export function sortByOffRadar(spots: readonly Spot[]): Spot[] {
-  return [...spots].sort(
-    (a, b) => b.offRadar - a.offRadar || a.name.en.localeCompare(b.name.en),
-  );
-}
+export type SortMode = "open-now" | "price" | "name";
 
 /**
- * Available, but never the initial state. There is no separate popularity
- * field: being well known is simply the inverse of being off the radar.
+ * An object rather than a bare `at` parameter, so adding `from` for a distance
+ * sort later does not churn the signature a second time.
  */
-export function sortByPopularity(spots: readonly Spot[]): Spot[] {
-  return [...spots].sort(
-    (a, b) => a.offRadar - b.offRadar || a.name.en.localeCompare(b.name.en),
-  );
-}
+export type SortContext = {
+  at?: Instant;
+  /** [longitude, latitude], for a future distance sort. */
+  from?: readonly [number, number];
+};
 
 export function sortByName(spots: readonly Spot[]): Spot[] {
   return [...spots].sort((a, b) => a.name.en.localeCompare(b.name.en));
 }
 
-/**
- * Single entry point for ordering. Phase 6 replaces the off-radar branch with a
- * trained score; keeping every call site behind this function is what makes
- * that a one-file change (D4).
- */
-export function sortSpots(spots: readonly Spot[], mode: SortMode): Spot[] {
-  switch (mode) {
-    case "popularity":
-      return sortByPopularity(spots);
-    case "name":
-      return sortByName(spots);
-    case "off-radar":
-    default:
-      return sortByOffRadar(spots);
-  }
+export function sortByPrice(spots: readonly Spot[]): Spot[] {
+  return [...spots].sort(
+    (a, b) => a.priceLevel - b.priceLevel || a.name.en.localeCompare(b.name.en),
+  );
 }
 
-/** Coarse band used for the meter label on cards and destination pages. */
-export function offRadarBand(score: number): "famous" | "known" | "quiet" | "remote" {
-  if (score < 20) return "famous";
-  if (score < 45) return "known";
-  if (score < 70) return "quiet";
-  return "remote";
+/**
+ * Open first, then closing soon, then unknown, then closed.
+ *
+ * `unknown` above `closed` is the deliberate call: a venue whose hours nobody
+ * has found is likelier to be open than one known to be shut, and burying it
+ * would punish exactly the entries that have not been finished yet. Ties break
+ * by name so the order is stable rather than incidental.
+ */
+const OPEN_RANK: Record<OpenState, number> = {
+  open: 0,
+  "closing-soon": 1,
+  unknown: 2,
+  closed: 3,
+};
+
+export function sortByOpenNow(spots: readonly Spot[], at: Instant): Spot[] {
+  return [...spots].sort((a, b) => {
+    const rank = OPEN_RANK[isOpenAt(a.hours, at)] - OPEN_RANK[isOpenAt(b.hours, at)];
+    return rank !== 0 ? rank : a.name.en.localeCompare(b.name.en);
+  });
+}
+
+export function sortSpots(
+  spots: readonly Spot[],
+  mode: SortMode,
+  ctx: SortContext = {},
+): Spot[] {
+  switch (mode) {
+    case "open-now":
+      // Without an instant there is nothing to be open *at*. Falling back to
+      // name is right for the server render, which has no clock — see useNow().
+      return ctx.at ? sortByOpenNow(spots, ctx.at) : sortByName(spots);
+    case "price":
+      return sortByPrice(spots);
+    case "name":
+      return sortByName(spots);
+    default:
+      return sortByName(spots);
+  }
 }

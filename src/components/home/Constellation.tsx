@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { projectCambodia } from "@/lib/geo/project";
-import { cities } from "@/lib/spots/cities";
+import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 
 /**
@@ -66,10 +66,11 @@ export function Constellation({
 
         {spots.map((spot) => {
           const { x, y } = project(spot.coords);
-          const city = cities.find((c) => c.id === spot.city);
-          // 7px at offRadar 0 up to 18px at 100 — biggest dot, least visited.
-          // Kept modest because the Angkor temples cluster tightly.
-          const size = 7 + (spot.offRadar / 100) * 11;
+          // Uniform. Dot size used to carry the off-radar score — the biggest
+          // marks were the least-visited places, which was the old product's
+          // whole thesis in one graphic. The score is gone (D28), and sizing
+          // by nothing is more honest than sizing by a leftover.
+          const size = 10;
           const isActive = active?.id === spot.id;
 
           return (
@@ -87,8 +88,8 @@ export function Constellation({
                 top: `${y}%`,
                 width: size,
                 height: size,
-                background: city?.ink ?? "var(--accent)",
-                opacity: isActive ? 1 : 0.55 + (spot.offRadar / 100) * 0.35,
+                background: "var(--accent)",
+                opacity: isActive ? 1 : 0.55 + (0 / 100) * 0.35,
               }}
             />
           );
@@ -112,11 +113,10 @@ export function Constellation({
       </div>
 
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        {cities.map((city) => (
+        {neighbourhoods.map((city) => (
           <span key={city.id} className="flex items-center gap-1.5 text-xs text-muted">
             <span
               className="size-2.5 rounded-full"
-              style={{ background: city.ink }}
               aria-hidden="true"
             />
             {city.name}

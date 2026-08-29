@@ -1,22 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   costOfAdding,
   dayBudget,
-  dayOffRadarAverage,
   defaultFrame,
   fullThresholdMins,
   stopDwell,
   type RouteStop,
 } from "@/lib/route/day";
-import { getSpotBySlug, getSpotsByCity } from "@/lib/spots";
+import { makeMemorial, makeSpot, resetFixtures } from "@/lib/spots/fixture";
 import type { Spot } from "@/lib/spots/schema";
 
-const spot = (slug: string): Spot => {
-  const found = getSpotBySlug(slug);
-  if (!found) throw new Error(`fixture missing: ${slug}`);
-  return found;
-};
+/**
+ * Built, not borrowed. These assertions are about scheduling arithmetic, and
+ * coupling them to the seed file made fifteen of them break when D27 deleted
+ * three neighbourhoods — none because the arithmetic was wrong.
+ */
+beforeEach(resetFixtures);
 
 const asStop = (s: Spot): RouteStop => ({ spot: s, dwellMins: stopDwell(s) });
 
@@ -29,7 +29,7 @@ describe("dayBudget", () => {
   });
 
   it("schedules the first stop at the start time with no leg", () => {
-    const budget = dayBudget([asStop(spot("tuol-sleng"))]);
+    const budget = dayBudget([asStop(makeSpot())]);
     const first = budget.stops[0];
 
     expect(first?.arrivalMins).toBe(defaultFrame.start);
@@ -38,7 +38,7 @@ describe("dayBudget", () => {
   });
 
   it("pushes each later stop out by its travel leg", () => {
-    const stops = [asStop(spot("tuol-sleng")), asStop(spot("choeung-ek"))];
+    const stops = [asStop(makeSpot()), asStop(makeSpot())];
     const budget = dayBudget(stops);
     const [first, second] = budget.stops;
 
@@ -52,7 +52,7 @@ describe("dayBudget", () => {
   it("goes over when the plan runs past the frame, and reports by how much", () => {
     // One absurd dwell is the cleanest way to force the state without
     // depending on how many real spots happen to fit.
-    const budget = dayBudget([{ spot: spot("tuol-sleng"), dwellMins: 10 * 60 }]);
+    const budget = dayBudget([{ spot: makeSpot(), dwellMins: 10 * 60 }]);
 
     expect(budget.state).toBe("over");
     expect(budget.overrunMins).toBe(
@@ -64,7 +64,7 @@ describe("dayBudget", () => {
   it("is full — not over — when less than the threshold remains", () => {
     const threshold = fullThresholdMins();
     const dwell = defaultFrame.frameEnd - defaultFrame.start - Math.floor(threshold / 2);
-    const budget = dayBudget([{ spot: spot("tuol-sleng"), dwellMins: dwell }]);
+    const budget = dayBudget([{ spot: makeSpot(), dwellMins: dwell }]);
 
     expect(budget.overrunMins).toBe(0);
     expect(budget.remainingMins).toBeLessThan(threshold);
@@ -72,12 +72,12 @@ describe("dayBudget", () => {
   });
 
   it("marks a memorial stop as sensitive in the schedule", () => {
-    const budget = dayBudget([asStop(spot("secret-lake")), asStop(spot("tuol-sleng"))]);
+    const budget = dayBudget([asStop(makeMemorial()), asStop(makeMemorial())]);
     expect(budget.stops.map((s) => s.isSensitive)).toEqual([true, true]);
   });
 
   it("does not mark an ordinary stop as sensitive", () => {
-    const ordinary = getSpotsByCity("kampot-kep").find((s) => !s.sensitive) as Spot;
+    const ordinary = makeSpot();
     expect(dayBudget([asStop(ordinary)]).stops[0]?.isSensitive).toBe(false);
   });
 });
@@ -91,7 +91,7 @@ describe("fullThresholdMins", () => {
     // The point of D24: "full" is derived from the content, so writing a
     // 15-minute spot must change the threshold rather than leave a stale
     // constant behind.
-    const dataset = getSpotsByCity("kampot-kep");
+    const dataset = [makeSpot(), makeSpot(), makeSpot()];
     const before = fullThresholdMins(dataset);
 
     const shortest = [...dataset].sort(
@@ -114,7 +114,7 @@ describe("fullThresholdMins", () => {
 
 describe("costOfAdding", () => {
   it("prices a first stop as dwell only", () => {
-    const candidate = spot("tuol-sleng");
+    const candidate = makeSpot();
     const cost = costOfAdding([], candidate);
 
     expect(cost.legMins).toBe(0);
@@ -124,48 +124,17 @@ describe("costOfAdding", () => {
   });
 
   it("prices a later stop as travel plus dwell", () => {
-    const cost = costOfAdding([asStop(spot("tuol-sleng"))], spot("choeung-ek"));
+    const cost = costOfAdding([asStop(makeSpot())], makeSpot());
     expect(cost.legMins).toBeGreaterThan(0);
     expect(cost.addedMins).toBe(cost.legMins + cost.dwellMins);
   });
 
   it("reports the overrun instead of refusing, so nothing is ever disabled", () => {
-    const stops = [{ spot: spot("tuol-sleng"), dwellMins: 8 * 60 }];
-    const cost = costOfAdding(stops, spot("choeung-ek"));
+    const stops = [{ spot: makeSpot(), dwellMins: 8 * 60 }];
+    const cost = costOfAdding(stops, makeSpot());
 
     expect(cost.fits).toBe(false);
     expect(cost.overrunMins).toBeGreaterThan(0);
   });
 });
 
-describe("dayOffRadarAverage", () => {
-  it("returns nothing for an empty day", () => {
-    expect(dayOffRadarAverage([])).toEqual({
-      average: null,
-      band: null,
-      scoredCount: 0,
-      totalCount: 0,
-    });
-  });
-
-  it("excludes memorial stops from the mean but counts them in the total", () => {
-    const ordinary = getSpotsByCity("kampot-kep").filter((s) => !s.sensitive).slice(0, 2);
-    const stops = [...ordinary.map(asStop), asStop(spot("secret-lake"))];
-
-    const result = dayOffRadarAverage(stops);
-    const expected = Math.round(
-      ordinary.reduce((sum, s) => sum + s.offRadar, 0) / ordinary.length,
-    );
-
-    expect(result.average).toBe(expected);
-    expect(result.scoredCount).toBe(2);
-    expect(result.totalCount).toBe(3);
-  });
-
-  it("returns a null average for a day of nothing but memorial sites", () => {
-    const result = dayOffRadarAverage([asStop(spot("tuol-sleng")), asStop(spot("choeung-ek"))]);
-    expect(result.average).toBeNull();
-    expect(result.scoredCount).toBe(0);
-    expect(result.totalCount).toBe(2);
-  });
-});

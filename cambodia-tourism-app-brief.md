@@ -1,3 +1,7 @@
+> **HISTORICAL.** This is the original brief for the Cambodia tourist guide. The product pivoted on 2026-08-29 to a Phnom Penh going-out platform — see `docs/PIVOT.md`. This file is kept unedited because a dozen decisions in `docs/DECISIONS.md` cite "the brief" and would otherwise be orphaned. **Do not plan from it.**
+
+---
+
 # Cambodia Tourism Discovery App — Project Brief
 
 Standalone project (separate from FoodRaccoon). A web app that showcases Cambodian

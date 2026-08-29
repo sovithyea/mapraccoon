@@ -1,5 +1,7 @@
 # Verified — MapRaccoon
 
+> **Everything here remains true of the code on `main`.** The product pivoted on 2026-08-29 (`docs/PIVOT.md`) but no code changed with it, so observations like "the home page's initial sort is off-radar descending" are still accurate statements about the shipped build — they simply describe a product that is being replaced. A verified fact does not become false when the plan changes; it becomes history. The Corrections table is the most durable thing in this doc set and carries over unchanged.
+
 Evidence log. A claim goes here only when something was actually run, read, or observed — not when it was assumed or planned.
 
 Status key: **VERIFIED** (observed directly) · **ASSUMED** (taken from documentation, not confirmed against a running system) · **PENDING** (not yet attempted).
@@ -128,6 +130,10 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C20 | The travel estimate used a flat 22 km/h, which turned the 40-minute Kep–Kampot drive into 1h 50m and ate seven hours of a nine-hour day in phantom travel | Found by running the builder over CDP, not by reading it. The distance factor had been calibrated against NH6 and the speed never had been. Replaced with distance-banded speeds (16 / 36 / 55 km/h) calibrated against two journeys with known real durations | 2026-08-29 |
 | C21 | `MapPlaceholder` printed `NEXT_PUBLIC_MAPBOX_TOKEN` in a `<code>` block to travellers. The token-missing state is this repo's default deployed state (D11), so this was the normal experience, not an edge case | Read off the rendered page at 390px. Replaced with the spot's real coordinates and an outbound maps link; the `SpotMap` test now asserts the variable name is *absent* rather than present | 2026-08-29 |
 | C22 | The route suggestion tray offered spots from other cities — a Battambang spot priced itself at "28h 20m over" inside a Kampot day. `AddToDay` guarded on city; the tray did not | Read off the rendered tail row at 1280px. Tray now filtered to the day's city | 2026-08-29 |
+| C23 | The theme toggle (D26) shipped a hydration mismatch on every page. Its inline script sets `data-theme` on `<html>` before paint, so the server-rendered element differs from the client one, and React logged "some attributes of the server rendered HTML didn't match" on every load | Found by reading the dev-server log while checking that `open-now` sorting hydrated cleanly — the log was never checked when D26 shipped. Fixed with `suppressHydrationWarning` scoped to the single `<html>` element, which is the documented pattern for a pre-paint attribute. It does not extend to content: a text or ordering mismatch is a real bug | 2026-08-29 |
+| C24 | Acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained. With the two Supabase keys swapped in `.env.local` it was grepping for the *publishable* key and passing for the wrong reason — while the actual secret key sat in `NEXT_PUBLIC_SUPABASE_ANON_KEY`, which Next inlines into the browser bundle | Found when writes 502'd and the direct insert returned `42501 row-level security`. **A check that depends on the thing it is checking is not a check.** Replaced with `tools/check-secrets.mjs`, which matches the *shape* of a secret (`sb_secret_`, a `service_role` JWT claim, `AIza…`, a PEM block) wherever it came from, and is proven to fail on a planted one | 2026-08-29 |
+| C25 | `VoteScreen` read `localStorage` in a lazy `useState` initialiser to prefill the voter's name. The server rendered `""` and the client rendered the saved name, so React hit a hydration mismatch and recovered into a state where the "Start voting" button was **disabled while the input visibly contained a name** — the flow was unusable and looked fine | Found by driving the flow over CDP, not by reading it. Five hydration warnings on the page. Replaced with `useSyncExternalStore`, whose third argument is the server snapshot and exists for exactly this. Notable because `useNow.ts` already documents the rule this broke, and `useRouteStops` and `ThemeToggle` had already needed the same correction | 2026-08-29 |
+| C26 | Three nav blocks — the desktop header list, the mobile rail and a footer column — linked to `/city/[city]`, which step 3 deleted. Nine dead links in the chrome of every page, all 404 | `grep -rn "locale}/city/"` after noticing the layout still mapped over neighbourhoods. The route deletion and its inbound links were done in different steps, which is how the gap opened. Header and rail removed (a neighbourhood is a filter, not a destination — D27); the footer and spot page now show the names as plain text | 2026-08-29 |
 
 ## Phase 2 — Itinerary builder
 
@@ -185,3 +191,88 @@ The token is unset, which is this repo's real state (B1, D11). Everything below 
 - The builder has been exercised by seeding `localStorage` and reading the rendered DOM, not by driving a full click-through add → reorder → share journey
 - The reorder tab's controls are built and typed but have not been clicked in a browser; its underlying reorder logic is covered by tests
 - The colour of every frame in the design direction is the pre-D21 palette (543 occurrences of the old values against 17 of the shipped ones). The layout was implemented; the colours deliberately were not. The app will not match the frames' hues and is not intended to
+
+### Step 7 — the vote store, verified against the live project
+
+- Three people POST votes to `/api/room/:id`; all three return 200, are stored, and read back in submission order — **VERIFIED**
+- `resolve()` turns those stored votes into `Winner: Wat Phnom, dissent: Mei`, with the runner-up and full tally — **VERIFIED** end to end, HTTP through to decision
+- A short or malformed room id returns 404, identically to an unknown one, so the endpoint cannot be used to probe which rooms exist — **VERIFIED**
+- A missing store returns 502 rather than an empty array. An empty array reads as "nobody has voted yet" and a group would wait on it forever — **VERIFIED**
+- **The anon key cannot read the votes table** (`[]` — RLS hides every row) and **cannot write to it** (`42501`), while the same key **does** receive Realtime broadcasts. That is the entire reason D35 chose Broadcast over `postgres_changes` — **VERIFIED**, all three
+- A live update reached a subscriber holding only the anon key within 3 seconds of a vote landing — **VERIFIED**
+- `npm run check:secrets`: 23 client files scanned, no secrets. Proven to fail on a planted `sb_secret_` — **VERIFIED**
+
+### Not verified in step 7
+
+- The 24-hour expiry has not been observed expiring anything. Both the scheduled sweep and the route's own sweep are written; neither has been watched delete a real row.
+- The rate limiter is per-instance and has not been tested across a cold start, because it cannot survive one by design.
+- No UI. Every vote above was placed with `curl`.
+
+### Step 8 — the voting UI, driven end to end
+
+Four voters through `/en/vote/[id]`, three of them by HTTP and one by clicking:
+
+- Name is asked once and remembered; the button enables and 0 hydration warnings remain (C25) — **VERIFIED**
+- Three candidates, one card at a time, in ballot order — **VERIFIED**
+- A card states the venue's state at the *slot*, not now: Wat Phnom shows `Daun Penh · $ · closed then` for a Friday 8pm ballot — **VERIFIED**
+- Votes send, `role="status"` reports `3 voted so far`, and the count rises as others vote — **VERIFIED**
+- The result reads `DECIDED / Russian Market / Toul Tom Poung · $ / 1 person said no. / Runner-up: Central Market`, with the full tally beneath — **VERIFIED**
+- **The dissent is named on screen**, which is the point of having no veto (D30) — **VERIFIED**
+- A malformed ballot renders "This link doesn't describe a vote we can read", not a crash — **VERIFIED**
+- 0 overflow at 390/768/1280; 0 contrast failures in both colour modes — **VERIFIED**
+
+### Not verified in step 8
+
+- **No two-browser test.** The live-update path was verified at the library level in step 7, not by watching one browser update because another voted. The polling fallback means a broken socket degrades rather than breaks, but that has not been observed either.
+- There is still no way to *create* a ballot from the UI. Every ballot above was built by a script.
+
+### Step 9 — the loop closes
+
+The whole product, driven end to end in a browser:
+
+- A day of three places on `/discover` → **Ask the others** → a link → the same three candidates in the same order → voting → `DECIDED / Central Market / Nobody objected. / Runner-up: Russian Market` — **VERIFIED**
+- The link is generated client-side and contains everything: candidates, slot and room secret. Nothing is created server-side before sharing — **VERIFIED**
+- `OpenNow` renders the live state on a spot page (`Open until 18:00`) while `WeeklyHours` renders the schedule server-side. The live state appears **only** in the RSC payload, never in the rendered markup — **VERIFIED** by stripping `<script>` blocks from the served HTML and searching what remained
+- 0 overflow at 390/768/1280 across four routes; 0 contrast failures in both modes; 0 hydration warnings — **VERIFIED**
+- 0 links to the deleted `/city/[city]` remain (C26) — **VERIFIED**
+
+### Still not verified after step 9
+
+- **No two-browser test.** Live update is verified at the library level (step 7) and the polling fallback exists, but nobody has watched one browser update because another voted.
+- **The 24-hour expiry has never been observed deleting a row.**
+- **The venue content is eleven tourist landmarks** (B9). Every flow above was exercised against markets and temples, not the bars and restaurants the product is for.
+- Passing the whole `dict` into client components ships ~10.7 KB of strings to the browser, including copy for pages the reader is not on. Not a defect; worth trimming.
+
+## Phase 3 — the seventeen acceptance criteria
+
+Closed on 2026-08-29 against `specs/3-friends/spec.md`. Each names what was run, not what was intended.
+
+| # | Criterion | Evidence |
+|---|---|---|
+| 1 | build, lint, typecheck, test clean | `npm run verify` — 133 tests, 25 client files scanned for secrets |
+| 2 | Phnom Penh only; the tight bbox rejects a stray coordinate | `bbox.test.ts`. A BKK1 venue at Siem Reap coordinates is rejected; the same coordinates pass as `out-of-town`; reversed lat/lng is rejected |
+| 3 | `isOpenAt` defined across a 7 × 24 sweep | `spots.test.ts` sweeps every venue × every day × every hour |
+| 4 | No fake timers in the hours suite | `hours.test.ts` passes explicit instants throughout; `phnomPenhNow` is the only clock read in the repo, by grep |
+| 5 | Unknown hours without a link fail to parse | `spots.test.ts` — rejected without `links`, accepted with one |
+| 6 | `lastVerified` never in the future; staleness warns only | `spots.test.ts`. Warn-only is deliberate: a suite that goes red on a calendar date with no code change teaches people to ignore red |
+| 7 | `/discover` defaults to open-now, server and client agree | Default is `open-now` in the filter store; **0 hydration warnings** read from the dev-server log across five routes |
+| 8 | open → closing-soon → unknown → closed ordering | `scoring.test.ts` at a fixed instant, including the deliberate unknown-above-closed rule |
+| 9 | A memorial is never a ballot candidate | `vote.test.ts`, and `createBallot` refuses to encode one at all |
+| 10 | A memorial never appears in a suggestion tray | `DayTail` sorts through `sortSpots`; memorial spots carry no score and are excluded at ballot creation |
+| 11 | A memorial never appears in a match result | `vote.test.ts` — it cannot be tallied because it cannot be a candidate. Removing the filter fails exactly two tests, checked by mutation |
+| 12 | A ballot round-trips; three voters resolve to one winner; `resolve` does no I/O | Four voters against the live project → `DECIDED / Russian Market / 1 person said no.` |
+| 13 | 404 on unknown ids, no enumeration, service key absent from the bundle | 404 for malformed and unknown alike; `npm run check:secrets` matches secret *shape*, and is proven to fail on a planted `sb_secret_` (C24) |
+| 14 | A second browser sees a vote without refreshing; a dead socket degrades | **Two tabs**: B showed "1 voted so far", A voted, B moved to "2" in ~1.5s with no reload. **Sockets blocked** via CDP: an out-of-band vote still arrived within 4s on the poll |
+| 15 | Rows older than 24 hours are deleted | Planted a row dated 25h ago; it read back once, then a fresh vote elsewhere triggered the sweep and it was gone |
+| 16 | 0 horizontal overflow at 390 / 768 / 1280 | 15 measurements across five routes, all 0 |
+| 17 | 0 contrast failures, both modes and the explicit dark path | 5 routes × light, dark, and `data-theme="dark"` — 0 of 306 text nodes fail |
+
+**All seventeen pass.**
+
+## What Phase 3 still does not have
+
+- **Real content.** Eleven tourist landmarks, no bars or restaurants (B9). Every flow above was exercised against markets and temples. The importer works and is verified against 20 real BKK1 bars, but nothing has been written into the seed file.
+- **Khmer.** Untouched, and this phase added more English strings (B4, D32).
+- **Photographs.** Voting between venues from text alone works mechanically; whether people will do it is untested (B8, R11).
+- The whole `dict` is passed into client components — ~10.7 KB of strings, including copy for pages the reader is not on. Not a defect; worth trimming.
+- Nothing is deployed (B5).

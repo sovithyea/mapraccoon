@@ -2,9 +2,15 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (fifth session, Phases 1 and 2 merged to `main`)
+**Last updated:** 2026-08-29 (seventh session — Phase 3 built and merged)
 
 ## Where things stand
+
+**The product pivoted on 2026-08-29, and Phase 3 has shipped it.** It was a discovery-first tourist guide to Cambodia; it is now a tool for friends who live in Phnom Penh to decide where to go out together. Read `docs/PIVOT.md` before this file makes sense.
+
+**The loop works end to end and is on `main`.** Build a shortlist on `/discover`, press *Ask the others*, share the link, everyone marks yes/maybe/no, it settles. Verified with two browser tabs, one with every websocket blocked to prove the poll carries it.
+
+**What it does not have is content.** Eleven tourist landmarks, no bars or restaurants (B9). Every flow was verified against markets and temples, and nobody has used the thing for real.
 
 **Phase 2 (Itinerary builder) is merged. Phase 1 (Foundation) is complete, and was executed out of order.** The scaffold, content schema, 42 curated spots, off-radar sorting, the map with its token-missing fallback, the i18n structure, the landing page and the test suite are all in and green. `npm run build`, `lint`, `typecheck` and `test` are clean; 50 pages generate statically; the dev server serves them.
 
@@ -20,32 +26,34 @@ Running ledger. Updated at the end of every working session so state survives ac
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
-| 3 | Persistence | — | `phase/3-persistence` | — | Not started |
-| 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
-| 5 | Trip assistant | — | `phase/5-assistant` | — | Blocked: needs Phase 3 and real content |
-| 6 | Hidden-gem scoring | — | `phase/6-scoring` | — | Blocked: needs first-party usage data (D4) |
-| 7 | Growth loops | — | `phase/7-growth` | — | Not started |
+| 3 | Friends platform | ✅ spec + plan | merged to `main` | Vithyea | **Complete and merged** via PR #3, all 17 criteria closed. Venue content (B9) is outstanding and is the only thing between this and real use |
+| 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
+| 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
 
 ## Open blockers
 
 | # | Blocker | Blocks | Owner |
 |---|---|---|---|
 | B1 | No Mapbox account or token exists | Verifying pins render and click/hover sync. **No longer blocks Phase 2** (D22) | User |
-| B2 | Content is unverified on the ground (R1) | Any public launch | Editorial |
-| B3 | Community-impact claims unconfirmed with the named organisations (R4) | Any public launch | Editorial |
-| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6). Now an explicit open question to Claude Design — which pairing, what line height, and what replaces the uppercase eyebrow in a script with no uppercase | Filling `km.json` | Design |
+| B2 | ~~Content unverified on the ground (R1)~~ | **Largely closed by the pivot.** Residents self-correct crossing their own city; what replaces it is staleness, tracked as R8 | — |
+| B3 | ~~Community-impact claims unconfirmed (R4)~~ | **Closed by D27.** All five named organisations are outside Phnom Penh and leave with their cities | — |
+| B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | **Launch (D32).** The audience is majority Khmer-speaking by construction, so this stopped being a scheduled defect. Phase 2 added ~60 English-only strings, so it grew | Design |
 | B5 | Nothing is deployed; no hosting decided | First public URL | User |
-| B6 | Design direction for the Phase 2 itinerary builder and the spot page is out with Claude Design; nothing decided yet | Writing `specs/2-itinerary/spec.md` with any layout in it | User |
-| B7 | No field in the content schema marks a memorial site; R9 is enforced only by how the prose was written (C17) | — **closing in Phase 2 step 1** (D25) | Vithyea |
+| B10 | ~~Supabase votes table~~ | **Closed.** Table created, RLS verified denying the anon key both read and write, Realtime broadcast reaching an anon subscriber | — |
+| B6 | ~~Design direction for Phase 2 was out with Claude Design~~ | **Closed.** Returned, implemented and merged. Note it was produced against a stale commit and its colours are pre-D21 — do not take hex values out of that file | — |
+| B7 | ~~No schema field marks a memorial site (C17)~~ | **Closed in Phase 2 by D25.** But R9 got *worse* at the pivot, not better — see D33 | — |
+| B8 | No photographs, and voting between four bars from text alone is untested (R11) | A real v1 with real friends. No solution chosen | User |
+| B9 | `src/data/spots.ts` has 11 Phnom Penh places and every one is a tourist landmark — no restaurants, bars or cafés at all | All of Phase 3. `tools/import-places.mjs` drafts entries from Google Places (D36); blurbs and the hours that matter still need a person | User |
+| B11 | ~~No Google Places key~~ | **Closed.** Key works; a BKK1 bar import returned 20 venues that all parse | — |
 
 ## Next session should
 
-1. **Drive the builder through a real click-through** at 390 and 1280 — add, reorder, share. It has only been exercised by seeding `localStorage` and reading the rendered DOM, and the reorder tab's controls have never been clicked in a browser. This is the largest open gap in Phase 2.
-2. Decide the palette question. It is genuinely open: the user prefers the design direction's earthier look, and a search over 400,000 combinations found no four-city set that keeps that character and separates by ΔE 25 against accent, gold and forest-mid. The interesting option is not a repaint but changing what carries city identity, so hue stops being one of seven competing roles — that wants a spec (see D21, D26).
-3. Choose a Khmer face and check the design at Khmer line heights **before** filling `km.json` (R6, B4). Phase 2 added ~60 English-only strings, so this gap is larger than it was.
-4. Decide whether to run the R1 content-verification pass before anything else ships publicly.
-5. If a token arrives (B1): close acceptance criterion 9 in `docs/VERIFIED.md` — pins render, click and hover sync between map and list — and restrict the token to its domains on creation (R3).
-6. Continue the UI/UX pass. Still open: no focus-visible audit; no `prefers-reduced-motion` handling (hover translate/scale are unconditional); the constellation's Angkor cluster is dense at 320px; `/discover` has no empty-state illustration; no skip-to-content link.
+1. **Write venue content (B9).** This is the only thing between a working product and using it. `GOOGLE_PLACES_KEY=... node tools/import-places.mjs bkk1 bar` drafts twenty entries; blurbs come out as `TODO` because that field has to be a person's. Twenty places you actually go beats eighty you cannot vouch for.
+2. **Try it with real friends on a real Friday.** Everything below is verified mechanically and nothing is verified as *good*. D31 sets the bar at "better than someone typing where should we go tonight", and that is not a bar a test can clear.
+3. Choose a Khmer face and check the layout at Khmer line heights **before** filling `km.json` (B4, D32). Phase 3 added more English strings, so the gap grew again.
+4. Rebuild the landing page. It is a shell — D28 and D29 removed what it argued and nothing replaced it.
+5. Decide on photographs (B8, R11). Voting from text works mechanically; whether people will do it is untested.
+6. Trim the dictionary passed into client components — ~10.7 KB, including copy for pages the reader is not on.
 
 ## Session log
 
@@ -64,3 +72,19 @@ Shipped: the memorial flag (`sensitive: "memorial"`) with a build-time refinemen
 Four defects found, three of them only by running it rather than reading it. The schema refinement caught a live R9 violation in Phase 1 content — Kamping Puoy was paired to Phnom Sampeau (C19). The flat 22 km/h speed constant turned a 40-minute drive into 1h 50m (C20). `MapPlaceholder` was printing `NEXT_PUBLIC_MAPBOX_TOKEN` to travellers in what is the site's default state (C21). The suggestion tray offered other cities' spots at "28h 20m over" (C22).
 
 67 tests across 8 files, build/lint/typecheck clean, 51 static pages, 0 overflow at 390/768/1280 across four routes, 0 contrast failures in both modes.
+
+**2026-08-29 (sixth session — the pivot)** — No code. The product changed: from a discovery-first tourist guide to Cambodia to a tool for friends who live in Phnom Penh deciding where to go out. Documented in `docs/PIVOT.md` and D27–D34, superseding ten earlier decisions.
+
+The three calls that took the most argument. **The off-radar score is removed entirely** (D28) — not demoted, removed, because for a resident "almost nobody goes here" describes an empty bar rather than a find, so the signal inverts rather than weakens. That reverses `CLAUDE.md` hard rule 3 and `INTERFACES.md`'s "must stay that way", both of which said it could never change. **Voting cannot work client-only** (D30): a URL is one-way, so N voters produce N isolated states with no merge point, and the zero-backend fallback silently loses a vote whenever two people vote off the same link. One 24-hour KV store is the minimum that makes the feature exist. **The memorials stay** (D33), against a recommendation to drop them — so R9 gets worse, and every new surface needs an exclusion enforced by schema or test rather than by prose.
+
+Risk re-scoring found the pivot trades two content risks for two harder product risks: R1 and R5 improve, R2 and R4 become moot, but R6 (Khmer) becomes a launch blocker because the audience is majority Khmer-speaking by construction, and R11 (photographs) becomes near-blocking because voting between bars from text alone is untested. R8 arrives much sooner: 80+ venues that close and change hours cannot live in a TypeScript module.
+
+Also fixed two staleness bugs in `CLAUDE.md` that predate the pivot: the decision range said D1–D21 against 26, and the status line said Phases 2–7 had no docs against a merged Phase 2.
+
+**2026-08-29 (seventh session — Phase 3 built)** — The pivot, executed. Spec first, then eleven steps: deleting the tourist model, fixtures, the hours system, the venue schema and neighbourhoods, open-now sorting, vote logic, the Supabase store, the voting screen, and the loop that joins them. All seventeen acceptance criteria closed with evidence in `VERIFIED.md`. 133 tests, up from 70.
+
+**The product works end to end**: build a day on `/discover`, press *Ask the others*, share the link, everyone marks yes/maybe/no, and it settles — `DECIDED / Central Market / Nobody objected.` Verified with two independent browser tabs, one of them with every websocket blocked to prove the polling fallback carries it.
+
+Six defects found, and five of them only by running the thing rather than reading it. C23: the theme toggle had been logging a hydration mismatch on every page since it shipped, and nobody had read the dev log. C24 is the worst — acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained, so when the two Supabase keys were swapped it passed while the real secret sat in a `NEXT_PUBLIC_` variable. A check that depends on the thing it checks is not a check. C25: `VoteScreen` read `localStorage` during render, and React recovered into a state where the button was disabled over an input that visibly showed a name — unusable, and perfect in a screenshot. C26: nine dead links in the chrome of every page, because a route and its inbound links were deleted in different steps.
+
+What is not done is the half that matters now. The seed file still holds eleven tourist landmarks — no bars, no restaurants (B9) — so every flow above was exercised against markets and temples. The importer works and was checked against twenty real BKK1 bars, but nothing has been written in. Khmer is untouched and grew worse. Nothing is deployed.

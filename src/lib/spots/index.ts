@@ -1,5 +1,5 @@
 import { spots as raw } from "@/data/spots";
-import type { CityId, Spot } from "@/lib/spots/schema";
+import type { NeighbourhoodId, Spot } from "@/lib/spots/schema";
 import { spotsSchema } from "@/lib/spots/schema";
 
 /**
@@ -32,16 +32,8 @@ export function getSpotById(id: string): Spot | undefined {
   return byId.get(id);
 }
 
-export function getSpotsByCity(city: CityId): Spot[] {
-  return allSpots.filter((spot) => spot.city === city);
+export function getSpotsByNeighbourhood(id: NeighbourhoodId): Spot[] {
+  return allSpots.filter((spot) => spot.neighbourhood === id);
 }
 
-/** The famous place a spot is offered as an alternative to. */
-export function getPairedSpot(spot: Spot): Spot | undefined {
-  return spot.pairedWith ? byId.get(spot.pairedWith.spotId) : undefined;
-}
 
-/** Spots that name this one as the crowded thing they replace. */
-export function getAlternativesTo(spot: Spot): Spot[] {
-  return allSpots.filter((candidate) => candidate.pairedWith?.spotId === spot.id);
-}

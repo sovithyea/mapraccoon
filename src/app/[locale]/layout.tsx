@@ -9,7 +9,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { DayDock } from "@/components/route/DayDock";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAllSpots } from "@/lib/spots";
-import { cities } from "@/lib/spots/cities";
+import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 
 // Serif display over a geometric sans — the editorial register this kind of
 // content wants. See docs/DESIGN-SYSTEM.md.
@@ -55,8 +55,22 @@ export default async function LocaleLayout({
   const dict = await getDictionary(locale as Locale);
 
   return (
+    /*
+      The one legitimate use of suppressHydrationWarning, scoped to this single
+      element.
+
+      The inline script in <head> sets `data-theme` here before first paint, so
+      a stored dark choice does not flash light (D26). The server has no
+      localStorage and renders without it, so the attribute genuinely differs
+      and React is right to notice.
+
+      It does NOT extend to content. A text or ordering mismatch is a real bug
+      and is fixed by not rendering time-dependent output until after mount —
+      see src/components/hooks/useNow.ts.
+    */
     <html
       lang={locale}
+      suppressHydrationWarning
       className={`${playfair.variable} ${dmSans.variable} h-full antialiased`}
     >
       {/*
@@ -85,24 +99,13 @@ export default async function LocaleLayout({
               {dict.site.name}
             </Link>
 
-            {/* Inline on desktop; the scrolling rail below covers mobile. */}
-            <ul className="hidden items-center gap-6 md:flex">
-              {cities.map((city) => (
-                <li key={city.id}>
-                  <Link
-                    href={`/${locale}/city/${city.id}`}
-                    className="flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"
-                  >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: city.ink }}
-                      aria-hidden="true"
-                    />
-                    {city.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/*
+              The four cities used to live here as site navigation, and the
+              neighbourhoods that replaced them do not belong in global chrome
+              (D27). A neighbourhood is a filter, not a destination — nine of
+              them across a header is a row nobody reads, and every link would
+              have gone to a page that is a worse version of /discover.
+            */}
 
             <div className="flex shrink-0 items-center gap-3">
               <ThemeToggle label={dict.nav.theme} />
@@ -114,31 +117,6 @@ export default async function LocaleLayout({
               </Link>
             </div>
           </nav>
-
-          {/*
-            Cities were unreachable on mobile — the inline list is md-only and
-            there is no drawer. A horizontally scrolling rail costs one row and
-            no JavaScript.
-          */}
-          <div className="border-t border-border md:hidden">
-            <ul className="rail flex gap-2 overflow-x-auto px-5 py-2">
-              {cities.map((city) => (
-                <li key={city.id} className="shrink-0">
-                  <Link
-                    href={`/${locale}/city/${city.id}`}
-                    className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium"
-                  >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: city.ink }}
-                      aria-hidden="true"
-                    />
-                    {city.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </header>
 
         <main className="flex flex-1 flex-col">{children}</main>
@@ -155,24 +133,17 @@ export default async function LocaleLayout({
             </div>
 
             <div>
+              {/*
+                Names the neighbourhoods without linking anywhere. Each one was
+                a link to /city/[city], which step 3 deleted — nine dead links
+                in the footer of every page. They are kept as text because
+                telling someone which parts of the city this covers is useful;
+                sending them to a filtered list from the footer is not.
+              */}
               <h2 className="eyebrow">{dict.footer.cities}</h2>
-              <ul className="mt-3 space-y-1">
-                {cities.map((city) => (
-                  <li key={city.id}>
-                    <Link
-                      href={`/${locale}/city/${city.id}`}
-                      className="inline-flex min-h-9 items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
-                    >
-                      <span
-                        className="size-2 rounded-full"
-                        style={{ background: city.ink }}
-                        aria-hidden="true"
-                      />
-                      {city.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                {neighbourhoods.map((n) => n.name).join(" · ")}
+              </p>
             </div>
 
             <div>
