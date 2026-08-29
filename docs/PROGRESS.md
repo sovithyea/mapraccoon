@@ -2,7 +2,7 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (fifth session, Phase 2 merged)
+**Last updated:** 2026-08-29 (fifth session, Phases 1 and 2 merged to `main`)
 
 ## Where things stand
 
@@ -18,8 +18,8 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 | # | Phase | Docs | Branch | Owner | Status |
 |---|---|---|---|---|---|
-| 1 | Foundation | ✅ spec + plan (back-filled) | `phase/1-foundation` | Vithyea | **Complete** and committed, pending review, merge, and the R1 content-verification pass |
-| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **Complete** — merged into `phase/1-foundation` via PR #1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
+| 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
+| 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
 | 3 | Persistence | — | `phase/3-persistence` | — | Not started |
 | 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
 | 5 | Trip assistant | — | `phase/5-assistant` | — | Blocked: needs Phase 3 and real content |
