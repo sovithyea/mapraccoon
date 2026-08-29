@@ -57,6 +57,61 @@ describe("seed content", () => {
     }
   });
 
+  /**
+   * R9 made mechanical (D25). Until the `sensitive` field existed these three
+   * facts were true only because the prose happened to be written that way —
+   * and one of them was not actually true: Kamping Puoy shipped paired to
+   * Phnom Sampeau, framing one forced-labour site as the alternative to
+   * another. The refinement below is what caught it.
+   */
+  describe("memorial sites", () => {
+    const sensitive = getAllSpots().filter((s) => s.sensitive);
+
+    it("marks every known memorial site", () => {
+      expect(sensitive.map((s) => s.slug).sort()).toEqual([
+        "choeung-ek",
+        "kamping-puoy",
+        "phnom-sampeau",
+        "secret-lake",
+        "tuol-sleng",
+      ]);
+    });
+
+    it("never carries a pairing", () => {
+      for (const spot of sensitive) {
+        expect(spot.pairedWith, `${spot.slug} is paired`).toBeUndefined();
+      }
+    });
+
+    it("is never the anchor another spot points at", () => {
+      // The same failure read from the other end: "go here instead of Choeung
+      // Ek". The per-spot schema cannot see across spots, so it is checked here.
+      for (const spot of getAllSpots()) {
+        const anchor = getPairedSpot(spot);
+        if (!anchor) continue;
+        expect(anchor.sensitive, `${spot.slug} points at ${anchor.slug}`).toBeUndefined();
+      }
+    });
+
+    it("rejects a sensitive spot that carries a pairing, at parse time", () => {
+      const base = getSpotBySlug("tuol-sleng");
+      expect(base).toBeDefined();
+
+      const result = spotsSchema.safeParse([
+        {
+          ...base,
+          pairedWith: {
+            spotId: "royal-palace",
+            hook: { en: "Should never be writable." },
+          },
+        },
+      ]);
+
+      expect(result.success).toBe(false);
+      expect(JSON.stringify(result.error?.issues)).toContain("cannot carry a pairing");
+    });
+  });
+
   it("assigns every spot to a known city", () => {
     const known = new Set(cities.map((c) => c.id));
     for (const spot of getAllSpots()) {

@@ -20,6 +20,14 @@ export function PairingCard({
   dict: Dictionary;
   locale: string;
 }) {
+  /**
+   * The schema refinement stops a memorial site from *carrying* a pairing.
+   * This stops one from being the thing pointed *at* — "go here instead of
+   * Choeung Ek" is the same R9 failure read from the other end, and the
+   * per-spot schema cannot see across spots to catch it (D25).
+   */
+  if (anchor.sensitive) return null;
+
   return (
     <section className="rounded-lg border border-accent/40 bg-surface p-5">
       <p className="text-xs font-medium uppercase tracking-wide text-accent">

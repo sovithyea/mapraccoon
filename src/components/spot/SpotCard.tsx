@@ -42,7 +42,10 @@ export function SpotCard({
         <p className="mt-1.5 text-sm leading-relaxed text-muted">{spot.blurb.en}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <OffRadarMeter score={spot.offRadar} />
+          <OffRadarMeter score={spot.offRadar} sensitive={spot.sensitive} />
+          {spot.sensitive ? (
+            <span className="text-xs text-muted">Not ranked</span>
+          ) : null}
           <ul className="flex gap-1.5">
             {spot.categories.map((category) => (
               <li
