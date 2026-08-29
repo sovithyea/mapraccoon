@@ -8,6 +8,7 @@ import { buildableLocales, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { DayDock } from "@/components/route/DayDock";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { siteUrl } from "@/lib/site-url";
 import { getAllSpots } from "@/lib/spots";
 import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 
@@ -36,8 +37,31 @@ export async function generateMetadata({
   const { locale } = await params;
   const dict = await getDictionary(isLocale(locale) ? locale : "en");
   return {
+    /*
+      Absolute URLs for Open Graph. A preview is fetched by Telegram's or
+      Facebook's servers, which have nothing to resolve a relative path
+      against — without this Next emits relative image URLs and every shared
+      link previews blank. This product is distributed entirely by people
+      pasting links into group chats, so that is the front door, not a detail.
+    */
+    metadataBase: siteUrl(),
     title: { default: dict.site.name, template: `%s · ${dict.site.name}` },
     description: dict.site.description,
+    openGraph: {
+      type: "website",
+      siteName: dict.site.name,
+      title: dict.site.tagline,
+      description: dict.site.description,
+      locale: locale === "km" ? "km_KH" : "en_GB",
+      // The image itself comes from opengraph-image.tsx in this segment; Next
+      // fills in og:image, its type and its dimensions. Naming it here too
+      // would give the crawler two and let them disagree.
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.site.tagline,
+      description: dict.site.description,
+    },
   };
 }
 

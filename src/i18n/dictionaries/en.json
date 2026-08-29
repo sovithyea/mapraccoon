@@ -217,7 +217,9 @@
     "howManyStops": "How many places tonight?",
     "stopsHint": "The most-approved this many become the night. You arrange the times after.",
     "shorterAt": "Less time at {name}",
-    "longerAt": "More time at {name}"
+    "longerAt": "More time at {name}",
+    "shareTitle": "The plan for tonight",
+    "shareDescription": "Where the group landed, and what time you are at each place."
   },
   "vote": {
     "eyebrow": "Deciding together",
@@ -257,6 +259,8 @@
     "openLink": "Open the vote",
     "planTheNight": "Plan the night",
     "chosenHeading": "The night",
-    "chosenOf": "{count} of {total} places, in approval order"
+    "chosenOf": "{count} of {total} places, in approval order",
+    "shareTitle": "Where are we going tonight?",
+    "shareDescription": "Someone put a shortlist up. Tap yes or no on each place — it takes a minute, and there is nothing to sign up for."
   }
 }

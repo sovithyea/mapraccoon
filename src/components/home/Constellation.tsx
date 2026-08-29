@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { boundsOf, projectInto } from "@/lib/geo/project";
 import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
+import { plottableSpots } from "@/lib/spots/plottable";
 import type { Spot } from "@/lib/spots/schema";
 
 /**
@@ -36,20 +37,11 @@ export function Constellation({
   const [active, setActive] = useState<Spot | null>(null);
 
   const { points, areas } = useMemo(() => {
-    /*
-      Memorials are not dots on the going-out map (R9, D33).
-
-      They stay in the dataset, in the list and on their own page — D33 is
-      explicit about that. What they are not is a mark in the graphic sitting
-      under "let's finally plan an actual hangout": that is the product's voice
-      applied to a site of mass killing, which is the thing hard rule 5 forbids.
-
-      It was also framing the plot. Choeung Ek is five kilometres south of
-      everything else, so fitting the frame around it pushed all eighty-two
-      venues into the top half and left one lone dot in the empty bottom.
-      `constellation.test.ts` is what holds this, not this comment.
-    */
-    const plotted = spots.filter((spot) => !spot.sensitive);
+    // Memorials are not dots on a going-out map — see `plottableSpots`, which
+    // is where that rule lives now that two surfaces need it. Excluding
+    // Choeung Ek also stops one place five kilometres south of everything else
+    // from framing the whole plot.
+    const plotted = plottableSpots(spots);
     const project = projectInto(boundsOf(plotted.map((s) => s.coords)));
 
     // One label per neighbourhood, at the mean of its places. Below three it is

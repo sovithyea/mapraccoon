@@ -16,7 +16,54 @@ import { decodeBallot, resolveBallot } from "@/lib/vote/ballot";
  * without a round trip — but every vote it collects goes through /api/room,
  * which is the only thing holding a key.
  */
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+/*
+  `noindex` and dynamic: these URLs are user-generated, unbounded, and each one
+  is a shared secret. Nothing about them should be crawled or cached.
+
+  It still gets Open Graph tags, because `noindex` stops search engines and does
+  nothing to a chat app fetching a preview — and a preview is exactly what the
+  five people in the group see before they tap.
+
+  The copy is deliberately generic and does NOT decode the ballot. It could:
+  the id carries the candidates and the page decodes them a few lines below. But
+  naming the shortlist in the preview would hand it to whichever preview service
+  fetched the link, cached on infrastructure nobody in the group chose. "Where
+  are we going tonight?" gets them to tap, which is all the preview has to do.
+*/
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const dict = await getDictionary(isLocale(locale) ? locale : "en");
+  return {
+    robots: { index: false, follow: false },
+    title: dict.vote.shareTitle,
+    description: dict.vote.shareDescription,
+    openGraph: {
+      title: dict.vote.shareTitle,
+      description: dict.vote.shareDescription,
+      /*
+        Named explicitly. A child segment's `openGraph` REPLACES the parent's
+        rather than merging into it, so defining a title here silently dropped
+        the image the layout's `opengraph-image.tsx` contributes — on the two
+        routes that are actually shared. Verified by reading the tags off the
+        rendered page, which is the only way this is visible.
+
+        The path, not a re-export: the image is prerendered once at
+        /{locale}/opengraph-image, and giving these dynamic routes their own
+        image file would make Satori run on every preview fetch.
+      */
+      images: [`/${locale}/opengraph-image`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.vote.shareTitle,
+      description: dict.vote.shareDescription,
+    },
+  };
+}
 export const dynamic = "force-dynamic";
 
 export default async function VotePage({

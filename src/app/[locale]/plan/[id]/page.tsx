@@ -10,7 +10,44 @@ import { decodeDay } from "@/lib/route/share";
 import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import { notFound } from "next/navigation";
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+/*
+  Same reasoning as the ballot: `noindex` for crawlers, real Open Graph tags for
+  the chat app, and nothing decoded into the preview.
+*/
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const dict = await getDictionary(isLocale(locale) ? locale : "en");
+  return {
+    robots: { index: false, follow: false },
+    title: dict.route.shareTitle,
+    description: dict.route.shareDescription,
+    openGraph: {
+      title: dict.route.shareTitle,
+      description: dict.route.shareDescription,
+      /*
+        Named explicitly. A child segment's `openGraph` REPLACES the parent's
+        rather than merging into it, so defining a title here silently dropped
+        the image the layout's `opengraph-image.tsx` contributes — on the two
+        routes that are actually shared. Verified by reading the tags off the
+        rendered page, which is the only way this is visible.
+
+        The path, not a re-export: the image is prerendered once at
+        /{locale}/opengraph-image, and giving these dynamic routes their own
+        image file would make Satori run on every preview fetch.
+      */
+      images: [`/${locale}/opengraph-image`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.route.shareTitle,
+      description: dict.route.shareDescription,
+    },
+  };
+}
 
 const fill = (t: string, v: Record<string, string | number>): string =>
   Object.entries(v).reduce((o, [k, val]) => o.replaceAll(`{${k}}`, String(val)), t);
