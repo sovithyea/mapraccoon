@@ -1,0 +1,194 @@
+{
+  "site": {
+    "name": "MapRaccoon",
+    "tagline": "Cambodia, past the top five",
+    "description": "A discovery-first guide to Cambodia. Sorted by what you haven't heard of, not by what everyone already visits."
+  },
+  "nav": {
+    "discover": "Discover",
+    "cities": "Cities",
+    "backToDiscover": "Back to the map",
+    "openMap": "Open the map",
+    "theme": "Colour theme"
+  },
+  "hero": {
+    "eyebrow": "Cambodia, sorted backwards",
+    "headingA": "Everyone sees",
+    "headingB": "the same five places.",
+    "headingC": "Here is the rest.",
+    "lead": "Forty-two places across four cities, ranked by how far off the radar they are. The famous ones are still here — at the bottom, each one paired with the quieter place that beats it.",
+    "doorsLabel": "Choose where to start",
+    "doors": {
+      "hidden": {
+        "title": "The hidden ones",
+        "body": "Sorted least-known first"
+      },
+      "instead": {
+        "title": "Instead of the crowds",
+        "body": "Every famous place, paired"
+      },
+      "community": {
+        "title": "Where your money goes",
+        "body": "Community-run and conservation"
+      }
+    },
+    "proof": {
+      "label": "How this list is built",
+      "spots": "places, each one written by hand",
+      "sourced": "of them carry a source you can check",
+      "editorial": "Off-radar score is editorial, not an algorithm"
+    },
+    "constellationLabel": "Every place in the guide, positioned by its real coordinates",
+    "constellationHint": "Colour marks the base city"
+  },
+  "home": {
+    "heading": "Cambodia, past the top five",
+    "intro": "Everything below is sorted by how far off the radar it is. The famous places are still here — they're just at the bottom, where you can find the quieter alternative to each one.",
+    "resultCount": "{count} places",
+    "resultCountOne": "1 place",
+    "empty": "No places match these filters yet.",
+    "clearFilters": "Clear filters"
+  },
+  "picks": {
+    "eyebrow": "By base city",
+    "heading": "Pick a base, start at the bottom of the list",
+    "lead": "Each city's least-visited places first. Choose where you're staying and work down toward the famous ones, not up from them.",
+    "seeAll": "See all {count} in {city}",
+    "chooseCity": "Choose a base city"
+  },
+  "pairings": {
+    "eyebrow": "The whole idea",
+    "heading": "Instead of the crowds",
+    "lead": "Every hidden place in this guide names the famous one it replaces. Not a list of alternatives — a swap, with the reason attached.",
+    "insteadOf": "Instead of",
+    "go": "Go here",
+    "seeAll": "See every place"
+  },
+  "communitySection": {
+    "eyebrow": "Community-based tourism",
+    "heading": "Where your money actually goes",
+    "lead": "Some of these places are run by the village, the cooperative or the NGO that benefits from your visit. Where that is true, we say who and how.",
+    "runBy": "Run by {name}"
+  },
+  "filters": {
+    "city": "City",
+    "allCities": "All cities",
+    "category": "Category",
+    "sort": "Sort",
+    "sortOffRadar": "Off the radar first",
+    "sortPopularity": "Best known first",
+    "sortName": "A–Z",
+    "viewList": "List",
+    "viewMap": "Map",
+    "viewToggle": "Show list or map"
+  },
+  "categories": {
+    "temple": "Temples",
+    "nature": "Nature",
+    "food": "Food",
+    "culture": "Culture"
+  },
+  "spot": {
+    "offRadarLabel": "Off-radar score",
+    "offRadarHint": "Higher means fewer visitors and less coverage. Editorial for now — not an algorithm.",
+    "practical": "Practical",
+    "bestTime": "Best time",
+    "entryFee": "Entry",
+    "duration": "Plan for",
+    "free": "Free",
+    "minutes": "{count} min",
+    "hours": "{count} hr",
+    "sources": "Sources",
+    "sourcesHint": "Every claim on this page should be traceable. If something here is wrong, these are the places to check.",
+    "onTheMap": "On the map",
+    "nearby": "More in {city}",
+    "communityRun": "Community-run",
+    "sensitiveNote": "Not ranked, not paired, and not recommended as an alternative to anything. The off-radar score and the pairing that appear elsewhere on this site are withheld here by design.",
+    "unverifiedCaveat": "Fees and hours here are unverified and change without notice. Check the sources below before you travel.",
+    "visiting": "Visiting"
+  },
+  "pairing": {
+    "heading": "Instead of {name}",
+    "anchorLabel": "The famous one",
+    "seeAnchor": "See {name}"
+  },
+  "community": {
+    "heading": "Where your money goes",
+    "runBy": "Run by {name}"
+  },
+  "city": {
+    "heading": "{name}",
+    "placesIn": "Places in {name}"
+  },
+  "map": {
+    "missingTokenTitle": "No map here yet",
+    "missingTokenBody": "Every place on this site has real coordinates, and nothing here needs a map to work — the route builder included. Open the coordinates in your own maps app instead.",
+    "selectHint": "Select a pin to see the place.",
+    "viewDetails": "View details"
+  },
+  "footer": {
+    "blurb": "A discovery-first guide to Cambodia, sorted by what you haven't heard of.",
+    "cities": "Cities",
+    "about": "About",
+    "editorial": "Off-radar scores and hidden-gem tags on this site are editorial judgements, not algorithm output. Content is unverified on the ground — check the sources on each page before you travel."
+  },
+  "route": {
+    "dayTitle": "Your day",
+    "dayIn": "A day in {city}",
+    "emptyTitle": "A day with nothing in it yet",
+    "emptyBody": "Nine hours of daylight, starting {start}. Add a place from the list and it lands at the top of the frame below, with travel time to the next one worked out.",
+    "emptyFree": "0 stops · {free} free",
+    "startsAt": "Starts {start} · day frame {from}–{to}",
+    "summary": "{count} stops · {planned} planned · {left} left",
+    "summaryOne": "1 stop · {planned} planned · {left} left",
+    "summaryOver": "{count} stops · {planned} planned · {over} past {end}",
+    "dayAverage": "Day off-radar average {average} · {band}",
+    "dayAverageDenominator": "({scored} of {total} stops scored)",
+    "estimateNote": "Arrival times are estimates — straight-line distance, no routing service yet",
+    "legEstimate": "est. {minutes} · {km} km",
+    "dwellHere": "{duration} here",
+    "dwellMinimum": "{duration} here, as a minimum",
+    "notRanked": "not ranked, not paired",
+    "free": "free",
+    "moveUp": "Move {name} earlier",
+    "moveDown": "Move {name} later",
+    "remove": "Remove {name} from the day",
+    "addNext": "Add a {ordinal} stop — {left} left after {end}",
+    "addFirst": "Start with the least-visited place in {city}",
+    "addFirstNote": "The default sort, applied to your day",
+    "suggestionsNote": "Least-visited first, and only what fits",
+    "dayFull": "The day is full. {left} left before {end}.",
+    "dayFullBody": "Anything else needs room made for it. Two ways to make some:",
+    "runLater": "Run the day to {time}",
+    "trimStop": "Trim a stop — {name} is {duration}",
+    "overBy": "{over} past {end}",
+    "addCost": "Add · {duration}",
+    "addOver": "Add · {over} over",
+    "addStartDay": "Start a day in {city} · {duration}",
+    "added": "In your day · stop {index}",
+    "addFits": "Fits. {left} would still be left.",
+    "addOverExplain": "Adding this puts you {over} past {end}. Still allowed.",
+    "tabTimeline": "Timeline",
+    "tabReorder": "Reorder",
+    "tabMap": "Map",
+    "tabRoute": "Route",
+    "reorderNote": "Order changes retime the day. Dwell is editable per stop.",
+    "stays": "stays {duration}",
+    "staysMinimum": "stays {duration} minimum",
+    "reverseDay": "Reverse the day",
+    "shortestOrder": "Shortest driving order",
+    "shortestSaves": "Shortest order saves {minutes} of travel.",
+    "shortestMovesSensitive": "It puts {name} at {time} — worth thinking about.",
+    "openDay": "Open your day",
+    "closeDay": "Close",
+    "clearDay": "Clear this day",
+    "sharedTitle": "A day, shared",
+    "sharedSubtitle": "{count} places in {city}, {from} to {to}",
+    "sharedOpen": "Open this day and edit it",
+    "sharedMemorialNote": "One stop is a memorial site and is drawn without a score.",
+    "sharedBadLink": "This link doesn't describe a day we can read.",
+    "noMapNeeded": "No map key configured — the route needs none",
+    "shareDay": "Share this day",
+    "shareCopied": "Link copied"
+  }
+}

@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+/*
+ * Palette — "Laterite & Monsoon".
+ *
+ * Every value here is verified, not chosen by eye: WCAG AA (4.5:1) for text,
+ * and CIELAB deltaE > 25 between any two colours that carry different meanings
+ * on the same page. The previous palette failed both — `--forest-mid` and
+ * `--cat-nature` were literally the same colour, gold collided with the temple
+ * category, and two of the four cities were indistinguishable. See D21.
+ *
+ * Three colour ROLES, and nothing else may use them:
+ *   --accent   institutional green. CTAs and links.
+ *   --gold     "where your visitor money goes". Community blocks only.
+ *   --city-*   a city's identity, the same everywhere it appears.
+ *
+ * Category colour is NOT a page-level role. It identifies pin layers on the
+ * map and appears nowhere else — see docs/DESIGN-SYSTEM.md.
+ */
+:root {
+  --background: #faf6ef;
+  --surface: #fffdf8;
+  --surface-sunk: #f1ead9;
+  --ink: #141a16;
+  --foreground: #1d2621;
+  --muted: #655d51;
+  --border: #e1d8c6;
+
+  --forest: #123a31;
+  --forest-deep: #0b2620;
+  --forest-mid: #276353;
+  --accent: #123a31;
+  --accent-contrast: #fdfaf4;
+  --gold: #7e5a0c;
+
+  /* Map pin layers only. */
+  --cat-temple: #b07a0f;
+  --cat-nature: #2e7d48;
+  --cat-food: #c2410c;
+  --cat-culture: #7c4dbd;
+
+  /*
+   * Two variants per city, because one colour cannot do both jobs:
+   *   --city-*      large fill behind white text (stays dark in both modes)
+   *   --city-*-ink  small marks and text on the page background (adapts)
+   */
+  --city-phnom-penh: #a83c22;
+  --city-siem-reap: #2f5296;
+  --city-kampot-kep: #0e6b8a;
+  --city-battambang: #7d3a5c;
+
+  --city-phnom-penh-ink: #a83c22;
+  --city-siem-reap-ink: #2f5296;
+  --city-kampot-kep-ink: #0e6b8a;
+  --city-battambang-ink: #7d3a5c;
+}
+
+/*
+ * Dark mode has two triggers and one set of values.
+ *
+ * The OS preference is the default; an explicit choice from the theme toggle
+ * wins over it in both directions, which is why the media query excludes
+ * `[data-theme="light"]` rather than simply applying.
+ *
+ * The two blocks below MUST define the same token names. `globals.test.ts`
+ * asserts it — a token defined in only one of them is the exact shape of the
+ * bug D21 and C13 were about, and it would only appear for the half of users
+ * who had used the toggle.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --background: #101310;
+    --surface: #171b16;
+    --surface-sunk: #1e231d;
+    --ink: #f4efe4;
+    --foreground: #ece5d8;
+    --muted: #a1988a;
+    --border: #2d342c;
+
+    --forest: #57b79c;
+    --forest-deep: #08150f;
+    --forest-mid: #6cc3aa;
+    --accent: #57b79c;
+    --accent-contrast: #08150f;
+    --gold: #d9a83f;
+
+    --cat-temple: #d9a441;
+    --cat-nature: #63c684;
+    --cat-food: #f2915f;
+    --cat-culture: #b6a0f2;
+
+    /* Fills keep their dark values — they always carry white text. */
+    --city-phnom-penh-ink: #e08a6c;
+    --city-siem-reap-ink: #8fabec;
+    --city-kampot-kep-ink: #5cbcd9;
+    --city-battambang-ink: #dc93b8;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+    --background: #101310;
+    --surface: #171b16;
+    --surface-sunk: #1e231d;
+    --ink: #f4efe4;
+    --foreground: #ece5d8;
+    --muted: #a1988a;
+    --border: #2d342c;
+
+    --forest: #57b79c;
+    --forest-deep: #08150f;
+    --forest-mid: #6cc3aa;
+    --accent: #57b79c;
+    --accent-contrast: #08150f;
+    --gold: #d9a83f;
+
+    --cat-temple: #d9a441;
+    --cat-nature: #63c684;
+    --cat-food: #f2915f;
+    --cat-culture: #b6a0f2;
+
+    /* Fills keep their dark values — they always carry white text. */
+    --city-phnom-penh-ink: #e08a6c;
+    --city-siem-reap-ink: #8fabec;
+    --city-kampot-kep-ink: #5cbcd9;
+    --city-battambang-ink: #dc93b8;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-ink: var(--ink);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-mid: var(--forest-mid);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-gold: var(--gold);
+
+  --color-cat-temple: var(--cat-temple);
+  --color-cat-nature: var(--cat-nature);
+  --color-cat-food: var(--cat-food);
+  --color-cat-culture: var(--cat-culture);
+
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-dm-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Eyebrow label: the small tracked-out uppercase line above a section heading. */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--forest-mid);
+}
+
+/* Horizontal card rails. Scrollbar hidden, scrolling still works. */
+.rail {
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mapbox GL's stylesheet is light-only; keep its chrome on our surfaces. */
+.mapboxgl-popup-content {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+}
+.mapboxgl-popup-tip {
+  border-top-color: var(--surface);
+  border-bottom-color: var(--surface);
+}
+.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-attrib a {
+  color: var(--muted);
+}
