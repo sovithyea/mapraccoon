@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 
+import { AddToDay } from "@/components/route/AddToDay";
 import { OffRadarMeter } from "@/components/spot/OffRadarMeter";
 import { getCity } from "@/lib/spots/cities";
+import type { Dictionary } from "@/i18n/get-dictionary";
 import type { Spot } from "@/lib/spots/schema";
 
 export function SpotCard({
@@ -12,12 +14,15 @@ export function SpotCard({
   active,
   onHover,
   onSelect,
+  dict,
 }: {
   spot: Spot;
   locale: string;
   active?: boolean;
   onHover?: (id: string | null) => void;
   onSelect?: (id: string) => void;
+  /** When present, the card carries the priced add affordance (D24). */
+  dict?: Dictionary;
 }) {
   return (
     <li
@@ -42,7 +47,10 @@ export function SpotCard({
         <p className="mt-1.5 text-sm leading-relaxed text-muted">{spot.blurb.en}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <OffRadarMeter score={spot.offRadar} />
+          <OffRadarMeter score={spot.offRadar} sensitive={spot.sensitive} />
+          {spot.sensitive ? (
+            <span className="text-xs text-muted">Not ranked</span>
+          ) : null}
           <ul className="flex gap-1.5">
             {spot.categories.map((category) => (
               <li
@@ -59,6 +67,18 @@ export function SpotCard({
           <p className="mt-2 text-xs text-accent">Community-run</p>
         ) : null}
       </Link>
+
+      {/*
+        Outside the <Link>, not inside it: a button nested in an anchor is
+        invalid, and the whole card being a link is what makes the list
+        scannable. AddToDay renders nothing until a day exists, so a visitor
+        who has never built one sees the card exactly as before (D24).
+      */}
+      {dict ? (
+        <div className="px-4 pb-4">
+          <AddToDay spot={spot} dict={dict} />
+        </div>
+      ) : null}
     </li>
   );
 }

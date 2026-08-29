@@ -9,6 +9,8 @@ import type { Dictionary } from "@/i18n/get-dictionary";
 import { sortSpots, type SortMode } from "@/lib/scoring";
 import { cities } from "@/lib/spots/cities";
 import type { Spot } from "@/lib/spots/schema";
+import { RoutePane } from "@/components/route/RoutePane";
+import { useRouteStops } from "@/components/route/useRouteStops";
 import { useFilters } from "@/store/filters";
 
 // mapbox-gl touches `window` at import time, so the map never server-renders.
@@ -19,8 +21,14 @@ const SpotMap = dynamic(
 
 const sortModes: SortMode[] = ["off-radar", "popularity", "name"];
 
-/** Mobile-only display state. Not in the filter store — it is not a filter. */
-type MobileView = "list" | "map";
+/** Display state, not filter state — deliberately not in the filter store. */
+type MobileView = "list" | "map" | "route";
+
+/**
+ * The right pane's third state (D23). The route is never a page you navigate
+ * to, because adding a stop from a spot page must not cost you the spot page.
+ */
+type Pane = "map" | "route";
 
 export function DiscoverView({
   spots,
@@ -46,6 +54,16 @@ export function DiscoverView({
   } = useFilters();
 
   const [view, setView] = useState<MobileView>("list");
+  const { stops } = useRouteStops();
+
+  /**
+   * Route wins the default once a stop exists, and also when there is no
+   * Mapbox token — which is this repo's actual deployed state (D11). A map
+   * pane that renders a placeholder is a worse default than a working route.
+   */
+  const hasToken = Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
+  const [pane, setPane] = useState<Pane | null>(null);
+  const activePane: Pane = pane ?? (stops.length > 0 || !hasToken ? "route" : "map");
 
   const visible = useMemo(() => {
     const filtered = spots.filter((spot) => {
@@ -124,7 +142,7 @@ export function DiscoverView({
               role="group"
               aria-label={dict.filters.viewToggle}
             >
-              {(["list", "map"] as const).map((mode) => (
+              {(["list", "map", "route"] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
@@ -134,16 +152,25 @@ export function DiscoverView({
                     view === mode
                       ? "bg-accent text-accent-contrast"
                       : "text-muted hover:text-foreground"
+                  } ${
+                    // Three buttons plus the result count do not fit legibly at
+                    // 390. Below sm the route is reached through the dock bar
+                    // instead — two ways in to one view, by width (D23).
+                    mode === "route" ? "hidden sm:block" : ""
                   }`}
                 >
-                  {mode === "list" ? dict.filters.viewList : dict.filters.viewMap}
+                  {mode === "list"
+                    ? dict.filters.viewList
+                    : mode === "map"
+                      ? dict.filters.viewMap
+                      : dict.route.tabRoute}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        <div className={view === "map" ? "hidden lg:block" : undefined}>
+        <div className={view === "list" ? undefined : "hidden lg:block"}>
           {visible.length === 0 ? (
             <div className="p-5">
               <p className="text-sm text-muted">{dict.home.empty}</p>
@@ -165,6 +192,7 @@ export function DiscoverView({
                   active={spot.id === hoveredId || spot.id === selectedId}
                   onHover={setHovered}
                   onSelect={setSelected}
+                  dict={dict}
                 />
               ))}
             </ul>
@@ -174,21 +202,68 @@ export function DiscoverView({
 
       <div
         className={`flex-1 p-5 lg:block lg:h-auto ${
-          view === "map" ? "h-[70vh]" : "hidden lg:block"
+          view === "map" || view === "route" ? "min-h-[70vh]" : "hidden lg:block"
         }`}
       >
+        {/* Tabs, not a third column: splitting the lg remainder in two costs
+            the timeline its time column, and the map is absent by default
+            with no token anyway (D23). */}
+        <div
+          className="mb-3 hidden rounded-full border border-border p-0.5 lg:inline-flex"
+          role="group"
+          aria-label={dict.filters.viewToggle}
+        >
+          {(["map", "route"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={activePane === mode}
+              onClick={() => setPane(mode)}
+              className={`min-h-9 rounded-full px-4 text-xs font-semibold transition-colors ${
+                activePane === mode
+                  ? "bg-accent text-accent-contrast"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {mode === "map" ? dict.route.tabMap : dict.route.tabRoute}
+              {mode === "route" && stops.length > 0 ? ` ${stops.length}` : ""}
+            </button>
+          ))}
+        </div>
+
         <div className="h-full min-h-64 overflow-hidden rounded-lg border border-border">
-          <SpotMap
-            spots={visible}
-            city={city}
-            selectedId={selectedId}
-            hoveredId={hoveredId}
-            onSelect={setSelected}
-            onHover={setHovered}
-            missingTokenTitle={dict.map.missingTokenTitle}
-            missingTokenBody={dict.map.missingTokenBody}
-            legend={dict.categories}
-          />
+          {/*
+            Two independent visibility rules, not one: below `lg` the pane
+            follows the mobile `view` toggle, and at `lg` it follows the pane
+            tabs. Written out rather than composed, because the composed
+            version was unreadable and this is the kind of thing that ships a
+            layout bug nobody notices until the probe runs.
+          */}
+          <div
+            className={`${view === "route" ? "block" : "hidden"} ${
+              activePane === "route" ? "lg:block" : "lg:hidden"
+            }`}
+          >
+            <RoutePane candidates={visible} dict={dict} />
+          </div>
+
+          <div
+            className={`h-full ${view === "map" ? "block" : "hidden"} ${
+              activePane === "map" ? "lg:block" : "lg:hidden"
+            }`}
+          >
+            <SpotMap
+              spots={visible}
+              city={city}
+              selectedId={selectedId}
+              hoveredId={hoveredId}
+              onSelect={setSelected}
+              onHover={setHovered}
+              missingTokenTitle={dict.map.missingTokenTitle}
+              missingTokenBody={dict.map.missingTokenBody}
+              legend={dict.categories}
+            />
+          </div>
         </div>
       </div>
     </div>

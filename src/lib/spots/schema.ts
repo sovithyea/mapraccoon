@@ -52,6 +52,18 @@ export const spotSchema = z.object({
   offRadar: z.number().int().min(0).max(100),
 
   /**
+   * Sites of mass killing or forced labour. R9: these are never written in the
+   * product's voice — no off-radar meter, no pairing, no badge, no generated
+   * blurb, no "escape the crowds" framing. Until D25 that rule was upheld only
+   * by how the prose happened to be written, so nothing in the UI could branch
+   * on it and any future generated copy would have broken it silently (C17).
+   *
+   * Marking a spot here is what makes the rule enforceable: components return
+   * null for these, and the refinement below rejects a pairing at build time.
+   */
+  sensitive: z.literal("memorial").optional(),
+
+  /**
    * The narrative pairing: the famous place this one is an alternative to.
    * Anchors (Angkor Wat, the Royal Palace) leave this empty — they are the
    * things other spots pair *to*.
@@ -80,6 +92,21 @@ export const spotSchema = z.object({
 
   /** Provenance for every claim above. Required — no unattributable spots. */
   sources: z.array(z.url()).min(1),
+}).superRefine((spot, ctx) => {
+  /**
+   * R9, enforced at build time rather than trusted to editorial discipline.
+   * "Instead of Angkor Wat, try this killing field" is the sentence this
+   * exists to make impossible to write.
+   */
+  if (spot.sensitive && spot.pairedWith) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["pairedWith"],
+      message:
+        `"${spot.slug}" is marked sensitive and cannot carry a pairing — ` +
+        "a memorial site is never an alternative to somewhere else (R9, D25)",
+    });
+  }
 });
 
 export type LocalizedText = z.infer<typeof localizedTextSchema>;

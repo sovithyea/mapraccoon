@@ -427,6 +427,7 @@ export const spots: Spot[] = [
       en: "A secondary school converted into Security Prison 21, where at least 12,000 people were interrogated and sent to Choeung Ek. The classrooms, the photographs of the detained, and the survivors' accounts are left largely as found.\n\nThe audio guide, narrated by a survivor, is what makes the visit comprehensible rather than merely harrowing. Allow time afterwards to sit down.",
     },
     offRadar: 5,
+    sensitive: "memorial",
     practical: {
       bestTime: { en: "Open 8am–5pm; go early, and go before Choeung Ek" },
       entryFeeUsd: 10,
@@ -449,6 +450,7 @@ export const spots: Spot[] = [
       en: "The best known of several hundred killing fields, where those held at S-21 were executed. A memorial stupa holds thousands of skulls; the walking route passes excavated grave pits and the killing tree.\n\nThe audio guide is again essential. Fragments of cloth and bone still surface in the paths after heavy rain.",
     },
     offRadar: 6,
+    sensitive: "memorial",
     practical: {
       bestTime: { en: "Afternoon, after Tuol Sleng; open 8am–5:30pm" },
       entryFeeUsd: 6,
@@ -829,6 +831,7 @@ export const spots: Spot[] = [
       en: "Not a beauty spot with a cute name — the lake was excavated by forced labour in the late 1970s and many of those who dug it died doing so. It is unmarked, unmemorialised, and locally well understood.\n\nThe backroad out from Kampot past pepper farms and the lake is one of the best rides in the country. Go knowing what you are looking at.",
     },
     offRadar: 70,
+    sensitive: "memorial",
     practical: {
       bestTime: { en: "Late afternoon by motorbike, on the loop from Kampot" },
       entryFeeUsd: 0,
@@ -931,6 +934,7 @@ export const spots: Spot[] = [
       en: "A limestone hill holding a Khmer Rouge execution site — victims were thrown through a skylight into the cave below, now a memorial with a reclining Buddha and a glass case of remains.\n\nAt around 5:30pm a column of wrinkle-lipped bats streams out of a cliff fissure for close to an hour. The two things sit ten minutes apart and most visitors do both.",
     },
     offRadar: 25,
+    sensitive: "memorial",
     practical: {
       bestTime: { en: "Arrive 4pm for the caves, stay for the 5:30pm bat exodus" },
       entryFeeUsd: 3,
@@ -1085,15 +1089,10 @@ export const spots: Spot[] = [
     coords: [103.0000, 13.0331],
     blurb: { en: "A Khmer Rouge irrigation dam between two hills, now where Battambang picnics." },
     description: {
-      en: "An eight-kilometre dam built by forced labour in the late 1970s at enormous human cost, and never finished to the design it was meant to serve. It now irrigates the plain and doubles as the local swimming and picnic spot, with stilted platforms over the water.\n\nAt weekends it is full of Cambodian families; midweek it is quiet. Both facts are worth knowing before you go.",
+      en: "An eight-kilometre dam built by forced labour in the late 1970s at enormous human cost, and never finished to the design it was meant to serve. It now irrigates the plain and doubles as the local swimming and picnic spot, with stilted platforms over the water. It is the other Khmer Rouge site outside Battambang, alongside Phnom Sampeau — no ticket booth and no tour circuit.\n\nAt weekends it is full of Cambodian families; midweek it is quiet. Both facts are worth knowing before you go.",
     },
     offRadar: 78,
-    pairedWith: {
-      spotId: "phnom-sampeau",
-      hook: {
-        en: "The other Khmer Rouge site outside Battambang — no ticket booth, no tour circuit, and today the place the town comes to swim.",
-      },
-    },
+    sensitive: "memorial",
     practical: {
       bestTime: { en: "Weekday afternoon; lotus flowers in the wet season" },
       entryFeeUsd: 0,

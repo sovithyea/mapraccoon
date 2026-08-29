@@ -97,14 +97,55 @@ The `.eyebrow` utility (12px, 700, uppercase, `0.14em` tracking, `--forest-mid`)
 
 **`CommunityImpact`** — gold eyebrow, impact sentence, then "Run by {name}" with an optional outbound link. Gold appears nowhere else, so the reader learns it means "this is about where the money goes".
 
+## The spot page, after Phase 2
+
+Rebuilt from the Claude Design direction (turn B). The three things that carry the page were the three buried in it: the meter was an 18px artifact in a chip row, the pairing sat after three paragraphs, and `order-1` on the whole `<aside>` dragged the map and sources above the pairing so a phone reader met it fifth.
+
+**Reading order, at every width:** name → blurb → score → pairing → practical → description → community → map → sources. The aside is split in two rather than flipped: practical early, reference material last.
+
+**Score panel** (`OffRadarPanel`) — replaces the inline meter in the header. Playfair 34px (46px at `lg`), four `offRadarBand()` segments at 7px with the active one in `--accent`, and the editorial caveat attached to the number it qualifies rather than floating beneath as a page footnote.
+
+**Two full-bleed bands** break the page's card rhythm, and nothing else does:
+- **Pairing** — `-mx-5` onto `--surface-sunk`, eyebrow naming the anchor in `--accent`, hook in Playfair 20px rising to 33px at `lg`, the anchor's own meter and link in a 210px column.
+- **Community** — same bleed, a 3px `--gold` left rule, impact sentence in Playfair. Gold appears nowhere else, and never on a memorial page.
+
+**Categories are neutral text** on this page — `Nature · Food`, not outlined pills. Category colour is a pin layer (D21) and the chips put two more shapes beside the city dot.
+
+**Practical** is three columns below `lg` and a stacked list inside the 320px aside above it. Same DOM, one grid class. The unverified-content caveat sits inside this card against the fee and the hours, which are the numbers that go stale (C18).
+
+### The memorial variant (D25)
+
+Subtraction driven by `sensitive: "memorial"`, never a judgement made at render time. Measured on `/en/spot/tuol-sleng` against `/en/spot/trapeang-sangkae`:
+
+| | Memorial | Ordinary |
+|---|---|---|
+| Article width at 1280 | 596px | 1024px |
+| `h1` | Playfair 33px / 400 | Playfair 36px / 700 |
+| Section radii | 0 | 1rem / 1.5rem |
+| City dot | absent | present |
+| Gold on the page | 0 elements | community band |
+| Score, meter, pairing | none | all three |
+| Practical heading | "Visiting" | "Practical" |
+
+The absence is stated rather than left silent — a reader who has seen five scored pages reads a missing score as a data gap, and it is not one.
+
 ## Layout
 
 - Content column caps at `max-w-6xl` (72rem); prose inside a spot page caps narrower.
 - Sections separate with `border-t border-border`, alternating `--background` and `--surface-sunk`.
-- Rails scroll horizontally with `snap-x snap-mandatory`, cards at `85vw` on mobile and a fixed rem width above. `.rail` hides the scrollbar without disabling scrolling.
+- Three horizontal rails exist, and they are not one pattern. `.rail` is only the scrollbar-hiding utility; the scroll behaviour is per-rail:
+  - **Pairing rail** (`components/home/PairingRail.tsx`) — the only one that snaps: `snap-x snap-mandatory`, cards `85vw` on mobile and a fixed `26rem` from `sm` up, and on `lg` it aligns to the 72rem column while bleeding past it via `px-[max(1.25rem,calc((100vw-72rem)/2))]`.
+  - **Header city rail** (`app/[locale]/layout.tsx`) — plain `flex overflow-x-auto`, no snap. A second header row below `md`, since the inline nav list is hidden there.
+  - **Discover chip rails** (`components/DiscoverView.tsx`) — plain `flex overflow-x-auto` below `sm`, wrapping from `sm` up. Bleeds to the screen edge with `-mx-5 px-5`.
+- Other multi-item sections are grids, not rails. `CommunityRail` is a `lg` sidebar beside an `sm:grid-cols-2` grid, despite the name.
 - Radii: 2xl (1rem) for list cards, 3xl (1.5rem) for feature panels, full for chips and buttons.
 
 ## Dark mode
+
+**Two triggers, one set of values (D26).** The OS preference applies through `@media (prefers-color-scheme: dark)` scoped to `:root:not([data-theme="light"])`; an explicit choice from the header's auto/light/dark control applies through `:root[data-theme="dark"]` and wins in both directions. The two blocks must define the same tokens, and `src/app/globals.test.ts` fails if they drift — a token present in only one would break solely for people who had used the toggle, and would survive every review done with the OS setting.
+
+The stored choice is applied by an inline script before first paint.
+
 
 Every token is redefined under `@media (prefers-color-scheme: dark)`. Surfaces, text, accent, gold, city `-ink` variants and category pins all move; **city fills do not**, because they always carry white text.
 

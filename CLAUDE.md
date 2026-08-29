@@ -29,11 +29,12 @@ Run `build` and `lint` after every step of a plan, not just at the end. Plan ste
 | `docs/ARCHITECTURE.md` | What the product is, and why Mapbox rather than MapLibre |
 | `docs/BUILD-PLAN.md` | Seven phases, dependency graph, sequencing |
 | `docs/PROGRESS.md` | Where things stand, who owns what, open blockers |
-| `docs/DECISIONS.md` | Every settled call, D1–D17 |
+| `docs/DECISIONS.md` | Every settled call, D1–D21 |
 | `docs/VERIFIED.md` | Observed fact vs. assumption, plus corrections |
 | `docs/RISKS.md` | R1–R11, ordered by severity |
 | `docs/WORKFLOW.md` | Branching, commits, definition of done |
 | `docs/DESIGN-SYSTEM.md` | Palette, type, the components that carry meaning |
+| `docs/COMPETITOR.md` | What `themapcambodia.com` actually does, what to take and what to reject |
 | `specs/N-name/spec.md` | The spec for a given phase |
 
 ## Hard rules

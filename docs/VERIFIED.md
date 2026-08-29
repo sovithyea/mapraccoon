@@ -121,3 +121,67 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C13 | Dark mode had never been looked at, and contained two near-invisible text defects (1.15:1, 2.46:1) | `docs/PROGRESS.md` had listed this as a known gap; probing the live DOM confirmed it | 2026-08-29 |
 | C14 | The picks list swatch was a tinted grey block carrying no information — it read as a broken image | Visible in the first desktop screenshot. Replaced with the item's rank in the off-radar order | 2026-08-29 |
 | C15 | `tools/contrast.mjs` produced confident false failures on its first two runs, from parsing `oklab()` as `rgb()` and from stopping the backdrop walk at a translucent layer | Caught by checking a flagged element's computed style instead of trusting the tool. A measuring tool that has not been checked against a known-good case is not evidence | 2026-08-29 |
+| C16 | `docs/DESIGN-SYSTEM.md` described rails as one pattern — "rails scroll horizontally with `snap-x snap-mandatory`, cards at `85vw` on mobile". Three rails exist and only one behaves that way | `grep -rn "overflow-x-auto" src --include="*.tsx"` returns three hits; `grep -rn "snap-x"` returns one. The header city rail and the `/discover` chip rails are plain `overflow-x-auto` with no snap and no card sizing. `.rail` is only the scrollbar-hiding utility. Doc corrected | 2026-08-29 |
+| C17 | R9 (memorial sites are never written in the product's voice) is enforced by nothing but the prose. There is no field in the content schema marking those five spots, so no component can branch on it | Read `src/lib/spots/schema.ts` — no memorial, tone or severity field. The sober treatment exists only in the hand-written copy in `src/data/spots.ts` (Choeung Ek line 447, the Secret Lake 829, Phnom Sampeau 931). A future generated blurb, badge or off-radar meter would apply to them silently | 2026-08-29 |
+| C18 | The footer caveat that R1 and R4 depend on is the least prominent text in the footer | Read `src/app/[locale]/layout.tsx:159-164`: the unverified-content sentence sits in the last of four columns at `text-xs text-muted`. The wording was never softened; the layout softened it. Open design question, not yet fixed | 2026-08-29 |
+| C19 | Kamping Puoy shipped paired to Phnom Sampeau — one forced-labour site framed as the alternative to another, hooked "no ticket booth, no tour circuit, and today the place the town comes to swim". A live R9 violation in Phase 1 content | Caught by the `sensitive` refinement added in D25 the moment the five sites were marked; the build failed. Pairing removed, the factual half kept in the description | 2026-08-29 |
+| C20 | The travel estimate used a flat 22 km/h, which turned the 40-minute Kep–Kampot drive into 1h 50m and ate seven hours of a nine-hour day in phantom travel | Found by running the builder over CDP, not by reading it. The distance factor had been calibrated against NH6 and the speed never had been. Replaced with distance-banded speeds (16 / 36 / 55 km/h) calibrated against two journeys with known real durations | 2026-08-29 |
+| C21 | `MapPlaceholder` printed `NEXT_PUBLIC_MAPBOX_TOKEN` in a `<code>` block to travellers. The token-missing state is this repo's default deployed state (D11), so this was the normal experience, not an edge case | Read off the rendered page at 390px. Replaced with the spot's real coordinates and an outbound maps link; the `SpotMap` test now asserts the variable name is *absent* rather than present | 2026-08-29 |
+| C22 | The route suggestion tray offered spots from other cities — a Battambang spot priced itself at "28h 20m over" inside a Kampot day. `AddToDay` guarded on city; the tray did not | Read off the rendered tail row at 1280px. Tray now filtered to the day's city | 2026-08-29 |
+
+## Phase 2 — Itinerary builder
+
+Measured on 2026-08-29 at `phase/2-itinerary`, against `specs/2-itinerary/spec.md`.
+
+### Toolchain
+
+- `npm run build`, `lint`, `typecheck` clean; `npm test` 67 passing across 8 files (was 20 across 3) — **VERIFIED**
+- 51 pages still statically generated. The day sheet uses the History API rather than `useSearchParams`, which would have opted every page into dynamic rendering — **VERIFIED**
+
+### Behaviour, with no Mapbox token
+
+The token is unset, which is this repo's real state (B1, D11). Everything below was observed with it unset.
+
+- A day builds, reorders and schedules end to end. A seeded three-stop Kampot day renders `3 stops · 6h 15m planned · 2h 15m left` — **VERIFIED**
+- The dock bar appears only once a day exists, measures 57px including its border, and reads `A day in Kampot & Kep · 3 stops · 1h 10m left` at 390px — **VERIFIED**
+- No page mentions an environment variable; the no-map state carries real coordinates and an outbound link (see C21) — **VERIFIED**
+- Every travel figure on screen is prefixed `est.` — **VERIFIED**
+- `fullThresholdMins()` computes 50 minutes from the content, and a test proves it moves when a shorter spot enters the dataset — **VERIFIED**
+- No add button is ever disabled; over-budget adds render `Add · 4h over` and stay pressable with `aria-describedby` to their cost line — **VERIFIED** (0 disabled add buttons found in the DOM)
+
+### Memorial sites (D25, R9)
+
+- All five pages — Tuol Sleng, Choeung Ek, the Secret Lake, Kamping Puoy, Phnom Sampeau — render no meter in the article header, no pairing, and the explicit withheld statement — **VERIFIED** (probed individually, scoped to `article > header`)
+- In the route, a memorial row renders `2h here, as a minimum · not ranked, not paired` with `—` in place of a score — **VERIFIED**
+- The day average footnotes its denominator: `Day off-radar average 19 · Famous (2 of 3 stops scored)` — **VERIFIED**
+- A sensitive spot carrying a `pairedWith` fails `spotsSchema.safeParse` — **VERIFIED** (test)
+
+### Layout and colour
+
+- `tools/probe.mjs` at 390, 768 and 1280 on `/en`, `/en/discover` and two spot pages: `scrollWidth - innerWidth = 0` on all twelve — **VERIFIED**
+- `tools/contrast.mjs` on `/discover`, an ordinary spot page and a memorial page, in both colour modes: 0 failures on all six — **VERIFIED**
+
+### Second pass — the design direction's layout, the reorder tab and the share view
+
+- Spot page rebuilt to the direction. Measured at 1280 on `/en/spot/tuol-sleng` against `/en/spot/trapeang-sangkae`: memorial article 596px vs 1024px, `h1` Playfair 33px/400 vs 36px/700, every section radius 0, no city dot, **0 gold elements** on the memorial page, heading "Visiting" not "Practical" — **VERIFIED**
+- The pairing and community bands bleed to the viewport: 390px against 350px for cards on a 390px screen — **VERIFIED**
+- Reading order on `/en/spot/trapeang-sangkae` at 390, measured by position rather than DOM order: score 421 → pairing 599 → practical 944 → community 1555 → map 1809 → sources 2113 — **VERIFIED**
+- `/plan/[id]` renders a shared day from the URL alone with no token and no backend: `3 places in Kampot & Kep, 08:30 to 14:45`, 3 dots and 2 dashed legs on the Constellation graticule, and `One stop is a memorial site and is drawn without a score` — **VERIFIED**
+- A malformed share link renders `This link doesn't describe a day we can read`, not a 500 — **VERIFIED**
+- The projection is now one function (`src/lib/geo/project.ts`) shared by `Constellation` and the share view, so the two cannot drift — **VERIFIED**
+- 0 overflow at 390/768/1280 and 0 contrast failures in both modes, including `/plan/[id]` — **VERIFIED**
+
+### Theme toggle (D26)
+
+- The header control moves the palette in all three states: `dark` sets `data-theme="dark"` and `body` background `rgb(16, 19, 16)`; `light` sets `#faf6ef`; `auto` removes the attribute and follows the system — **VERIFIED**
+- A stored dark choice is applied at load with the attribute already present on first evaluation, so there is no light flash — **VERIFIED**
+- All 17 palette tokens resolve to their dark values under explicit `data-theme="dark"` — **VERIFIED**
+- Contrast under explicit dark: 0 failures across 363, 72 and 56 text nodes on `/discover`, an ordinary spot page and a memorial page — **VERIFIED**
+- 0 overflow at 390/768/1280 with the control added to the header — **VERIFIED**
+
+### Not verified
+
+- Pins rendering and click/hover sync still need a token (B1, unchanged from Phase 1)
+- The builder has been exercised by seeding `localStorage` and reading the rendered DOM, not by driving a full click-through add → reorder → share journey
+- The reorder tab's controls are built and typed but have not been clicked in a browser; its underlying reorder logic is covered by tests
+- The colour of every frame in the design direction is the pre-D21 palette (543 occurrences of the old values against 17 of the shipped ones). The layout was implemented; the colours deliberately were not. The app will not match the frames' hues and is not intended to

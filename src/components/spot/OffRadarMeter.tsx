@@ -7,13 +7,25 @@ const bandLabel: Record<ReturnType<typeof offRadarBand>, string> = {
   remote: "Off the radar",
 };
 
+/**
+ * R9/D25: a memorial site is never scored. Callers pass the spot's `sensitive`
+ * field straight through rather than remembering to guard at each call site —
+ * the whole point of D25 is that the rule lives in one place and cannot be
+ * forgotten. Renders nothing at all; the caller decides what stands in its
+ * place, which on the spot page is an explicit statement that the score is
+ * withheld, not a silent gap.
+ */
 export function OffRadarMeter({
   score,
   showValue = false,
+  sensitive,
 }: {
   score: number;
   showValue?: boolean;
+  sensitive?: "memorial";
 }) {
+  if (sensitive) return null;
+
   const band = offRadarBand(score);
 
   return (
