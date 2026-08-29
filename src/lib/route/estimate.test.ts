@@ -1,14 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { DETOUR_FACTOR, estimateLeg, haversineKm, speedForKm } from "@/lib/route/estimate";
-import { getSpotBySlug } from "@/lib/spots";
-import type { Spot } from "@/lib/spots/schema";
+import { makeSpot } from "@/lib/spots/fixture";
 
-const spot = (slug: string): Spot => {
-  const found = getSpotBySlug(slug);
-  if (!found) throw new Error(`fixture missing: ${slug}`);
-  return found;
-};
+/**
+ * Coordinates are stated inline. This suite is about geometry, so borrowing
+ * two spots from the seed file only made the assertions depend on content that
+ * is expected to change (R8).
+ *
+ * Tuol Sleng to Choeung Ek, the pair this used to use, is about 13 km — kept as
+ * the working distance so the rounding assertions still exercise a realistic
+ * leg rather than a degenerate one.
+ */
+const TUOL_SLENG = [104.9177, 11.5495] as const;
+const CHOEUNG_EK = [104.9020, 11.4840] as const;
+
+const at = (coords: readonly [number, number]) =>
+  makeSpot({ coords: [coords[0], coords[1]] });
 
 /**
  * These numbers are estimates by design (D22), so the tests check the shape of
@@ -50,8 +58,8 @@ describe("haversineKm", () => {
 
 describe("estimateLeg", () => {
   it("applies the detour factor to the straight line", () => {
-    const from = spot("tuol-sleng");
-    const to = spot("choeung-ek");
+    const from = at(TUOL_SLENG);
+    const to = at(CHOEUNG_EK);
     const straight = haversineKm(from.coords, to.coords);
 
     expect(estimateLeg(from, to).km).toBeCloseTo(
@@ -61,8 +69,8 @@ describe("estimateLeg", () => {
   });
 
   it("rounds minutes up to a 5-minute granularity, never down", () => {
-    const from = spot("tuol-sleng");
-    const to = spot("choeung-ek");
+    const from = at(TUOL_SLENG);
+    const to = at(CHOEUNG_EK);
     const leg = estimateLeg(from, to);
     const exact = (leg.km / speedForKm(leg.km)) * 60;
 
@@ -72,12 +80,12 @@ describe("estimateLeg", () => {
   });
 
   it("gives a zero-length leg zero minutes rather than a floor of 5", () => {
-    const s = spot("tuol-sleng");
+    const s = at(TUOL_SLENG);
     expect(estimateLeg(s, s)).toEqual({ km: 0, minutes: 0, isEstimate: true });
   });
 
   it("marks every leg as an estimate", () => {
-    expect(estimateLeg(spot("tuol-sleng"), spot("wat-phnom")).isEstimate).toBe(true);
+    expect(estimateLeg(at(TUOL_SLENG), at(CHOEUNG_EK)).isEstimate).toBe(true);
   });
 });
 

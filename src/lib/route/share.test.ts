@@ -5,6 +5,19 @@ import { decodeDay, encodeDay } from "@/lib/route/share";
 import { getSpotBySlug } from "@/lib/spots";
 import type { Spot } from "@/lib/spots/schema";
 
+/**
+ * This suite stays coupled to the seed file on purpose, and it is the exception
+ * that proves the rule elsewhere.
+ *
+ * `decodeDay` resolves spot ids against the real dataset by design (D3) — a
+ * shared link carries ids, not content, so a link picks up corrected copy
+ * rather than freezing a stale copy of it. Feeding it built fixtures would test
+ * a resolution path that does not exist: every id would miss and every stop
+ * would be dropped.
+ *
+ * The cost is that these break when a slug is removed. That is correct: a
+ * removed slug genuinely breaks every shared link that named it.
+ */
 const spot = (slug: string): Spot => {
   const found = getSpotBySlug(slug);
   if (!found) throw new Error(`fixture missing: ${slug}`);
