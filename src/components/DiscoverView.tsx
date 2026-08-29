@@ -192,6 +192,7 @@ export function DiscoverView({
                   active={spot.id === hoveredId || spot.id === selectedId}
                   onHover={setHovered}
                   onSelect={setSelected}
+                  dict={dict}
                 />
               ))}
             </ul>

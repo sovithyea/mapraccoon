@@ -100,6 +100,20 @@ export function DayFrameBar({
             />
             travelling, est.
           </li>
+          {/*
+            Only when the day actually contains one. The day average already
+            footnotes its denominator; this explains the other consequence —
+            that a memorial stop's dwell is a floor, not a plan (D25).
+          */}
+          {budget.stops.some((stop) => stop.isSensitive) ? (
+            <li className="flex items-center gap-1.5">
+              <span
+                className="h-2 w-4 rounded-[1px] border border-foreground"
+                aria-hidden="true"
+              />
+              memorial site — dwell is a minimum
+            </li>
+          ) : null}
         </ul>
       ) : null}
     </div>
