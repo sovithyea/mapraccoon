@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { AddToDay } from "@/components/route/AddToDay";
-import { OffRadarMeter } from "@/components/spot/OffRadarMeter";
 import { getCity } from "@/lib/spots/cities";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import type { Spot } from "@/lib/spots/schema";
@@ -47,7 +46,6 @@ export function SpotCard({
         <p className="mt-1.5 text-sm leading-relaxed text-muted">{spot.blurb.en}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <OffRadarMeter score={spot.offRadar} sensitive={spot.sensitive} />
           {spot.sensitive ? (
             <span className="text-xs text-muted">Not ranked</span>
           ) : null}

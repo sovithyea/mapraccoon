@@ -5,14 +5,21 @@ import { notFound } from "next/navigation";
 import { SpotCard } from "@/components/spot/SpotCard";
 import { buildableLocales, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { sortByOffRadar } from "@/lib/scoring";
+import { sortSpots } from "@/lib/scoring";
 import { getSpotsByCity } from "@/lib/spots";
 import { cities } from "@/lib/spots/cities";
 import { cityIdSchema } from "@/lib/spots/schema";
 
 export function generateStaticParams() {
+  // Only cities that still have content. The other three left with D27, and
+  // generating their pages would ship three empty routes. This whole route is
+  // deleted in step 3 of specs/3-friends/plan.md — neighbourhoods are a filter,
+  // not a destination — so this guard is deliberately the cheapest correct
+  // thing rather than a design.
   return buildableLocales.flatMap((locale) =>
-    cities.map((city) => ({ locale, city: city.id })),
+    cities
+      .filter((city) => getSpotsByCity(city.id).length > 0)
+      .map((city) => ({ locale, city: city.id })),
   );
 }
 
@@ -41,7 +48,7 @@ export default async function CityPage({
   if (!match) notFound();
 
   const dict = await getDictionary(isLocale(locale) ? locale : "en");
-  const spots = sortByOffRadar(getSpotsByCity(parsed.data));
+  const spots = sortSpots(getSpotsByCity(parsed.data), "name");
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-8">

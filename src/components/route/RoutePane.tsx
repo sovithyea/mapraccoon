@@ -7,7 +7,7 @@ import { RouteTimeline } from "@/components/route/RouteTimeline";
 import { DayFrameBar } from "@/components/route/DayFrameBar";
 import { clock, duration } from "@/components/route/time";
 import type { Dictionary } from "@/i18n/get-dictionary";
-import { dayBudget, dayOffRadarAverage } from "@/lib/route/day";
+import { dayBudget } from "@/lib/route/day";
 import { encodeDay } from "@/lib/route/share";
 import { getCity } from "@/lib/spots/cities";
 import type { Spot } from "@/lib/spots/schema";
@@ -20,12 +20,6 @@ const fill = (template: string, values: Record<string, string | number>): string
     template,
   );
 
-const bandLabel: Record<string, string> = {
-  famous: "Famous",
-  known: "Well known",
-  quiet: "Quiet",
-  remote: "Off the radar",
-};
 
 /**
  * The route as a pane. D23: this is the third state of /discover's existing
@@ -56,7 +50,6 @@ export function RoutePane({
   if (!hydrated) return <div className="min-h-[24rem]" aria-busy="true" />;
 
   const budget = dayBudget(stops, frame);
-  const average = dayOffRadarAverage(stops);
   const cityName = city ? getCity(city).name : "";
 
   /**
@@ -135,20 +128,6 @@ export function RoutePane({
             })}
       </p>
 
-      {average.average !== null ? (
-        <p className="mt-1 text-[11px] text-muted">
-          {fill(dict.route.dayAverage, {
-            average: average.average,
-            band: bandLabel[average.band ?? "quiet"] ?? "",
-          })}{" "}
-          {average.scoredCount !== average.totalCount
-            ? fill(dict.route.dayAverageDenominator, {
-                scored: average.scoredCount,
-                total: average.totalCount,
-              })
-            : null}
-        </p>
-      ) : null}
 
       <div className="mt-4">
         <RouteTimeline

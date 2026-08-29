@@ -19,7 +19,8 @@ const SpotMap = dynamic(
   { ssr: false },
 );
 
-const sortModes: SortMode[] = ["off-radar", "popularity", "name"];
+// "open-now" joins this in step 4, and becomes the default (D28).
+const sortModes: SortMode[] = ["name"];
 
 /** Display state, not filter state — deliberately not in the filter store. */
 type MobileView = "list" | "map" | "route";
@@ -76,8 +77,6 @@ export function DiscoverView({
   }, [spots, city, categories, sort]);
 
   const sortLabel: Record<SortMode, string> = {
-    "off-radar": dict.filters.sortOffRadar,
-    popularity: dict.filters.sortPopularity,
     name: dict.filters.sortName,
   };
 

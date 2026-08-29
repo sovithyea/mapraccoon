@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { OffRadarMeter } from "@/components/spot/OffRadarMeter";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import { cities } from "@/lib/spots/cities";
 import type { CityId, Spot } from "@/lib/spots/schema";
@@ -153,7 +152,6 @@ export function CityPicks({
                         {spot.blurb.en}
                       </span>
                       <span className="mt-1.5 block">
-                        <OffRadarMeter score={spot.offRadar} />
                       </span>
                     </span>
                   </Link>

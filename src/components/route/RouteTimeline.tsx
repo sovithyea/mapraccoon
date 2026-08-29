@@ -85,11 +85,8 @@ function StopRow({
               —
             </span>
           ) : (
-            <span
-              className="text-sm font-semibold tabular-nums"
-              style={{ color: city.ink }}
-            >
-              {spot.offRadar}
+            <span className="text-xs text-muted" style={{ color: city.ink }}>
+              {getCity(spot.city).name}
             </span>
           )}
 

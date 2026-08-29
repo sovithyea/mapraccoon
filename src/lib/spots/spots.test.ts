@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { spots as raw } from "@/data/spots";
-import { getAllSpots, getPairedSpot, getSpotBySlug } from "@/lib/spots";
+import { getAllSpots, getSpotBySlug } from "@/lib/spots";
 import { cities } from "@/lib/spots/cities";
 import { CAMBODIA_BBOX, spotsSchema } from "@/lib/spots/schema";
 
@@ -32,30 +32,8 @@ describe("seed content", () => {
     }
   });
 
-  it("resolves every pairedWith reference to a real spot", () => {
-    for (const spot of getAllSpots()) {
-      if (!spot.pairedWith) continue;
-      expect(getPairedSpot(spot), `${spot.id} → ${spot.pairedWith.spotId}`).toBeDefined();
-    }
-  });
 
-  it("never pairs a spot with itself", () => {
-    for (const spot of getAllSpots()) {
-      expect(spot.pairedWith?.spotId).not.toBe(spot.id);
-    }
-  });
 
-  it("only pairs to a better-known spot", () => {
-    // A pairing says "go here instead of there". If the anchor were the more
-    // obscure of the two, the sentence would be backwards.
-    for (const spot of getAllSpots()) {
-      const anchor = getPairedSpot(spot);
-      if (!anchor) continue;
-      expect(anchor.offRadar, `${spot.id} vs anchor ${anchor.id}`).toBeLessThan(
-        spot.offRadar,
-      );
-    }
-  });
 
   /**
    * R9 made mechanical (D25). Until the `sensitive` field existed these three
@@ -68,48 +46,16 @@ describe("seed content", () => {
     const sensitive = getAllSpots().filter((s) => s.sensitive);
 
     it("marks every known memorial site", () => {
+      // Three of the five left with their cities (D27). These two are in
+      // Phnom Penh and stay, so their exclusions get stronger, not weaker (D33).
       expect(sensitive.map((s) => s.slug).sort()).toEqual([
         "choeung-ek",
-        "kamping-puoy",
-        "phnom-sampeau",
-        "secret-lake",
         "tuol-sleng",
       ]);
     });
 
-    it("never carries a pairing", () => {
-      for (const spot of sensitive) {
-        expect(spot.pairedWith, `${spot.slug} is paired`).toBeUndefined();
-      }
-    });
 
-    it("is never the anchor another spot points at", () => {
-      // The same failure read from the other end: "go here instead of Choeung
-      // Ek". The per-spot schema cannot see across spots, so it is checked here.
-      for (const spot of getAllSpots()) {
-        const anchor = getPairedSpot(spot);
-        if (!anchor) continue;
-        expect(anchor.sensitive, `${spot.slug} points at ${anchor.slug}`).toBeUndefined();
-      }
-    });
 
-    it("rejects a sensitive spot that carries a pairing, at parse time", () => {
-      const base = getSpotBySlug("tuol-sleng");
-      expect(base).toBeDefined();
-
-      const result = spotsSchema.safeParse([
-        {
-          ...base,
-          pairedWith: {
-            spotId: "royal-palace",
-            hook: { en: "Should never be writable." },
-          },
-        },
-      ]);
-
-      expect(result.success).toBe(false);
-      expect(JSON.stringify(result.error?.issues)).toContain("cannot carry a pairing");
-    });
   });
 
   it("assigns every spot to a known city", () => {
@@ -119,25 +65,10 @@ describe("seed content", () => {
     }
   });
 
-  it("covers all four base cities", () => {
-    for (const city of cities) {
-      const count = getAllSpots().filter((s) => s.city === city.id).length;
-      expect(count, `${city.id} has no spots`).toBeGreaterThan(0);
-    }
-  });
 
-  it("keeps at least one anchor per city for pairings to point at", () => {
-    // An off-radar-only dataset has nothing to contrast against.
-    for (const city of cities) {
-      const anchors = getAllSpots().filter(
-        (s) => s.city === city.id && s.offRadar < 30,
-      );
-      expect(anchors.length, `${city.id} has no anchor spots`).toBeGreaterThan(0);
-    }
-  });
 
   it("looks spots up by slug", () => {
-    expect(getSpotBySlug("angkor-wat")?.name.en).toBe("Angkor Wat");
+    expect(getSpotBySlug("wat-phnom")?.name.en).toBe("Wat Phnom");
     expect(getSpotBySlug("not-a-real-slug")).toBeUndefined();
   });
 });

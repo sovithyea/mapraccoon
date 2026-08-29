@@ -77,7 +77,7 @@ describe("estimateLeg", () => {
   });
 
   it("marks every leg as an estimate", () => {
-    expect(estimateLeg(spot("tuol-sleng"), spot("secret-lake")).isEstimate).toBe(true);
+    expect(estimateLeg(spot("tuol-sleng"), spot("wat-phnom")).isEstimate).toBe(true);
   });
 });
 

@@ -5,9 +5,8 @@ import { clock } from "@/components/route/time";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { projectCambodia } from "@/lib/geo/project";
-import { dayBudget, dayOffRadarAverage } from "@/lib/route/day";
+import { dayBudget } from "@/lib/route/day";
 import { decodeDay } from "@/lib/route/share";
-import { offRadarBand } from "@/lib/scoring";
 import { getCity } from "@/lib/spots/cities";
 import { notFound } from "next/navigation";
 
@@ -16,12 +15,6 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 const fill = (t: string, v: Record<string, string | number>): string =>
   Object.entries(v).reduce((o, [k, val]) => o.replaceAll(`{${k}}`, String(val)), t);
 
-const bandLabel: Record<string, string> = {
-  famous: "Famous",
-  known: "Well known",
-  quiet: "Quiet",
-  remote: "Off the radar",
-};
 
 /**
  * A shared day.
@@ -69,7 +62,6 @@ export default async function PlanPage({
   }
 
   const budget = dayBudget(day.stops, day.frame);
-  const average = dayOffRadarAverage(day.stops);
   const first = day.stops[0];
   const city = first ? getCity(first.spot.city) : undefined;
   const points = day.stops.map((stop) => ({
@@ -132,7 +124,7 @@ export default async function PlanPage({
                 // Size from the off-radar score, as on the home page. A
                 // memorial site carries no score, so it takes the base size
                 // rather than being drawn as if it had one (D25).
-                r={p.stop.spot.sensitive ? 1.1 : 0.9 + (p.stop.spot.offRadar / 100) * 1.4}
+                r={1.1}
                 fill={p.stop.spot.sensitive ? "var(--muted)" : "var(--accent)"}
               />
             ))}
@@ -168,27 +160,11 @@ export default async function PlanPage({
                 </Link>
                 <p className="mt-1 text-[11px] text-muted">{stop.spot.blurb.en}</p>
               </div>
-              {stop.isSensitive ? null : (
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-muted">
-                  {stop.spot.offRadar}
-                </span>
-              )}
             </div>
           </li>
         ))}
       </ol>
 
-      {average.average !== null ? (
-        <p className="mt-6 text-sm text-muted">
-          {fill(dict.route.dayAverage, {
-            average: average.average,
-            band: bandLabel[offRadarBand(average.average)] ?? "",
-          })}
-          {average.scoredCount !== average.totalCount
-            ? ` ${dict.route.sharedMemorialNote}`
-            : ""}
-        </p>
-      ) : null}
 
       <p className="mt-4 text-[11px] leading-relaxed text-muted">
         {dict.route.estimateNote}

@@ -5,12 +5,11 @@ import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
 import { AddToDay } from "@/components/route/AddToDay";
 import { CommunityImpact } from "@/components/spot/CommunityImpact";
-import { OffRadarPanel } from "@/components/spot/OffRadarPanel";
-import { PairingCard } from "@/components/spot/PairingCard";
 import { SpotCard } from "@/components/spot/SpotCard";
 import { buildableLocales, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { getAllSpots, getPairedSpot, getSpotBySlug, getSpotsByCity } from "@/lib/spots";
+import { sortSpots } from "@/lib/scoring";
+import { getAllSpots, getSpotBySlug, getSpotsByCity } from "@/lib/spots";
 import { getCity } from "@/lib/spots/cities";
 
 export function generateStaticParams() {
@@ -41,11 +40,12 @@ export default async function SpotPage({
 
   const dict = await getDictionary(isLocale(locale) ? locale : "en");
   const city = getCity(spot.city);
-  const anchor = getPairedSpot(spot);
-  const nearby = getSpotsByCity(spot.city)
-    .filter((s) => s.id !== spot.id)
-    .sort((a, b) => b.offRadar - a.offRadar)
-    .slice(0, 3);
+  // Was ordered by off-radar score, which is gone (D28). Name order until the
+  // hours model lands and this becomes "what else is open near here".
+  const nearby = sortSpots(
+    getSpotsByCity(spot.city).filter((s) => s.id !== spot.id),
+    "name",
+  ).slice(0, 3);
 
   return (
     /*
@@ -116,10 +116,6 @@ export default async function SpotPage({
           ) : null}
         </p>
 
-        {/* The score is the reason to be on the page, so it gets a panel. */}
-        <div className="mt-4 max-w-md">
-          <OffRadarPanel spot={spot} caveat={dict.spot.offRadarHint} />
-        </div>
         {spot.sensitive ? (
           /*
             R9/D25. A reader who has seen five scored pages reads a missing
@@ -143,16 +139,6 @@ export default async function SpotPage({
         description → community → map → sources.
       */}
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
-        {anchor && spot.pairedWith ? (
-          <div className="order-1 lg:order-1 lg:col-start-1">
-            <PairingCard
-              anchor={anchor}
-              hook={spot.pairedWith.hook}
-              dict={dict}
-              locale={locale}
-            />
-          </div>
-        ) : null}
 
         <div className="order-3 space-y-6 lg:order-3 lg:col-start-1">
           {spot.description.en.split("\n\n").map((para, i) => (

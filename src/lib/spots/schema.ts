@@ -44,12 +44,6 @@ export const spotSchema = z.object({
   /** Two or three paragraphs for the destination page. */
   description: localizedTextSchema,
 
-  /**
-   * 0–100, where 100 is "almost nobody goes here". Editorial today. The brief
-   * defers the XGBoost model until there is first-party visit data, so this
-   * stays a hand-set number rather than pretending to be a model output.
-   */
-  offRadar: z.number().int().min(0).max(100),
 
   /**
    * Sites of mass killing or forced labour. R9: these are never written in the
@@ -63,17 +57,6 @@ export const spotSchema = z.object({
    */
   sensitive: z.literal("memorial").optional(),
 
-  /**
-   * The narrative pairing: the famous place this one is an alternative to.
-   * Anchors (Angkor Wat, the Royal Palace) leave this empty — they are the
-   * things other spots pair *to*.
-   */
-  pairedWith: z
-    .object({
-      spotId: z.string().min(1),
-      hook: localizedTextSchema,
-    })
-    .optional(),
 
   /** Community-based tourism / conservation framing: where the money goes. */
   community: z
@@ -92,21 +75,6 @@ export const spotSchema = z.object({
 
   /** Provenance for every claim above. Required — no unattributable spots. */
   sources: z.array(z.url()).min(1),
-}).superRefine((spot, ctx) => {
-  /**
-   * R9, enforced at build time rather than trusted to editorial discipline.
-   * "Instead of Angkor Wat, try this killing field" is the sentence this
-   * exists to make impossible to write.
-   */
-  if (spot.sensitive && spot.pairedWith) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["pairedWith"],
-      message:
-        `"${spot.slug}" is marked sensitive and cannot carry a pairing — ` +
-        "a memorial site is never an alternative to somewhere else (R9, D25)",
-    });
-  }
 });
 
 export type LocalizedText = z.infer<typeof localizedTextSchema>;

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   costOfAdding,
   dayBudget,
-  dayOffRadarAverage,
   defaultFrame,
   fullThresholdMins,
   stopDwell,
@@ -72,12 +71,12 @@ describe("dayBudget", () => {
   });
 
   it("marks a memorial stop as sensitive in the schedule", () => {
-    const budget = dayBudget([asStop(spot("secret-lake")), asStop(spot("tuol-sleng"))]);
+    const budget = dayBudget([asStop(spot("choeung-ek")), asStop(spot("tuol-sleng"))]);
     expect(budget.stops.map((s) => s.isSensitive)).toEqual([true, true]);
   });
 
   it("does not mark an ordinary stop as sensitive", () => {
-    const ordinary = getSpotsByCity("kampot-kep").find((s) => !s.sensitive) as Spot;
+    const ordinary = getSpotsByCity("phnom-penh").find((s) => !s.sensitive) as Spot;
     expect(dayBudget([asStop(ordinary)]).stops[0]?.isSensitive).toBe(false);
   });
 });
@@ -91,7 +90,7 @@ describe("fullThresholdMins", () => {
     // The point of D24: "full" is derived from the content, so writing a
     // 15-minute spot must change the threshold rather than leave a stale
     // constant behind.
-    const dataset = getSpotsByCity("kampot-kep");
+    const dataset = getSpotsByCity("phnom-penh");
     const before = fullThresholdMins(dataset);
 
     const shortest = [...dataset].sort(
@@ -138,34 +137,3 @@ describe("costOfAdding", () => {
   });
 });
 
-describe("dayOffRadarAverage", () => {
-  it("returns nothing for an empty day", () => {
-    expect(dayOffRadarAverage([])).toEqual({
-      average: null,
-      band: null,
-      scoredCount: 0,
-      totalCount: 0,
-    });
-  });
-
-  it("excludes memorial stops from the mean but counts them in the total", () => {
-    const ordinary = getSpotsByCity("kampot-kep").filter((s) => !s.sensitive).slice(0, 2);
-    const stops = [...ordinary.map(asStop), asStop(spot("secret-lake"))];
-
-    const result = dayOffRadarAverage(stops);
-    const expected = Math.round(
-      ordinary.reduce((sum, s) => sum + s.offRadar, 0) / ordinary.length,
-    );
-
-    expect(result.average).toBe(expected);
-    expect(result.scoredCount).toBe(2);
-    expect(result.totalCount).toBe(3);
-  });
-
-  it("returns a null average for a day of nothing but memorial sites", () => {
-    const result = dayOffRadarAverage([asStop(spot("tuol-sleng")), asStop(spot("choeung-ek"))]);
-    expect(result.average).toBeNull();
-    expect(result.scoredCount).toBe(0);
-    expect(result.totalCount).toBe(2);
-  });
-});

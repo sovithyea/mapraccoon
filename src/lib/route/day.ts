@@ -1,5 +1,4 @@
 import { estimateLeg, type Leg } from "@/lib/route/estimate";
-import { offRadarBand } from "@/lib/scoring";
 import { getAllSpots } from "@/lib/spots";
 import type { Spot } from "@/lib/spots/schema";
 
@@ -171,30 +170,3 @@ export function costOfAdding(
   };
 }
 
-/**
- * The day's off-radar average, with an honest denominator. Memorial sites are
- * excluded from the mean but counted in the total, so the UI can say "2 of 3
- * stops scored" rather than quietly averaging over a smaller set (D25).
- */
-export function dayOffRadarAverage(stops: readonly RouteStop[]): {
-  average: number | null;
-  band: ReturnType<typeof offRadarBand> | null;
-  scoredCount: number;
-  totalCount: number;
-} {
-  const scored = stops.filter((stop) => stop.spot.sensitive === undefined);
-
-  if (scored.length === 0) {
-    return { average: null, band: null, scoredCount: 0, totalCount: stops.length };
-  }
-
-  const total = scored.reduce((sum, stop) => sum + stop.spot.offRadar, 0);
-  const average = Math.round(total / scored.length);
-
-  return {
-    average,
-    band: offRadarBand(average),
-    scoredCount: scored.length,
-    totalCount: stops.length,
-  };
-}
