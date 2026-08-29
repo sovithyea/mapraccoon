@@ -101,7 +101,11 @@ The `.eyebrow` utility (12px, 700, uppercase, `0.14em` tracking, `--forest-mid`)
 
 - Content column caps at `max-w-6xl` (72rem); prose inside a spot page caps narrower.
 - Sections separate with `border-t border-border`, alternating `--background` and `--surface-sunk`.
-- Rails scroll horizontally with `snap-x snap-mandatory`, cards at `85vw` on mobile and a fixed rem width above. `.rail` hides the scrollbar without disabling scrolling.
+- Three horizontal rails exist, and they are not one pattern. `.rail` is only the scrollbar-hiding utility; the scroll behaviour is per-rail:
+  - **Pairing rail** (`components/home/PairingRail.tsx`) — the only one that snaps: `snap-x snap-mandatory`, cards `85vw` on mobile and a fixed `26rem` from `sm` up, and on `lg` it aligns to the 72rem column while bleeding past it via `px-[max(1.25rem,calc((100vw-72rem)/2))]`.
+  - **Header city rail** (`app/[locale]/layout.tsx`) — plain `flex overflow-x-auto`, no snap. A second header row below `md`, since the inline nav list is hidden there.
+  - **Discover chip rails** (`components/DiscoverView.tsx`) — plain `flex overflow-x-auto` below `sm`, wrapping from `sm` up. Bleeds to the screen edge with `-mx-5 px-5`.
+- Other multi-item sections are grids, not rails. `CommunityRail` is a `lg` sidebar beside an `sm:grid-cols-2` grid, despite the name.
 - Radii: 2xl (1rem) for list cards, 3xl (1.5rem) for feature panels, full for chips and buttons.
 
 ## Dark mode
