@@ -23,10 +23,31 @@ const EARTH_RADIUS_KM = 6371;
 export const DETOUR_FACTOR = 1.4;
 
 /**
- * 22 km/h average. Low for a highway and about right for what this app
- * actually describes: tuk-tuks, unsealed provincial roads, and stopping.
+ * Speed bands, in km/h, keyed on the estimated road distance.
+ *
+ * A single flat speed cannot cover both a two-kilometre hop across Kampot and
+ * the run up National Highway 6. The first version of this used 22 km/h
+ * throughout and was caught by running the builder rather than reading it: it
+ * turned the 40-minute Kep-to-Kampot drive into 1h 50m, so three stops ate
+ * seven hours of a nine-hour day in phantom travel.
+ *
+ * Calibrated against two journeys with known real durations:
+ *   Kep → Kampot            25 km in ~40 min  → 37.5 km/h
+ *   Phnom Penh → Siem Reap 314 km in ~5h 30m  → 57.1 km/h
+ *
+ * The bands sit just under both, so the estimate still errs long. Town speed
+ * is lower again: short hops are traffic, parking and walking from wherever
+ * the tuk-tuk actually stops.
  */
-export const AVERAGE_SPEED_KMH = 22;
+export const SPEED_BANDS: readonly { upToKm: number; kmh: number }[] = [
+  { upToKm: 5, kmh: 16 },
+  { upToKm: 60, kmh: 36 },
+  { upToKm: Infinity, kmh: 55 },
+];
+
+export function speedForKm(km: number): number {
+  return SPEED_BANDS.find((band) => km <= band.upToKm)?.kmh ?? 36;
+}
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
@@ -66,7 +87,7 @@ export type Leg = {
 export function estimateLeg(from: Spot, to: Spot): Leg {
   const straightLineKm = haversineKm(from.coords, to.coords);
   const km = straightLineKm * DETOUR_FACTOR;
-  const rawMinutes = (km / AVERAGE_SPEED_KMH) * 60;
+  const rawMinutes = (km / speedForKm(km)) * 60;
 
   return {
     km: Math.round(km * 10) / 10,

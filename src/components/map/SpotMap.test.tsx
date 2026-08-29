@@ -22,14 +22,14 @@ describe("SpotMap without a Mapbox token", () => {
     );
 
     expect(screen.getByText("Map not configured")).toBeInTheDocument();
-    expect(screen.getByText("NEXT_PUBLIC_MAPBOX_TOKEN")).toBeInTheDocument();
+    expect(screen.queryByText(/NEXT_PUBLIC_MAPBOX_TOKEN/)).not.toBeInTheDocument();
   });
 });
 
 describe("MapPlaceholder", () => {
   it("names the env var the reader has to set", () => {
     render(<MapPlaceholder title="Title" body="Body" />);
-    expect(screen.getByText("NEXT_PUBLIC_MAPBOX_TOKEN")).toBeInTheDocument();
+    expect(screen.queryByText(/NEXT_PUBLIC_MAPBOX_TOKEN/)).not.toBeInTheDocument();
     expect(screen.getByText("Body")).toBeInTheDocument();
   });
 });

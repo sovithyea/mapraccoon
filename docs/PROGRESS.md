@@ -2,7 +2,7 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (fourth session)
+**Last updated:** 2026-08-29 (fifth session)
 
 ## Where things stand
 
@@ -19,7 +19,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 | # | Phase | Docs | Branch | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | `phase/1-foundation` | Vithyea | **Complete** and committed, pending review, merge, and the R1 content-verification pass |
-| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **In progress** — D22–D25 accepted; executing `specs/2-itinerary/plan.md` |
+| 2 | Itinerary builder | ✅ spec + plan | `phase/2-itinerary` | Vithyea | **In progress** — plan steps 0–7 and part of 9 done and verified; steps 8 (`/plan/[id]` share view), the reorder tab, and the spot page's typographic restructure remain |
 | 3 | Persistence | — | `phase/3-persistence` | — | Not started |
 | 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
 | 5 | Trip assistant | — | `phase/5-assistant` | — | Blocked: needs Phase 3 and real content |
@@ -56,3 +56,11 @@ Running ledger. Updated at the end of every working session so state survives ac
 **2026-08-29 (third session)** — User said the colouring was not good. Measured it: the first palette collided twelve ways, including `--forest-mid` and `--cat-nature` being literally the same colour, and failed WCAG AA twice. Root cause was structural — ten colours competing for meaning on one page — so category colour was cut to the map's pin layers only and the cities moved off the brand green and gold (D21). Each city gained a separate `-ink` variant for marks and text, since fills stay dark in both modes. Auditing dark mode for the first time found two near-invisible text defects (1.15:1 and 2.46:1). Added `tools/contrast.mjs`, which itself produced false failures twice before it was right (C15). Now 0 contrast failures across four routes in both modes, minimum role separation ΔE 29.2.
 
 **2026-08-29 (fourth session)** — No application code. The user supplied the competitor's spot-page, city-hub and `/plan-my-trip` HTML, closing B6, and their footer was checked in a browser. The teardown is now `docs/COMPETITOR.md` rather than session context that evaporates. Wrote a design brief for Claude Design grounded in measured values rather than the doc set: the tokens read out of `globals.css`, and the responsive system read out of the components — no custom breakpoints, and in practice a two-breakpoint design (43 `sm:`, 32 `lg:`, 2 `md:`, 1 `xl:`, no `2xl:`). Scope was cut to the Phase 2 itinerary builder and the spot page; the Phase 4 collaborative screens were deferred, since designing them now means designing against a data model three phases out. Three corrections recorded: `DESIGN-SYSTEM.md` generalised the pairing rail's snap behaviour to all three rails (C16, doc fixed); R9's memorial rule has no schema field behind it and is enforced only by the prose (C17, now B7); and the footer's unverified-content caveat — the sentence R1 and R4 rest on — is the least prominent text in the footer at `text-xs text-muted` in the last of four columns (C18). Nobody softened the wording; the layout softened it.
+
+**2026-08-29 (fifth session)** — Phase 2 built from a Claude Design direction document, spec first this time. The design had been produced against a stale commit (`0ffa5b7`, one before the palette rebuild), so its token values and its whole dark-mode audit measured colours that no longer exist; the layout survived and the colours were taken from the CSS instead. D22–D25 accepted, `BUILD-PLAN.md`'s Phase 2 row corrected to match D22.
+
+Shipped: the memorial flag (`sensitive: "memorial"`) with a build-time refinement, travel estimates, the day budget, the Zustand route store with reordering and URL-encoded sharing, the timeline, the day frame bar, the tail row, the priced add affordance, the dock bar and sheet, the `[Map | Route]` pane on `/discover`, and the spot page's reading order plus the C18 caveat move.
+
+Four defects found, three of them only by running it rather than reading it. The schema refinement caught a live R9 violation in Phase 1 content — Kamping Puoy was paired to Phnom Sampeau (C19). The flat 22 km/h speed constant turned a 40-minute drive into 1h 50m (C20). `MapPlaceholder` was printing `NEXT_PUBLIC_MAPBOX_TOKEN` to travellers in what is the site's default state (C21). The suggestion tray offered other cities' spots at "28h 20m over" (C22).
+
+67 tests across 8 files, build/lint/typecheck clean, 51 static pages, 0 overflow at 390/768/1280 across four routes, 0 contrast failures in both modes.

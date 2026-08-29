@@ -124,3 +124,45 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C16 | `docs/DESIGN-SYSTEM.md` described rails as one pattern — "rails scroll horizontally with `snap-x snap-mandatory`, cards at `85vw` on mobile". Three rails exist and only one behaves that way | `grep -rn "overflow-x-auto" src --include="*.tsx"` returns three hits; `grep -rn "snap-x"` returns one. The header city rail and the `/discover` chip rails are plain `overflow-x-auto` with no snap and no card sizing. `.rail` is only the scrollbar-hiding utility. Doc corrected | 2026-08-29 |
 | C17 | R9 (memorial sites are never written in the product's voice) is enforced by nothing but the prose. There is no field in the content schema marking those five spots, so no component can branch on it | Read `src/lib/spots/schema.ts` — no memorial, tone or severity field. The sober treatment exists only in the hand-written copy in `src/data/spots.ts` (Choeung Ek line 447, the Secret Lake 829, Phnom Sampeau 931). A future generated blurb, badge or off-radar meter would apply to them silently | 2026-08-29 |
 | C18 | The footer caveat that R1 and R4 depend on is the least prominent text in the footer | Read `src/app/[locale]/layout.tsx:159-164`: the unverified-content sentence sits in the last of four columns at `text-xs text-muted`. The wording was never softened; the layout softened it. Open design question, not yet fixed | 2026-08-29 |
+| C19 | Kamping Puoy shipped paired to Phnom Sampeau — one forced-labour site framed as the alternative to another, hooked "no ticket booth, no tour circuit, and today the place the town comes to swim". A live R9 violation in Phase 1 content | Caught by the `sensitive` refinement added in D25 the moment the five sites were marked; the build failed. Pairing removed, the factual half kept in the description | 2026-08-29 |
+| C20 | The travel estimate used a flat 22 km/h, which turned the 40-minute Kep–Kampot drive into 1h 50m and ate seven hours of a nine-hour day in phantom travel | Found by running the builder over CDP, not by reading it. The distance factor had been calibrated against NH6 and the speed never had been. Replaced with distance-banded speeds (16 / 36 / 55 km/h) calibrated against two journeys with known real durations | 2026-08-29 |
+| C21 | `MapPlaceholder` printed `NEXT_PUBLIC_MAPBOX_TOKEN` in a `<code>` block to travellers. The token-missing state is this repo's default deployed state (D11), so this was the normal experience, not an edge case | Read off the rendered page at 390px. Replaced with the spot's real coordinates and an outbound maps link; the `SpotMap` test now asserts the variable name is *absent* rather than present | 2026-08-29 |
+| C22 | The route suggestion tray offered spots from other cities — a Battambang spot priced itself at "28h 20m over" inside a Kampot day. `AddToDay` guarded on city; the tray did not | Read off the rendered tail row at 1280px. Tray now filtered to the day's city | 2026-08-29 |
+
+## Phase 2 — Itinerary builder
+
+Measured on 2026-08-29 at `phase/2-itinerary`, against `specs/2-itinerary/spec.md`.
+
+### Toolchain
+
+- `npm run build`, `lint`, `typecheck` clean; `npm test` 67 passing across 8 files (was 20 across 3) — **VERIFIED**
+- 51 pages still statically generated. The day sheet uses the History API rather than `useSearchParams`, which would have opted every page into dynamic rendering — **VERIFIED**
+
+### Behaviour, with no Mapbox token
+
+The token is unset, which is this repo's real state (B1, D11). Everything below was observed with it unset.
+
+- A day builds, reorders and schedules end to end. A seeded three-stop Kampot day renders `3 stops · 6h 15m planned · 2h 15m left` — **VERIFIED**
+- The dock bar appears only once a day exists, measures 57px including its border, and reads `A day in Kampot & Kep · 3 stops · 1h 10m left` at 390px — **VERIFIED**
+- No page mentions an environment variable; the no-map state carries real coordinates and an outbound link (see C21) — **VERIFIED**
+- Every travel figure on screen is prefixed `est.` — **VERIFIED**
+- `fullThresholdMins()` computes 50 minutes from the content, and a test proves it moves when a shorter spot enters the dataset — **VERIFIED**
+- No add button is ever disabled; over-budget adds render `Add · 4h over` and stay pressable with `aria-describedby` to their cost line — **VERIFIED** (0 disabled add buttons found in the DOM)
+
+### Memorial sites (D25, R9)
+
+- All five pages — Tuol Sleng, Choeung Ek, the Secret Lake, Kamping Puoy, Phnom Sampeau — render no meter in the article header, no pairing, and the explicit withheld statement — **VERIFIED** (probed individually, scoped to `article > header`)
+- In the route, a memorial row renders `2h here, as a minimum · not ranked, not paired` with `—` in place of a score — **VERIFIED**
+- The day average footnotes its denominator: `Day off-radar average 19 · Famous (2 of 3 stops scored)` — **VERIFIED**
+- A sensitive spot carrying a `pairedWith` fails `spotsSchema.safeParse` — **VERIFIED** (test)
+
+### Layout and colour
+
+- `tools/probe.mjs` at 390, 768 and 1280 on `/en`, `/en/discover` and two spot pages: `scrollWidth - innerWidth = 0` on all twelve — **VERIFIED**
+- `tools/contrast.mjs` on `/discover`, an ordinary spot page and a memorial page, in both colour modes: 0 failures on all six — **VERIFIED**
+
+### Not verified
+
+- Pins rendering and click/hover sync still need a token (B1, unchanged from Phase 1)
+- The route pane has been exercised by seeding `localStorage` and by reading the rendered DOM, not by driving clicks through a full add-reorder-share journey
+- `/plan/[id]` is encoded and decoded under test but has no page yet — the share view is not built

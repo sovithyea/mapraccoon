@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 
 import { buildableLocales, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { DayDock } from "@/components/route/DayDock";
+import { getAllSpots } from "@/lib/spots";
 import { cities } from "@/lib/spots/cities";
 
 // Serif display over a geometric sans — the editorial register this kind of
@@ -164,6 +166,14 @@ export default async function LocaleLayout({
             </div>
           </div>
         </footer>
+
+        {/*
+          The day's ambient summary, below `lg` on every page (D23). Renders
+          nothing at all when no day exists — the feature is invisible until it
+          is used, and it must not cost 56px of viewport to a visitor who has
+          never added a stop.
+        */}
+        <DayDock spots={[...getAllSpots()]} dict={dict} />
       </body>
     </html>
   );

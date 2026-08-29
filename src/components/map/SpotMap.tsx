@@ -51,7 +51,17 @@ export function SpotMap({
   }, [view, city]);
 
   if (!token) {
-    return <MapPlaceholder title={missingTokenTitle} body={missingTokenBody} />;
+    // With exactly one spot in view the placeholder can carry its real
+    // coordinates and an outbound link — useful to a traveller, where an
+    // environment variable name was not.
+    const only = spots.length === 1 ? spots[0] : undefined;
+    return (
+      <MapPlaceholder
+        title={missingTokenTitle}
+        body={missingTokenBody}
+        coords={only?.coords}
+      />
+    );
   }
 
   return (

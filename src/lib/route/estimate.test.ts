@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AVERAGE_SPEED_KMH, DETOUR_FACTOR, estimateLeg, haversineKm } from "@/lib/route/estimate";
+import { DETOUR_FACTOR, estimateLeg, haversineKm, speedForKm } from "@/lib/route/estimate";
 import { getSpotBySlug } from "@/lib/spots";
 import type { Spot } from "@/lib/spots/schema";
 
@@ -64,7 +64,7 @@ describe("estimateLeg", () => {
     const from = spot("tuol-sleng");
     const to = spot("choeung-ek");
     const leg = estimateLeg(from, to);
-    const exact = (leg.km / AVERAGE_SPEED_KMH) * 60;
+    const exact = (leg.km / speedForKm(leg.km)) * 60;
 
     expect(leg.minutes % 5).toBe(0);
     expect(leg.minutes).toBeGreaterThanOrEqual(exact);
@@ -78,5 +78,35 @@ describe("estimateLeg", () => {
 
   it("marks every leg as an estimate", () => {
     expect(estimateLeg(spot("tuol-sleng"), spot("secret-lake")).isEstimate).toBe(true);
+  });
+});
+
+/**
+ * The speed bands are the part most likely to be wrong, and the first version
+ * was: a flat 22 km/h turned a 40-minute drive into 1h 50m. These check the
+ * estimate against journeys with known real durations rather than restating
+ * the formula.
+ */
+describe("speed calibration against real journeys", () => {
+  const minutesFor = (a: readonly [number, number], b: readonly [number, number]): number => {
+    const km = haversineKm(a, b) * DETOUR_FACTOR;
+    return (km / speedForKm(km)) * 60;
+  };
+
+  it("puts Kep to Kampot near its real 40 minutes, and not under", () => {
+    const minutes = minutesFor([104.3167, 10.4833], [104.1817, 10.5947]);
+    expect(minutes).toBeGreaterThanOrEqual(40);
+    expect(minutes).toBeLessThan(60);
+  });
+
+  it("puts Phnom Penh to Siem Reap near its real 5h 30m, and not under", () => {
+    const minutes = minutesFor([104.9282, 11.5564], [103.8597, 13.3633]);
+    expect(minutes).toBeGreaterThanOrEqual(330);
+    expect(minutes).toBeLessThan(400);
+  });
+
+  it("moves slower in town than between towns", () => {
+    expect(speedForKm(2)).toBeLessThan(speedForKm(30));
+    expect(speedForKm(30)).toBeLessThan(speedForKm(200));
   });
 });
