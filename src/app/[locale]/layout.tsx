@@ -55,8 +55,22 @@ export default async function LocaleLayout({
   const dict = await getDictionary(locale as Locale);
 
   return (
+    /*
+      The one legitimate use of suppressHydrationWarning, scoped to this single
+      element.
+
+      The inline script in <head> sets `data-theme` here before first paint, so
+      a stored dark choice does not flash light (D26). The server has no
+      localStorage and renders without it, so the attribute genuinely differs
+      and React is right to notice.
+
+      It does NOT extend to content. A text or ordering mismatch is a real bug
+      and is fixed by not rendering time-dependent output until after mount —
+      see src/components/hooks/useNow.ts.
+    */
     <html
       lang={locale}
+      suppressHydrationWarning
       className={`${playfair.variable} ${dmSans.variable} h-full antialiased`}
     >
       {/*

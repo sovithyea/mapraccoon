@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { sortByName, sortSpots } from "@/lib/scoring";
+import type { DayToken } from "@/lib/hours/schema";
 import { makeSpot, resetFixtures } from "@/lib/spots/fixture";
 
 /**
@@ -48,5 +49,78 @@ describe("sortSpots", () => {
     // "École" sorts before "Zoo" for a reader, and after it by code point.
     const sorted = sortSpots(named("Zoo", "École"), "name");
     expect(sorted.map((s) => s.name.en)).toEqual(["École", "Zoo"]);
+  });
+});
+
+describe("sortByOpenNow", () => {
+  const hours = (
+    rules: { days: DayToken[]; open: string; close: string }[],
+  ) => ({
+    kind: "weekly" as const,
+    rules,
+  });
+
+  const spots = () => [
+    makeSpot({ name: { en: "Closed bar" }, hours: hours([{ days: ["mon"], open: "18:00", close: "23:00" }]) }),
+    makeSpot({ name: { en: "Unknown cafe" }, hours: { kind: "unknown" }, links: { facebook: "https://facebook.com/x" } }),
+    makeSpot({ name: { en: "Open all hours" }, hours: { kind: "always" } }),
+    makeSpot({ name: { en: "Closing soon" }, hours: hours([{ days: ["tue"], open: "08:00", close: "12:30" }]) }),
+  ];
+
+  // Tuesday at 12:00 — "always" is open, the Tuesday venue closes in 30
+  // minutes, the unknown one is unknown, the Monday one is shut.
+  const tuesdayNoon = { day: 1, mins: 12 * 60 };
+
+  it("orders open, then closing-soon, then unknown, then closed", () => {
+    const sorted = sortSpots(spots(), "open-now", { at: tuesdayNoon });
+    expect(sorted.map((s) => s.name.en)).toEqual([
+      "Open all hours",
+      "Closing soon",
+      "Unknown cafe",
+      "Closed bar",
+    ]);
+  });
+
+  it("puts unknown above closed, not below it", () => {
+    // Deliberate: a venue nobody has found hours for is likelier open than one
+    // known to be shut, and burying it would punish unfinished entries.
+    const sorted = sortSpots(spots(), "open-now", { at: tuesdayNoon });
+    const unknown = sorted.findIndex((s) => s.name.en === "Unknown cafe");
+    const closed = sorted.findIndex((s) => s.name.en === "Closed bar");
+    expect(unknown).toBeLessThan(closed);
+  });
+
+  it("falls back to name order with no instant — the server render", () => {
+    const sorted = sortSpots(spots(), "open-now");
+    expect(sorted.map((s) => s.name.en)).toEqual([
+      "Closed bar",
+      "Closing soon",
+      "Open all hours",
+      "Unknown cafe",
+    ]);
+  });
+
+  it("breaks ties by name so the order is stable, not incidental", () => {
+    const both = [
+      makeSpot({ name: { en: "Zed" }, hours: { kind: "always" } }),
+      makeSpot({ name: { en: "Alpha" }, hours: { kind: "always" } }),
+    ];
+    expect(sortSpots(both, "open-now", { at: tuesdayNoon }).map((s) => s.name.en))
+      .toEqual(["Alpha", "Zed"]);
+  });
+});
+
+describe("sortByPrice", () => {
+  it("orders cheapest first, then by name", () => {
+    const spots = [
+      makeSpot({ name: { en: "Pricey" }, priceLevel: 4 }),
+      makeSpot({ name: { en: "Zed cheap" }, priceLevel: 1 }),
+      makeSpot({ name: { en: "Alpha cheap" }, priceLevel: 1 }),
+    ];
+    expect(sortSpots(spots, "price").map((s) => s.name.en)).toEqual([
+      "Alpha cheap",
+      "Zed cheap",
+      "Pricey",
+    ]);
   });
 });

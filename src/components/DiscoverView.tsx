@@ -10,6 +10,7 @@ import type { Dictionary } from "@/i18n/get-dictionary";
 import { sortSpots, type SortMode } from "@/lib/scoring";
 import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
+import { useNow } from "@/components/hooks/useNow";
 import { RoutePane } from "@/components/route/RoutePane";
 import { useRouteStops } from "@/components/route/useRouteStops";
 import { useFilters } from "@/store/filters";
@@ -20,8 +21,7 @@ const SpotMap = dynamic(
   { ssr: false },
 );
 
-// "open-now" joins this in step 4, and becomes the default (D28).
-const sortModes: SortMode[] = ["name"];
+const sortModes: SortMode[] = ["open-now", "price", "name"];
 
 /** Display state, not filter state — deliberately not in the filter store. */
 type MobileView = "list" | "map" | "route";
@@ -57,6 +57,7 @@ export function DiscoverView({
 
   const [view, setView] = useState<MobileView>("list");
   const { stops } = useRouteStops();
+  const at = useNow();
 
   /**
    * Route wins the default once a stop exists, and also when there is no
@@ -74,10 +75,14 @@ export function DiscoverView({
         return false;
       return true;
     });
-    return sortSpots(filtered, sort);
-  }, [spots, city, categories, sort]);
+    // `at` is undefined until after mount, so the first paint orders by name
+    // and the client re-sorts once it has a clock. See useNow().
+    return sortSpots(filtered, sort, { at: at ?? undefined });
+  }, [spots, city, categories, sort, at]);
 
   const sortLabel: Record<SortMode, string> = {
+    "open-now": dict.filters.sortOpenNow,
+    price: dict.filters.sortPrice,
     name: dict.filters.sortName,
   };
 

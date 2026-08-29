@@ -25,8 +25,15 @@ type FilterState = {
 const initial = {
   city: null,
   categories: [] as CategoryGroup[],
-  // Off-radar is the initial state and stays that way. See D4.
-  sort: "off-radar" as SortMode,
+  /**
+   * The default, and the reversal that defines this phase.
+   *
+   * It was "off-radar", described in CLAUDE.md as "the product, not a
+   * preference" and in INTERFACES.md as something that must never change. It
+   * is now "open-now": it is 7pm on a Thursday and the useful question is what
+   * is actually open, not what is obscure (D28).
+   */
+  sort: "open-now" as SortMode,
   selectedId: null,
   hoveredId: null,
 };

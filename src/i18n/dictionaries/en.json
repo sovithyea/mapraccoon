@@ -82,7 +82,9 @@
     "viewMap": "Map",
     "viewToggle": "Show list or map",
     "neighbourhood": "Neighbourhood",
-    "allNeighbourhoods": "Anywhere"
+    "allNeighbourhoods": "Anywhere",
+    "sortOpenNow": "Open now",
+    "sortPrice": "Cheapest first"
   },
   "categories": {
     "restaurant": "Restaurant",

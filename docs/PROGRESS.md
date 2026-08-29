@@ -22,7 +22,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
-| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **In progress** — steps 0–3 done (deletions, fixtures, hours, schema + neighbourhoods). Steps 4–10 remain; step 7 needs Supabase (B10) |
+| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **In progress** — steps 0–4 done. Steps 5–10 remain; step 5 (venue content) is the long pole and step 7 needs Supabase (B10) |
 | 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
 | 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
 
