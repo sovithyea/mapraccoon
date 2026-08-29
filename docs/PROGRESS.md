@@ -18,7 +18,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 | # | Phase | Docs | Branch | Owner | Status |
 |---|---|---|---|---|---|
-| 1 | Foundation | ✅ spec + plan (back-filled) | `main` | Vithyea | **Complete**, pending the R1 content-verification pass |
+| 1 | Foundation | ✅ spec + plan (back-filled) | `phase/1-foundation` | Vithyea | **Complete** and committed, pending review, merge, and the R1 content-verification pass |
 | 2 | Itinerary builder | — | `phase/2-itinerary` | — | Not started — needs spec + plan first |
 | 3 | Persistence | — | `phase/3-persistence` | — | Not started |
 | 4 | Day out with friends | — | `phase/4-collab` | — | Not started |
