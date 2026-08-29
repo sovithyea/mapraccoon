@@ -15,10 +15,15 @@ export function Hero({
   dict: Dictionary;
   sourcedCount: number;
 }) {
+  /*
+    One door, because there is one thing to do.
+    
+    There used to be three: discover, the pairing rail, the community rail.
+    The last two were anchors into sections that D28 and D29 removed, so they
+    had been scrolling to nothing — dead links in the hero of the landing page.
+  */
   const doors = [
     { key: "hidden", href: `/${locale}/discover`, ...dict.hero.doors.hidden },
-    { key: "instead", href: "#pairings", ...dict.hero.doors.instead },
-    { key: "community", href: "#community", ...dict.hero.doors.community },
   ];
 
   return (

@@ -153,14 +153,6 @@ export const spotSchema = z
      */
     sensitive: z.literal("memorial").optional(),
 
-    /** Where the money goes. A field, no longer one of the product's mechanics (D29). */
-    community: z
-      .object({
-        name: z.string().min(1),
-        impact: localizedTextSchema,
-        url: z.url().optional(),
-      })
-      .optional(),
 
     practical: z.object({
       /** Load-bearing: this is the dwell `dayBudget()` schedules with. */

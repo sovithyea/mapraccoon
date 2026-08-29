@@ -71,8 +71,7 @@ function StopRow({
             <p className="mt-1 text-[11px] text-muted">
               {fill(dict.route.dwellHere, { duration: duration(stop.dwellMins) })}
               {` · ${"$".repeat(spot.priceLevel)}`}
-              {spot.community ? ` · ${spot.community.name}` : ""}
-            </p>
+                          </p>
           )}
         </div>
 

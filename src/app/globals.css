@@ -11,7 +11,14 @@
  *
  * Three colour ROLES, and nothing else may use them:
  *   --accent   institutional green. CTAs and links.
- *   --gold     "where your visitor money goes". Community blocks only.
+ *   --gold     "this claim is unverified". The provenance rule beside a fee or
+ *              an opening time, and nowhere else.
+ *
+ *              It meant "where your visitor money goes" until the community
+ *              block was removed. Re-pointed rather than retired, because the
+ *              rule that matters is one colour carrying one meaning — a token
+ *              with no job drifts into decoration, which is how a palette ends
+ *              up with ten colours competing (D21).
  *
  * There used to be a third role: --city-*, a city's identity carried everywhere
  * it appeared. It left with the four-city model (D27). Nine neighbourhoods

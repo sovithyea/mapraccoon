@@ -22,14 +22,6 @@
       "hidden": {
         "title": "The hidden ones",
         "body": "Sorted least-known first"
-      },
-      "instead": {
-        "title": "Instead of the crowds",
-        "body": "Every famous place, paired"
-      },
-      "community": {
-        "title": "Where your money goes",
-        "body": "Community-run and conservation"
       }
     },
     "proof": {
@@ -63,12 +55,6 @@
     "insteadOf": "Instead of",
     "go": "Go here",
     "seeAll": "See every place"
-  },
-  "communitySection": {
-    "eyebrow": "Community-based tourism",
-    "heading": "Where your money actually goes",
-    "lead": "Some of these places are run by the village, the cooperative or the NGO that benefits from your visit. Where that is true, we say who and how.",
-    "runBy": "Run by {name}"
   },
   "filters": {
     "city": "Neighbourhood",
@@ -140,10 +126,6 @@
     "heading": "Instead of {name}",
     "anchorLabel": "The famous one",
     "seeAnchor": "See {name}"
-  },
-  "community": {
-    "heading": "Where your money goes",
-    "runBy": "Run by {name}"
   },
   "city": {
     "heading": "{name}",

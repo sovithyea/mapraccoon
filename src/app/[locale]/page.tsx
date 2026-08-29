@@ -1,8 +1,6 @@
-import { CommunityRail } from "@/components/home/CommunityRail";
 import { Hero } from "@/components/home/Hero";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { sortSpots } from "@/lib/scoring";
 import { getAllSpots } from "@/lib/spots";
 
 /**
@@ -25,7 +23,6 @@ export default async function HomePage({
   const dict = await getDictionary(isLocale(locale) ? locale : "en");
 
   const spots = [...getAllSpots()];
-  const community = sortSpots(spots.filter((s) => s.community), "name").slice(0, 4);
 
   return (
     <>
@@ -36,9 +33,6 @@ export default async function HomePage({
         sourcedCount={spots.filter((s) => s.sources.length > 0).length}
       />
 
-      <div id="community" className="scroll-mt-20">
-        <CommunityRail spots={community} locale={locale} dict={dict} />
-      </div>
     </>
   );
 }

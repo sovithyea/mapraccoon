@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 
 import { MiniMap } from "@/components/map/MiniMap";
 import { AddToDay } from "@/components/route/AddToDay";
-import { CommunityImpact } from "@/components/spot/CommunityImpact";
 import { OpenNow } from "@/components/spot/OpenNow";
 import { WeeklyHours } from "@/components/spot/WeeklyHours";
 import { SpotCard } from "@/components/spot/SpotCard";
@@ -99,14 +98,6 @@ export default async function SpotPage({
         */}
         <p className="mt-3 text-xs text-muted">
           {spot.categories.map((c) => dict.categories[c] ?? c).join(" · ")}
-          {spot.community ? (
-            <>
-              {" · "}
-              <a href="#community" className="text-gold underline underline-offset-4">
-                community-run ↓
-              </a>
-            </>
-          ) : null}
         </p>
 
         {spot.sensitive ? (
@@ -140,10 +131,6 @@ export default async function SpotPage({
               {para}
             </p>
           ))}
-
-          {spot.community ? (
-            <CommunityImpact community={spot.community} dict={dict} />
-          ) : null}
         </div>
 
         {/* Practical comes early — it is the reason to keep reading. */}
@@ -157,11 +144,14 @@ export default async function SpotPage({
               last of four columns. The numbers that actually go stale are the
               fee and the hours, so the warning belongs against them (R1).
 
-              The gold rule ties it to provenance — except on a memorial page,
-              which carries no gold at all. Gold means "where your money goes",
-              and a $5 museum ticket is not a community-impact story (D25).
-              There the caveat also moves below the rows: quieter, and the
-              rows are what a visitor came for.
+              Gold now means one thing and only this: the claim beside it is
+              unverified. It used to mean "where your money goes", and was
+              re-pointed rather than retired when the community block went — a
+              token with no job drifts into decoration (D21).
+
+              A memorial page carries no gold at all. There the caveat sits
+              below the rows instead: quieter, and the rows are what someone
+              came for.
             */}
             {spot.sensitive ? null : (
               <p className="mt-3 border-l-2 border-gold pl-3 text-xs leading-relaxed text-muted">
