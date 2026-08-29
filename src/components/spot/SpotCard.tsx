@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { AddToDay } from "@/components/route/AddToDay";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import type { Spot } from "@/lib/spots/schema";
 
@@ -40,7 +40,7 @@ export function SpotCard({
       >
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-medium leading-snug">{spot.name.en}</h3>
-          <span className="shrink-0 text-xs text-muted">{getCity(spot.city).name}</span>
+          <span className="shrink-0 text-xs text-muted">{getNeighbourhood(spot.neighbourhood).name}</span>
         </div>
 
         <p className="mt-1.5 text-sm leading-relaxed text-muted">{spot.blurb.en}</p>

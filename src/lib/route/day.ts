@@ -79,12 +79,12 @@ export function fullThresholdMins(spots: readonly Spot[] = getAllSpots()): numbe
   let minDwell = Infinity;
   for (const spot of spots) minDwell = Math.min(minDwell, stopDwell(spot));
 
-  // Shortest hop between two spots in the same city — a day is one city, so a
-  // cross-country pair is not a leg anyone would actually add.
+  // Shortest hop between any two spots. The same-city filter that used to be
+  // here went with the four-city model (D27) — every pair is now in Phnom Penh.
   let minLeg = Infinity;
   for (const a of spots) {
     for (const b of spots) {
-      if (a.id === b.id || a.city !== b.city) continue;
+      if (a.id === b.id) continue;
       const { minutes } = estimateLeg(a, b);
       if (minutes > 0) minLeg = Math.min(minLeg, minutes);
     }

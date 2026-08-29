@@ -71,8 +71,8 @@
     "runBy": "Run by {name}"
   },
   "filters": {
-    "city": "City",
-    "allCities": "All cities",
+    "city": "Neighbourhood",
+    "allCities": "Anywhere",
     "category": "Category",
     "sort": "Sort",
     "sortOffRadar": "Off the radar first",
@@ -80,13 +80,29 @@
     "sortName": "A–Z",
     "viewList": "List",
     "viewMap": "Map",
-    "viewToggle": "Show list or map"
+    "viewToggle": "Show list or map",
+    "neighbourhood": "Neighbourhood",
+    "allNeighbourhoods": "Anywhere"
   },
   "categories": {
-    "temple": "Temples",
-    "nature": "Nature",
-    "food": "Food",
-    "culture": "Culture"
+    "restaurant": "Restaurant",
+    "street-food": "Street food",
+    "cafe": "Café",
+    "bakery": "Bakery",
+    "bar": "Bar",
+    "rooftop": "Rooftop",
+    "night-market": "Night market",
+    "live-music": "Live music",
+    "cinema": "Cinema",
+    "gallery": "Gallery",
+    "karaoke": "Karaoke",
+    "sport": "Sport",
+    "swimming": "Swimming",
+    "games": "Games",
+    "temple": "Temple",
+    "museum": "Museum",
+    "market": "Market",
+    "nature": "Nature"
   },
   "spot": {
     "offRadarLabel": "Off-radar score",
@@ -105,7 +121,10 @@
     "communityRun": "Community-run",
     "sensitiveNote": "Not ranked, not paired, and not recommended as an alternative to anything. The off-radar score and the pairing that appear elsewhere on this site are withheld here by design.",
     "unverifiedCaveat": "Fees and hours here are unverified and change without notice. Check the sources below before you travel.",
-    "visiting": "Visiting"
+    "visiting": "Visiting",
+    "priceLevel": "Price",
+    "openingHours": "Hours",
+    "lastVerified": "Checked"
   },
   "pairing": {
     "heading": "Instead of {name}",

@@ -1,5 +1,5 @@
 import { spots as raw } from "@/data/spots";
-import type { CityId, Spot } from "@/lib/spots/schema";
+import type { NeighbourhoodId, Spot } from "@/lib/spots/schema";
 import { spotsSchema } from "@/lib/spots/schema";
 
 /**
@@ -32,8 +32,8 @@ export function getSpotById(id: string): Spot | undefined {
   return byId.get(id);
 }
 
-export function getSpotsByCity(city: CityId): Spot[] {
-  return allSpots.filter((spot) => spot.city === city);
+export function getSpotsByNeighbourhood(id: NeighbourhoodId): Spot[] {
+  return allSpots.filter((spot) => spot.neighbourhood === id);
 }
 
 

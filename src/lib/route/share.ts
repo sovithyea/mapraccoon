@@ -38,10 +38,10 @@ export function encodeDay(stops: readonly RouteStop[], frame: DayFrame = default
     }),
   );
 
-  const city = stops[0]?.spot.city ?? "day";
+  const hood = stops[0]?.spot.neighbourhood ?? "day";
   const count = stops.length;
 
-  return `${city}-${count}-${count === 1 ? "stop" : "stops"}.${payload}`;
+  return `${hood}-${count}-${count === 1 ? "stop" : "stops"}.${payload}`;
 }
 
 /**

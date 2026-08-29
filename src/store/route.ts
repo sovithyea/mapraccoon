@@ -12,7 +12,7 @@ import {
 } from "@/lib/route/day";
 import { estimateLeg } from "@/lib/route/estimate";
 import { getSpotById } from "@/lib/spots";
-import type { CityId, Spot } from "@/lib/spots/schema";
+import type { Spot } from "@/lib/spots/schema";
 
 /**
  * The day under construction. Client-side only — Phase 2 has no backend (D1),
@@ -30,8 +30,6 @@ const MAX_FRAME_END_MINS = 22 * 60;
 
 type RouteState = {
   stops: StoredStop[];
-  /** The day is one city (D22 scope). Set by the first add, cleared when empty. */
-  city: CityId | null;
   frame: DayFrame;
 
   add: (spot: Spot) => void;
@@ -148,7 +146,6 @@ export const useRoute = create<RouteState>()(
   persist(
     (set, get) => ({
       stops: [],
-      city: null,
       frame: initialFrame,
 
       add: (spot) =>
@@ -156,14 +153,13 @@ export const useRoute = create<RouteState>()(
           if (state.stops.some((s) => s.spotId === spot.id)) return state;
           return {
             stops: [...state.stops, { spotId: spot.id, dwellMins: stopDwell(spot) }],
-            city: state.city ?? spot.city,
           };
         }),
 
       remove: (spotId) =>
         set((state) => {
           const stops = state.stops.filter((s) => s.spotId !== spotId);
-          return { stops, city: stops.length === 0 ? null : state.city };
+          return { stops };
         }),
 
       move: (spotId, direction) =>
@@ -205,12 +201,23 @@ export const useRoute = create<RouteState>()(
         set({ stops: reindex(ordered, stops) });
       },
 
-      clear: () => set({ stops: [], city: null, frame: initialFrame }),
+      clear: () => set({ stops: [], frame: initialFrame }),
     }),
     {
-      name: "mapraccoon:day:v1",
-      version: 1,
-      partialize: (state) => ({ stops: state.stops, city: state.city, frame: state.frame }),
+      /**
+       * v2 because `city` left the shape (D27). Rehydrating a v1 day would
+       * restore a field nothing reads — harmless today, and exactly the kind of
+       * silent leftover that confuses whoever debugs this next. `migrate` drops
+       * it rather than letting the version bump quietly discard the whole day.
+       */
+      name: "mapraccoon:day:v2",
+      version: 2,
+      migrate: (persisted, version) => {
+        if (version >= 2) return persisted as { stops: StoredStop[]; frame: DayFrame };
+        const old = persisted as { stops?: StoredStop[]; frame?: DayFrame };
+        return { stops: old.stops ?? [], frame: old.frame ?? initialFrame };
+      },
+      partialize: (state) => ({ stops: state.stops, frame: state.frame }),
     },
   ),
 );

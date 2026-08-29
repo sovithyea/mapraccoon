@@ -6,15 +6,15 @@ import { useMemo } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/mapbox";
 
 import { MapPlaceholder } from "@/components/map/MapPlaceholder";
-import { categoryColor, categoryOrder } from "@/components/ui/category-style";
-import { CAMBODIA_VIEW, getCity } from "@/lib/spots/cities";
-import type { Category, CityId, Spot } from "@/lib/spots/schema";
+import { groupColor, groupOrder } from "@/components/ui/category-style";
+import { groupLabel, groupOf } from "@/lib/spots/categories";
+import { PHNOM_PENH_VIEW } from "@/lib/spots/neighbourhoods";
+import type { Category, NeighbourhoodId, Spot } from "@/lib/spots/schema";
 
 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 export type SpotMapProps = {
   spots: readonly Spot[];
-  city?: CityId | null;
   selectedId?: string | null;
   hoveredId?: string | null;
   onSelect?: (id: string) => void;
@@ -30,7 +30,6 @@ export type SpotMapProps = {
 
 export function SpotMap({
   spots,
-  city,
   selectedId,
   hoveredId,
   onSelect,
@@ -43,12 +42,8 @@ export function SpotMap({
 }: SpotMapProps) {
   const initialView = useMemo(() => {
     if (view) return view;
-    if (city) {
-      const { center, zoom } = getCity(city);
-      return { longitude: center[0], latitude: center[1], zoom };
-    }
-    return { ...CAMBODIA_VIEW };
-  }, [view, city]);
+    return { ...PHNOM_PENH_VIEW };
+  }, [view]);
 
   if (!token) {
     // With exactly one spot in view the placeholder can carry its real
@@ -83,17 +78,17 @@ export function SpotMap({
       */}
       {interactive && legend ? (
         <div className="pointer-events-none absolute bottom-2 left-2 z-10 flex flex-wrap gap-x-3 gap-y-1 rounded-lg border border-border bg-surface/92 px-2.5 py-1.5 backdrop-blur-sm">
-          {categoryOrder.map((category) => (
+          {groupOrder.map((group) => (
             <span
-              key={category}
+              key={group}
               className="flex items-center gap-1.5 text-[11px] text-muted"
             >
               <span
                 className="size-2 rounded-full"
-                style={{ background: categoryColor[category] }}
+                style={{ background: groupColor[group] }}
                 aria-hidden="true"
               />
-              {legend[category]}
+              {groupLabel[group]}
             </span>
           ))}
         </div>
@@ -101,7 +96,9 @@ export function SpotMap({
 
       {spots.map((spot) => {
         const emphasised = spot.id === selectedId || spot.id === hoveredId;
-        const color = categoryColor[spot.categories[0] ?? "culture"];
+        // Pins colour by group, not by category — eighteen categories cannot each
+        // have a hue without recreating the collision D21 measured.
+        const color = groupColor[groupOf(spot.categories)];
 
         return (
           <Marker

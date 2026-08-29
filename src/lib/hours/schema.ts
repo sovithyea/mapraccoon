@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { localizedTextSchema } from "@/lib/spots/schema";
+import { localizedTextSchema } from "@/lib/localized-text";
 
 /**
  * Opening hours (D34, and step 2 of specs/3-friends/plan.md).

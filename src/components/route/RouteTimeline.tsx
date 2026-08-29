@@ -6,7 +6,7 @@ import { DayFrameBar } from "@/components/route/DayFrameBar";
 import { clock, duration } from "@/components/route/time";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import type { DayBudget, DayFrame, ScheduledStop } from "@/lib/route/day";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 
 const fill = (template: string, values: Record<string, string | number>): string =>
   Object.entries(values).reduce(
@@ -38,7 +38,6 @@ function StopRow({
   onRemove?: (spotId: string) => void;
 }) {
   const { spot } = stop;
-  const city = getCity(spot.city);
 
   return (
     <li
@@ -71,9 +70,7 @@ function StopRow({
           ) : (
             <p className="mt-1 text-[11px] text-muted">
               {fill(dict.route.dwellHere, { duration: duration(stop.dwellMins) })}
-              {spot.practical.entryFeeUsd === 0
-                ? ` · ${dict.route.free}`
-                : ` · $${spot.practical.entryFeeUsd}`}
+              {` · ${"$".repeat(spot.priceLevel)}`}
               {spot.community ? ` · ${spot.community.name}` : ""}
             </p>
           )}
@@ -85,8 +82,8 @@ function StopRow({
               —
             </span>
           ) : (
-            <span className="text-xs text-muted" style={{ color: city.ink }}>
-              {getCity(spot.city).name}
+            <span className="text-xs text-muted">
+              {getNeighbourhood(spot.neighbourhood).name}
             </span>
           )}
 

@@ -1,12 +1,12 @@
-import { spotSchema, type Spot } from "@/lib/spots/schema";
+import { spotSchema, type Spot, type SpotInput } from "@/lib/spots/schema";
 
 /**
  * Test spots, built rather than borrowed.
  *
  * Before this existed, roughly fifteen tests across the route, store and
- * estimate suites reached into the live dataset — `getSpotsByCity("kampot-kep")
+ * estimate suites reached into the live dataset — `getSpotsByNeighbourhood("kampot-kep")
  * .slice(0, 2)` and friends. Every one of them broke when D27 deleted three
- * cities, and none of them broke because their logic was wrong. They were
+ * neighbourhoods, and none of them broke because their logic was wrong. They were
  * coupled to content that is expected to change constantly (R8), which is the
  * opposite of what a unit test should depend on.
  *
@@ -26,8 +26,8 @@ let counter = 0;
  * intersects the two `practical` types, so a caller would have to pass a
  * complete one — which defeats the point of the partial.
  */
-type Overrides = Omit<Partial<Spot>, "practical"> & {
-  practical?: Partial<Spot["practical"]>;
+type Overrides = Omit<Partial<SpotInput>, "practical"> & {
+  practical?: Partial<SpotInput["practical"]>;
 };
 
 export function makeSpot(overrides: Overrides = {}): Spot {
@@ -39,8 +39,6 @@ export function makeSpot(overrides: Overrides = {}): Spot {
   // `entryFeeUsd` and the schema would reject the result — which is exactly
   // what fixture.test.ts catches.
   const practical = {
-    bestTime: { en: "Any time" },
-    entryFeeUsd: 0,
     typicalDurationMins: 60,
     ...overrides.practical,
   };
@@ -48,14 +46,17 @@ export function makeSpot(overrides: Overrides = {}): Spot {
   const merged = {
     id: `fixture-${n}`,
     slug: `fixture-${n}`,
-    city: "phnom-penh",
-    categories: ["culture"],
+    neighbourhood: "bkk1",
+    categories: ["bar"],
     name: { en: `Fixture ${n}` },
     // Central Phnom Penh, nudged per fixture so distances are non-zero and
     // deterministic. A test that needs a real separation should set coords.
-    coords: [104.92 + n * 0.01, 11.55 + n * 0.01],
+    coords: [104.92 + n * 0.005, 11.55 + n * 0.005],
     blurb: { en: `Blurb for fixture ${n}.` },
     description: { en: `Description for fixture ${n}.` },
+    hours: { kind: "always" as const },
+    priceLevel: 2 as const,
+    lastVerified: "2026-08-29",
     sources: ["https://example.org/fixture"],
     ...overrides,
     practical,

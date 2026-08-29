@@ -7,7 +7,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { projectCambodia } from "@/lib/geo/project";
 import { dayBudget } from "@/lib/route/day";
 import { decodeDay } from "@/lib/route/share";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -63,7 +63,7 @@ export default async function PlanPage({
 
   const budget = dayBudget(day.stops, day.frame);
   const first = day.stops[0];
-  const city = first ? getCity(first.spot.city) : undefined;
+  const city = first ? getNeighbourhood(first.spot.neighbourhood) : undefined;
   const points = day.stops.map((stop) => ({
     stop,
     ...projectCambodia(stop.spot.coords),

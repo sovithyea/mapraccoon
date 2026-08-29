@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { Dictionary } from "@/i18n/get-dictionary";
-import { getCity } from "@/lib/spots/cities";
+import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 
 export function CommunityRail({
@@ -29,14 +29,14 @@ export function CommunityRail({
 
           <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:mt-0 lg:flex-1">
             {spots.map((spot) => {
-              const city = getCity(spot.city);
+              const city = getNeighbourhood(spot.neighbourhood);
               return (
                 <li key={spot.id}>
                   <Link
                     href={`/${locale}/spot/${spot.slug}`}
                     className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5 transition-shadow hover:shadow-md"
                   >
-                    <p className="text-xs" style={{ color: city.ink }}>
+                    <p className="text-xs">
                       {city.name}
                     </p>
                     <h3 className="mt-1 font-display text-lg font-semibold leading-snug">

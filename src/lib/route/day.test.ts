@@ -14,7 +14,7 @@ import type { Spot } from "@/lib/spots/schema";
 /**
  * Built, not borrowed. These assertions are about scheduling arithmetic, and
  * coupling them to the seed file made fifteen of them break when D27 deleted
- * three cities — none because the arithmetic was wrong.
+ * three neighbourhoods — none because the arithmetic was wrong.
  */
 beforeEach(resetFixtures);
 

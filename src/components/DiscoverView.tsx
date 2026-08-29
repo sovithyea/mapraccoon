@@ -4,10 +4,11 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 
 import { SpotCard } from "@/components/spot/SpotCard";
-import { categoryOrder } from "@/components/ui/category-style";
+import { groupOrder } from "@/components/ui/category-style";
+import { groupLabel, inGroup } from "@/lib/spots/categories";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import { sortSpots, type SortMode } from "@/lib/scoring";
-import { cities } from "@/lib/spots/cities";
+import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 import { RoutePane } from "@/components/route/RoutePane";
 import { useRouteStops } from "@/components/route/useRouteStops";
@@ -68,8 +69,8 @@ export function DiscoverView({
 
   const visible = useMemo(() => {
     const filtered = spots.filter((spot) => {
-      if (city && spot.city !== city) return false;
-      if (categories.length && !categories.some((c) => spot.categories.includes(c)))
+      if (city && spot.neighbourhood !== city) return false;
+      if (categories.length && !categories.some((g) => inGroup(spot.categories, g)))
         return false;
       return true;
     });
@@ -97,26 +98,22 @@ export function DiscoverView({
             <Chip active={city === null} onClick={() => setCity(null)}>
               {dict.filters.allCities}
             </Chip>
-            {cities.map((c) => (
+            {neighbourhoods.map((c) => (
               <Chip key={c.id} active={city === c.id} onClick={() => setCity(c.id)}>
-                <span
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ background: city === c.id ? "currentColor" : c.ink }}
-                  aria-hidden="true"
-                />
                 {c.name}
               </Chip>
             ))}
           </Group>
 
           <Group label={dict.filters.category}>
-            {categoryOrder.map((category) => (
+            {/* Four group chips, not eighteen category chips (see categories.ts). */}
+            {groupOrder.map((group) => (
               <Chip
-                key={category}
-                active={categories.includes(category)}
-                onClick={() => toggleCategory(category)}
+                key={group}
+                active={categories.includes(group)}
+                onClick={() => toggleCategory(group)}
               >
-                {dict.categories[category]}
+                {groupLabel[group]}
               </Chip>
             ))}
           </Group>
@@ -253,7 +250,6 @@ export function DiscoverView({
           >
             <SpotMap
               spots={visible}
-              city={city}
               selectedId={selectedId}
               hoveredId={hoveredId}
               onSelect={setSelected}

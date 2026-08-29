@@ -21,17 +21,17 @@ describe("makeSpot", () => {
   });
 
   it("applies overrides", () => {
-    const s = makeSpot({ name: { en: "Named" }, categories: ["food"] });
+    const s = makeSpot({ name: { en: "Named" }, categories: ["cafe"] });
     expect(s.name.en).toBe("Named");
-    expect(s.categories).toEqual(["food"]);
+    expect(s.categories).toEqual(["cafe"]);
   });
 
   it("merges into practical rather than replacing it", () => {
     // The trap this guards: spreading a partial `practical` over the default
     // would drop `bestTime` and `entryFeeUsd`, and the schema would reject it.
-    const s = makeSpot({ practical: { typicalDurationMins: 30 } });
+    const s = makeSpot({ practical: { typicalDurationMins: 30 }, priceLevel: 3 });
     expect(s.practical.typicalDurationMins).toBe(30);
-    expect(s.practical.entryFeeUsd).toBe(0);
+    expect(s.priceLevel).toBe(3);
   });
 
   it("throws loudly rather than returning something invalid", () => {

@@ -9,7 +9,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { DayDock } from "@/components/route/DayDock";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAllSpots } from "@/lib/spots";
-import { cities } from "@/lib/spots/cities";
+import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 
 // Serif display over a geometric sans — the editorial register this kind of
 // content wants. See docs/DESIGN-SYSTEM.md.
@@ -87,17 +87,12 @@ export default async function LocaleLayout({
 
             {/* Inline on desktop; the scrolling rail below covers mobile. */}
             <ul className="hidden items-center gap-6 md:flex">
-              {cities.map((city) => (
+              {neighbourhoods.map((city) => (
                 <li key={city.id}>
                   <Link
                     href={`/${locale}/city/${city.id}`}
                     className="flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"
                   >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: city.ink }}
-                      aria-hidden="true"
-                    />
                     {city.name}
                   </Link>
                 </li>
@@ -122,17 +117,12 @@ export default async function LocaleLayout({
           */}
           <div className="border-t border-border md:hidden">
             <ul className="rail flex gap-2 overflow-x-auto px-5 py-2">
-              {cities.map((city) => (
+              {neighbourhoods.map((city) => (
                 <li key={city.id} className="shrink-0">
                   <Link
                     href={`/${locale}/city/${city.id}`}
                     className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium"
                   >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: city.ink }}
-                      aria-hidden="true"
-                    />
                     {city.name}
                   </Link>
                 </li>
@@ -157,17 +147,12 @@ export default async function LocaleLayout({
             <div>
               <h2 className="eyebrow">{dict.footer.cities}</h2>
               <ul className="mt-3 space-y-1">
-                {cities.map((city) => (
+                {neighbourhoods.map((city) => (
                   <li key={city.id}>
                     <Link
                       href={`/${locale}/city/${city.id}`}
                       className="inline-flex min-h-9 items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
                     >
-                      <span
-                        className="size-2 rounded-full"
-                        style={{ background: city.ink }}
-                        aria-hidden="true"
-                      />
                       {city.name}
                     </Link>
                   </li>

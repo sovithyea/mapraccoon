@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { spots as raw } from "@/data/spots";
 import { getAllSpots, getSpotBySlug } from "@/lib/spots";
-import { cities } from "@/lib/spots/cities";
+import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 import { CAMBODIA_BBOX, spotsSchema } from "@/lib/spots/schema";
 
 /**
@@ -46,7 +46,7 @@ describe("seed content", () => {
     const sensitive = getAllSpots().filter((s) => s.sensitive);
 
     it("marks every known memorial site", () => {
-      // Three of the five left with their cities (D27). These two are in
+      // Three of the five left with their neighbourhoods (D27). These two are in
       // Phnom Penh and stay, so their exclusions get stronger, not weaker (D33).
       expect(sensitive.map((s) => s.slug).sort()).toEqual([
         "choeung-ek",
@@ -59,9 +59,9 @@ describe("seed content", () => {
   });
 
   it("assigns every spot to a known city", () => {
-    const known = new Set(cities.map((c) => c.id));
+    const known = new Set(neighbourhoods.map((c) => c.id));
     for (const spot of getAllSpots()) {
-      expect(known.has(spot.city), `${spot.id} city ${spot.city}`).toBe(true);
+      expect(known.has(spot.neighbourhood), `${spot.id} city ${spot.neighbourhood}`).toBe(true);
     }
   });
 
