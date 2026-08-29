@@ -22,39 +22,59 @@ The reference point is `themapcambodia.com`, the competitor named in the brief. 
 
 Defined once in `src/app/globals.css` as CSS custom properties, exposed to Tailwind through `@theme inline`. Full light and dark sets; nothing is defined only inside the dark block.
 
-| Token | Light | Role |
+**Every value is verified, not chosen by eye.** WCAG AA (4.5:1) for text, and CIELAB ΔE > 25 between any two colours that carry different meanings on the same page. The first palette failed both — see D21 and the measurements in `docs/VERIFIED.md`.
+
+### Three colour roles, and nothing else may use them
+
+| Role | Meaning |
+|---|---|
+| `--accent` | Institutional green. CTAs and links. |
+| `--gold` | "Where your visitor money goes." Community blocks only. |
+| `--city-*` | A city's identity, the same everywhere it appears. |
+
+Category colour is deliberately **not** a page-level role — see below.
+
+### Surfaces and text
+
+| Token | Light | Dark | Role |
+|---|---|---|---|
+| `--background` | `#faf6ef` | `#101310` | Page ground, warm paper |
+| `--surface` | `#fffdf8` | `#171b16` | Cards, raised panels |
+| `--surface-sunk` | `#f1ead9` | `#1e231d` | Recessed bands, alternating sections |
+| `--foreground` | `#1d2621` | `#ece5d8` | Body copy |
+| `--muted` | `#655d51` | `#a1988a` | Secondary copy, labels |
+| `--border` | `#e1d8c6` | `#2d342c` | Dividers, card outlines |
+| `--accent` | `#123a31` | `#57b79c` | Primary actions |
+| `--forest-mid` | `#276353` | `#6cc3aa` | Eyebrows |
+| `--gold` | `#7e5a0c` | `#d9a83f` | Community impact only |
+
+### Cities — two variants each, and why
+
+One colour cannot do both jobs. A city fill is a large dark panel carrying white text; a city mark is a small dot or a line of text sitting on the page background. In dark mode those requirements move in opposite directions.
+
+| City | `--city-*` (fill, both modes) | `--city-*-ink` dark |
 |---|---|---|
-| `--background` | `#faf6ef` | Page ground, warm paper |
-| `--surface` | `#fffdf8` | Cards, raised panels |
-| `--surface-sunk` | `#f0e9dc` | Recessed bands, alternating sections |
-| `--foreground` | `#1f2a23` | Body copy |
-| `--muted` | `#6b6558` | Secondary copy, labels |
-| `--border` | `#e0d7c7` | Dividers, card outlines |
-| `--forest` / `--accent` | `#16453a` | Primary actions, institutional colour |
-| `--forest-mid` | `#2f6b5b` | Eyebrows, the third hero heading line |
-| `--gold` | `#9a7415` | Community-impact accent only |
+| Phnom Penh | `#a83c22` clay red | `#e08a6c` |
+| Siem Reap | `#2f5296` indigo | `#8fabec` |
+| Kampot & Kep | `#0e6b8a` ocean | `#5cbcd9` |
+| Battambang | `#7d3a5c` plum | `#dc93b8` |
 
-### Category colours — semantic, not decoration
+`-ink` equals the fill in light mode. **Fills stay dark in both modes**, which has a consequence worth stating: anything sitting on a fill must also not flip with the theme. Using `--ink` on a white button over a city card produced 1.15:1 in dark mode, and `--accent-contrast` on a city fill produced 2.46:1. Both shipped briefly and were caught by measurement, not by eye.
 
-They identify the pin layer on the map and the tag on a card. Do not restyle without a product decision.
+Minimum separation across all seven on-page role colours is ΔE 29.6 (light) and 29.2 (dark).
 
-| Category | Light |
-|---|---|
-| temple | `#9a6b12` |
-| nature | `#2f6b5b` |
-| food | `#b3491d` |
-| culture | `#6d4aa8` |
+### Categories — map pins only
 
-### City accents — also semantic
+| Category | Light | Dark |
+|---|---|---|
+| temple | `#b07a0f` | `#d9a441` |
+| nature | `#2e7d48` | `#63c684` |
+| food | `#c2410c` | `#f2915f` |
+| culture | `#7c4dbd` | `#b6a0f2` |
 
-A city keeps its colour on the nav dot, the chip tab, the feature card, the constellation dot and the city label. Same idea as the competitor's system; different values.
+Four cities plus four categories plus an accent plus gold is ten colours competing on one page. Measured, the first attempt collided twelve ways: `--forest-mid` and `--cat-nature` were *literally the same colour* (ΔE 0), gold collided with the temple category (ΔE 11.6) — breaking the rule that gold means one thing — and two of the four cities were indistinguishable (ΔE 24.1).
 
-| City | Light |
-|---|---|
-| Phnom Penh | `#c2622a` |
-| Siem Reap | `#3c4a39` |
-| Kampot & Kep | `#6e7a33` |
-| Battambang | `#9e4b3b` |
+The fix was structural, not a tint adjustment: **category colour exists only where it distinguishes items from one another, which is the map's pin layers.** Everywhere else a category is a text label in neutral chrome. Because the pins are the only place these appear, they need to differ only from each other, not from the city set. `SpotMap` carries the legend, since it is now the only key to them.
 
 ## Type
 
@@ -86,7 +106,11 @@ The `.eyebrow` utility (12px, 700, uppercase, `0.14em` tracking, `--forest-mid`)
 
 ## Dark mode
 
-Every token is redefined under `@media (prefers-color-scheme: dark)`. Accent flips from deep forest to a light jade (`#4fae94`) so it stays legible on a dark ground, and `--accent-contrast` flips with it. City and category accents lighten. There is no manual theme toggle yet.
+Every token is redefined under `@media (prefers-color-scheme: dark)`. Surfaces, text, accent, gold, city `-ink` variants and category pins all move; **city fills do not**, because they always carry white text.
+
+That asymmetry is the trap. A colour that flips paired against a surface that does not is the one dark-mode bug this design can produce, and it produced two of them on first attempt. When putting text on a city fill, use a value that is dark in both modes (`--forest-deep`) or light in both (`white`) — never `--ink` or `--accent-contrast`.
+
+Audited at 0 failures across four routes in both modes with `tools/contrast.mjs`. There is no manual theme toggle yet.
 
 ## Responsive behaviour
 

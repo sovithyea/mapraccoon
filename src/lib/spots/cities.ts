@@ -8,9 +8,14 @@ export type City = {
   /** [longitude, latitude] */
   center: [number, number];
   zoom: number;
-  /** CSS custom property holding this city's accent. Semantic, not decorative:
-   *  a city keeps the same colour on the tab, the pin and the card. */
-  color: string;
+  /**
+   * Two variants, because one colour cannot do both jobs (D21):
+   *   `ink`  — small marks and text on the page background. Adapts in dark mode.
+   *   `fill` — large fill behind white text. Stays dark in both modes.
+   * Semantic, not decorative: a city keeps the same colour everywhere.
+   */
+  ink: string;
+  fill: string;
 };
 
 export const cities: readonly City[] = [
@@ -20,7 +25,8 @@ export const cities: readonly City[] = [
     tagline: "The capital, and the day trips nobody books",
     center: [104.9218, 11.5564],
     zoom: 11.5,
-    color: "var(--city-phnom-penh)",
+    ink: "var(--city-phnom-penh-ink)",
+    fill: "var(--city-phnom-penh)",
   },
   {
     id: "siem-reap",
@@ -28,7 +34,8 @@ export const cities: readonly City[] = [
     tagline: "Angkor — and the temples past the circuit",
     center: [103.8595, 13.3622],
     zoom: 11,
-    color: "var(--city-siem-reap)",
+    ink: "var(--city-siem-reap-ink)",
+    fill: "var(--city-siem-reap)",
   },
   {
     id: "kampot-kep",
@@ -36,7 +43,8 @@ export const cities: readonly City[] = [
     tagline: "Pepper, crab, karst caves and mangrove",
     center: [104.2, 10.6],
     zoom: 10.5,
-    color: "var(--city-kampot-kep)",
+    ink: "var(--city-kampot-kep-ink)",
+    fill: "var(--city-kampot-kep)",
   },
   {
     id: "battambang",
@@ -44,7 +52,8 @@ export const cities: readonly City[] = [
     tagline: "Colonial timber, hilltop temples, an arts school",
     center: [103.1968, 13.0957],
     zoom: 11,
-    color: "var(--city-battambang)",
+    ink: "var(--city-battambang-ink)",
+    fill: "var(--city-battambang)",
   },
 ];
 

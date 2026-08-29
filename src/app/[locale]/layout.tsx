@@ -79,7 +79,7 @@ export default async function LocaleLayout({
                   >
                     <span
                       className="size-2 rounded-full"
-                      style={{ background: city.color }}
+                      style={{ background: city.ink }}
                       aria-hidden="true"
                     />
                     {city.name}
@@ -111,7 +111,7 @@ export default async function LocaleLayout({
                   >
                     <span
                       className="size-2 rounded-full"
-                      style={{ background: city.color }}
+                      style={{ background: city.ink }}
                       aria-hidden="true"
                     />
                     {city.name}
@@ -146,7 +146,7 @@ export default async function LocaleLayout({
                     >
                       <span
                         className="size-2 rounded-full"
-                        style={{ background: city.color }}
+                        style={{ background: city.ink }}
                         aria-hidden="true"
                       />
                       {city.name}

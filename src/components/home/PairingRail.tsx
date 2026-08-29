@@ -57,7 +57,7 @@ export function PairingRail({
                 </blockquote>
 
                 <div className="mt-6 border-t border-border pt-4">
-                  <p className="text-xs" style={{ color: city.color }}>
+                  <p className="text-xs" style={{ color: city.ink }}>
                     {city.name}
                   </p>
                   <div className="mt-1 flex items-end justify-between gap-3">

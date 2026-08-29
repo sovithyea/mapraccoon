@@ -36,7 +36,7 @@ export function CommunityRail({
                     href={`/${locale}/spot/${spot.slug}`}
                     className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5 transition-shadow hover:shadow-md"
                   >
-                    <p className="text-xs" style={{ color: city.color }}>
+                    <p className="text-xs" style={{ color: city.ink }}>
                       {city.name}
                     </p>
                     <h3 className="mt-1 font-display text-lg font-semibold leading-snug">

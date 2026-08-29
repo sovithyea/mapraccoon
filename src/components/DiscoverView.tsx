@@ -84,7 +84,7 @@ export function DiscoverView({
               <Chip key={c.id} active={city === c.id} onClick={() => setCity(c.id)}>
                 <span
                   className="size-2 shrink-0 rounded-full"
-                  style={{ background: city === c.id ? "currentColor" : c.color }}
+                  style={{ background: city === c.id ? "currentColor" : c.ink }}
                   aria-hidden="true"
                 />
                 {c.name}
@@ -187,6 +187,7 @@ export function DiscoverView({
             onHover={setHovered}
             missingTokenTitle={dict.map.missingTokenTitle}
             missingTokenBody={dict.map.missingTokenBody}
+            legend={dict.categories}
           />
         </div>
       </div>

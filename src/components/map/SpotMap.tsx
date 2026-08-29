@@ -6,9 +6,9 @@ import { useMemo } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/mapbox";
 
 import { MapPlaceholder } from "@/components/map/MapPlaceholder";
-import { categoryColor } from "@/components/ui/category-style";
+import { categoryColor, categoryOrder } from "@/components/ui/category-style";
 import { CAMBODIA_VIEW, getCity } from "@/lib/spots/cities";
-import type { CityId, Spot } from "@/lib/spots/schema";
+import type { Category, CityId, Spot } from "@/lib/spots/schema";
 
 const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -24,6 +24,8 @@ export type SpotMapProps = {
   /** Overrides the computed view — used by the single-spot map on a detail page. */
   view?: { longitude: number; latitude: number; zoom: number };
   interactive?: boolean;
+  /** Localised category names. Omit to hide the pin legend. */
+  legend?: Record<Category, string>;
 };
 
 export function SpotMap({
@@ -37,6 +39,7 @@ export function SpotMap({
   missingTokenBody,
   view,
   interactive = true,
+  legend,
 }: SpotMapProps) {
   const initialView = useMemo(() => {
     if (view) return view;
@@ -63,6 +66,28 @@ export function SpotMap({
       style={{ width: "100%", height: "100%" }}
     >
       {interactive ? <NavigationControl position="top-right" /> : null}
+
+      {/*
+        Category colour lives only on these pins (D21), so the map carries the
+        only legend for it.
+      */}
+      {interactive && legend ? (
+        <div className="pointer-events-none absolute bottom-2 left-2 z-10 flex flex-wrap gap-x-3 gap-y-1 rounded-lg border border-border bg-surface/92 px-2.5 py-1.5 backdrop-blur-sm">
+          {categoryOrder.map((category) => (
+            <span
+              key={category}
+              className="flex items-center gap-1.5 text-[11px] text-muted"
+            >
+              <span
+                className="size-2 rounded-full"
+                style={{ background: categoryColor[category] }}
+                aria-hidden="true"
+              />
+              {legend[category]}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {spots.map((spot) => {
         const emphasised = spot.id === selectedId || spot.id === hoveredId;

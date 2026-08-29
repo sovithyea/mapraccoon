@@ -58,11 +58,11 @@ export function CityPicks({
                     ? "text-accent-contrast shadow-sm"
                     : "border border-border bg-surface text-foreground hover:border-muted"
                 }`}
-                style={on ? { background: city.color } : undefined}
+                style={on ? { background: city.fill } : undefined}
               >
                 <span
                   className="size-2.5 shrink-0 rounded-full"
-                  style={{ background: on ? "rgba(255,255,255,0.85)" : city.color }}
+                  style={{ background: on ? "rgba(255,255,255,0.85)" : city.ink }}
                   aria-hidden="true"
                 />
                 {city.name}
@@ -76,7 +76,7 @@ export function CityPicks({
             <Link
               href={`/${locale}/spot/${lead.slug}`}
               className="group relative order-2 flex min-h-[19rem] flex-col justify-end overflow-hidden rounded-3xl p-6 sm:p-7 text-white lg:order-1 lg:min-h-[28rem]"
-              style={{ background: active.color }}
+              style={{ background: active.fill }}
             >
               <div
                 aria-hidden="true"
@@ -87,7 +87,10 @@ export function CityPicks({
                 className="pointer-events-none absolute -right-8 -top-16 size-[18rem] rounded-full border border-white/15"
               />
 
-              <p className="relative text-xs font-bold uppercase tracking-[0.16em] text-white/70">
+              <p className="relative flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
+                <span className="rounded bg-white/20 px-1.5 py-0.5 font-display text-[13px] tracking-normal text-white">
+                  01
+                </span>
                 {active.tagline}
               </p>
               <h3 className="relative mt-3 max-w-lg font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
@@ -111,7 +114,7 @@ export function CityPicks({
                   </span>
                 ) : null}
               </div>
-              <span className="relative mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-ink">
+              <span className="relative mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-forest-deep">
                 {dict.map.viewDetails}
                 <span aria-hidden="true">→</span>
               </span>
@@ -125,17 +128,23 @@ export function CityPicks({
             <p className="mt-1 px-2 text-sm text-muted">{dict.filters.sortOffRadar}</p>
 
             <ul className="mt-4 flex flex-1 flex-col gap-2">
-              {rest.slice(0, 4).map((spot) => (
+              {rest.slice(0, 4).map((spot, i) => (
                 <li key={spot.id} className="min-w-0 flex-1">
                   <Link
                     href={`/${locale}/spot/${spot.slug}`}
                     className="group flex h-full min-w-0 items-center gap-3 rounded-2xl border border-border p-3 transition-shadow hover:shadow-md"
                   >
                     <span
-                      className="size-12 shrink-0 rounded-xl sm:size-14"
-                      style={{ background: active.color, opacity: 0.15 + spot.offRadar / 200 }}
+                      className="flex size-12 shrink-0 items-center justify-center rounded-xl border font-display text-base font-bold sm:size-14"
+                      style={{
+                        color: active.ink,
+                        borderColor: active.ink,
+                        background: "var(--surface-sunk)",
+                      }}
                       aria-hidden="true"
-                    />
+                    >
+                      {String(i + 2).padStart(2, "0")}
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block line-clamp-1 font-display text-[15px] font-semibold">
                         {spot.name.en}
@@ -154,8 +163,8 @@ export function CityPicks({
 
             <Link
               href={`/${locale}/city/${active.id}`}
-              className="mt-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-accent-contrast transition-opacity hover:opacity-90"
-              style={{ background: active.color }}
+              className="mt-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
+              style={{ background: active.fill }}
             >
               {dict.picks.seeAll
                 .replace("{count}", String(counts[activeId] ?? 0))

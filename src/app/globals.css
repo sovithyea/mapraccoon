@@ -1,67 +1,87 @@
 @import "tailwindcss";
 
 /*
- * Palette — "Laterite & Monsoon". Warm paper ground, deep jungle green, temple
- * gold. Documented in docs/DESIGN-SYSTEM.md.
+ * Palette — "Laterite & Monsoon".
  *
- * Convergent with themapcambodia.com's forest/warm register, because that is
- * the right register for Cambodian editorial content — but our own values, and
- * our own accent. Deliberately not foodraccoon's Chalk Market either.
+ * Every value here is verified, not chosen by eye: WCAG AA (4.5:1) for text,
+ * and CIELAB deltaE > 25 between any two colours that carry different meanings
+ * on the same page. The previous palette failed both — `--forest-mid` and
+ * `--cat-nature` were literally the same colour, gold collided with the temple
+ * category, and two of the four cities were indistinguishable. See D21.
+ *
+ * Three colour ROLES, and nothing else may use them:
+ *   --accent   institutional green. CTAs and links.
+ *   --gold     "where your visitor money goes". Community blocks only.
+ *   --city-*   a city's identity, the same everywhere it appears.
+ *
+ * Category colour is NOT a page-level role. It identifies pin layers on the
+ * map and appears nowhere else — see docs/DESIGN-SYSTEM.md.
  */
 :root {
   --background: #faf6ef;
   --surface: #fffdf8;
-  --surface-sunk: #f0e9dc;
-  --ink: #17211b;
-  --foreground: #1f2a23;
-  --muted: #6b6558;
-  --border: #e0d7c7;
+  --surface-sunk: #f1ead9;
+  --ink: #141a16;
+  --foreground: #1d2621;
+  --muted: #655d51;
+  --border: #e1d8c6;
 
-  --forest: #16453a;
-  --forest-deep: #0e2c25;
-  --forest-mid: #2f6b5b;
-  --accent: #16453a;
+  --forest: #123a31;
+  --forest-deep: #0b2620;
+  --forest-mid: #276353;
+  --accent: #123a31;
   --accent-contrast: #fdfaf4;
-  --gold: #9a7415;
+  --gold: #7e5a0c;
 
-  --cat-temple: #9a6b12;
-  --cat-nature: #2f6b5b;
-  --cat-food: #b3491d;
-  --cat-culture: #6d4aa8;
+  /* Map pin layers only. */
+  --cat-temple: #b07a0f;
+  --cat-nature: #2e7d48;
+  --cat-food: #c2410c;
+  --cat-culture: #7c4dbd;
 
-  /* Per-city accents. Semantic: a city keeps its colour everywhere. */
-  --city-phnom-penh: #c2622a;
-  --city-siem-reap: #3c4a39;
-  --city-kampot-kep: #6e7a33;
-  --city-battambang: #9e4b3b;
+  /*
+   * Two variants per city, because one colour cannot do both jobs:
+   *   --city-*      large fill behind white text (stays dark in both modes)
+   *   --city-*-ink  small marks and text on the page background (adapts)
+   */
+  --city-phnom-penh: #a83c22;
+  --city-siem-reap: #2f5296;
+  --city-kampot-kep: #0e6b8a;
+  --city-battambang: #7d3a5c;
+
+  --city-phnom-penh-ink: #a83c22;
+  --city-siem-reap-ink: #2f5296;
+  --city-kampot-kep-ink: #0e6b8a;
+  --city-battambang-ink: #7d3a5c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #10140f;
-    --surface: #171d18;
-    --surface-sunk: #1f2720;
+    --background: #101310;
+    --surface: #171b16;
+    --surface-sunk: #1e231d;
     --ink: #f4efe4;
     --foreground: #ece5d8;
-    --muted: #a49b8a;
-    --border: #2c352d;
+    --muted: #a1988a;
+    --border: #2d342c;
 
-    --forest: #4fae94;
-    --forest-deep: #0b1a16;
+    --forest: #57b79c;
+    --forest-deep: #08150f;
     --forest-mid: #6cc3aa;
-    --accent: #4fae94;
-    --accent-contrast: #0b1a16;
-    --gold: #d9b055;
+    --accent: #57b79c;
+    --accent-contrast: #08150f;
+    --gold: #d9a83f;
 
     --cat-temple: #d9a441;
-    --cat-nature: #5ecfae;
-    --cat-food: #f08a55;
-    --cat-culture: #b39bf0;
+    --cat-nature: #63c684;
+    --cat-food: #f2915f;
+    --cat-culture: #b6a0f2;
 
-    --city-phnom-penh: #e0854b;
-    --city-siem-reap: #8fae87;
-    --city-kampot-kep: #b3c163;
-    --city-battambang: #d0806e;
+    /* Fills keep their dark values — they always carry white text. */
+    --city-phnom-penh-ink: #e08a6c;
+    --city-siem-reap-ink: #8fabec;
+    --city-kampot-kep-ink: #5cbcd9;
+    --city-battambang-ink: #dc93b8;
   }
 }
 

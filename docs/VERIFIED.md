@@ -84,6 +84,20 @@ Measured with `tools/probe.mjs` over CDP at `deviceScaleFactor: 2, mobile: true`
 | **`chrome --headless --screenshot` with `--window-size` disagrees with CDP measurement** | **VERIFIED** | It produced images showing content cut off on `/discover`, a page the probe measured as having zero overflow. Screenshots now go through `Page.captureScreenshot` under the same emulation | 2026-08-29 |
 | The map renders pins with a real token | **PENDING** | Still blocked on B1 — no Mapbox account | — |
 
+### Colour
+
+Measured with `tools/contrast.mjs` (WCAG, over CDP) and a CIELAB ΔE script.
+
+| Claim | Status | Evidence | Date |
+|---|---|---|---|
+| **The first palette collided twelve ways** | **VERIFIED** | ΔE matrix over all role colours: `forest-mid`~`cat-nature` ΔE **0.0** (identical), `city:phnom-penh`~`cat:food` 9.9, `gold`~`cat:temple` 11.6, `accent`~`city:siem-reap` 12.2, `city:phnom-penh`~`city:battambang` 24.1, and seven more under the 25 threshold | 2026-08-29 |
+| The first palette failed WCAG AA twice | **VERIFIED** | `gold` on `surface-sunk` 3.56:1; white on the Phnom Penh feature card 4.14:1. Both need 4.5 | 2026-08-29 |
+| The replacement palette separates cleanly | **VERIFIED** | Minimum ΔE across all seven on-page role colours: **29.6** light, **29.2** dark. Category pins, which need only differ from each other, minimum ΔE 38.1 light / 26.9 dark | 2026-08-29 |
+| Zero contrast failures, both modes, four routes | **VERIFIED** | `tools/contrast.mjs` on `/en`, `/en/discover`, `/en/spot/banteay-chhmar`, `/en/city/kampot-kep` in light and dark → 0 failures each | 2026-08-29 |
+| **Dark mode shipped two invisible-text defects** | **VERIFIED** | Probed the live DOM: `--ink` (light in dark mode) on the white "View details" button → **1.15:1**; `--accent-contrast` (near-black in dark mode) on the indigo "See all" button → **2.46:1**. Both are the same bug — a colour that flips against a surface that does not | 2026-08-29 |
+| **The contrast tool was wrong twice before it was right** | **VERIFIED** | A regex reading `oklab(0.999994 … / 0.8)` as RGB reported `text-white/80` at 2.76:1 (false); stopping the backdrop walk at the first non-transparent layer reported four `bg-white/15` chips as failures (false). Fixed by resolving through a canvas and compositing the full stack | 2026-08-29 |
+| The palette looks good | **ASSUMED** | Contrast and separation are measured; "good" is not. Reviewed by eye at 1280px in both modes only — not at mobile widths, not on a calibrated display, not by anyone but the author | — |
+
 ---
 
 ## Corrections
@@ -103,3 +117,7 @@ Things this repo's own documentation or code got wrong, and when they were fixed
 | C9 | Cities were unreachable on mobile: the nav list is `hidden md:flex` and there was no drawer or alternative | Noticed while reading the first mobile screenshot. Fixed with a scrolling city rail as a second header row | 2026-08-29 |
 | C10 | On `/discover` the map sat below all 42 result cards on a phone, making it effectively unreachable | Same screenshot pass. Fixed with a mobile-only list/map toggle | 2026-08-29 |
 | C11 | The list/map toggle first shipped labelled "Discover" / "On The Map", reusing unrelated dictionary keys, and `capitalize` title-cased the multi-word string | Read back from the verification screenshot. Added `filters.viewList` / `filters.viewMap` | 2026-08-29 |
+| C12 | The first palette was assembled by eye and collided twelve ways, including two colours that were literally identical. `docs/DESIGN-SYSTEM.md` had asserted the colour system was semantic and non-overlapping | Measured with a ΔE matrix after the user said the colouring was not good. Superseded by D21 | 2026-08-29 |
+| C13 | Dark mode had never been looked at, and contained two near-invisible text defects (1.15:1, 2.46:1) | `docs/PROGRESS.md` had listed this as a known gap; probing the live DOM confirmed it | 2026-08-29 |
+| C14 | The picks list swatch was a tinted grey block carrying no information — it read as a broken image | Visible in the first desktop screenshot. Replaced with the item's rank in the off-radar order | 2026-08-29 |
+| C15 | `tools/contrast.mjs` produced confident false failures on its first two runs, from parsing `oklab()` as `rgb()` and from stopping the backdrop walk at a translucent layer | Caught by checking a flagged element's computed style instead of trusting the tool. A measuring tool that has not been checked against a known-good case is not evidence | 2026-08-29 |

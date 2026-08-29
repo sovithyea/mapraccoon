@@ -62,6 +62,29 @@ node tools/probe.mjs http://localhost:3000/en/discover 390 '
   .filter((x) => x.h > 0 && x.h < 24)'
 ```
 
+## Contrast audit
+
+```bash
+node tools/contrast.mjs <url> [dark]     # exits 1 on any failure
+```
+
+Walks every leaf text node, composites the full backdrop stack, and reports
+anything under WCAG AA (4.5:1, or 3:1 for large text). Run both modes on every
+route before signing off a palette change.
+
+Two things it does that a naive version gets wrong, both learned by shipping the
+naive version first:
+
+- **It resolves colours through a canvas, not a regex.** Tailwind v4 emits
+  `oklab(0.999994 … / 0.8)` for `text-white/80`. A regex that assumes `rgb()`
+  reads those three numbers as near-black and reports a confident false failure.
+- **It composites the whole backdrop stack, not the nearest background.**
+  `bg-white/15` over an indigo card is not `bg-white/15` over nothing. Stopping
+  at the first non-transparent layer flagged four passing chips as failures.
+
+It found two real defects on its first correct run — 1.15:1 and 2.46:1 in dark
+mode — that reading the source and looking at screenshots had both missed.
+
 ## Screenshot
 
 ```bash

@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { OffRadarMeter } from "@/components/spot/OffRadarMeter";
-import { categoryColor } from "@/components/ui/category-style";
 import { getCity } from "@/lib/spots/cities";
 import type { Spot } from "@/lib/spots/schema";
 
@@ -48,11 +47,7 @@ export function SpotCard({
             {spot.categories.map((category) => (
               <li
                 key={category}
-                className="rounded-full px-2 py-0.5 text-[11px] capitalize"
-                style={{
-                  color: categoryColor[category],
-                  border: `1px solid ${categoryColor[category]}`,
-                }}
+                className="rounded-full border border-border px-2 py-0.5 text-[11px] capitalize text-muted"
               >
                 {category}
               </li>

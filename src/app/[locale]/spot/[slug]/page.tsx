@@ -7,7 +7,6 @@ import { CommunityImpact } from "@/components/spot/CommunityImpact";
 import { OffRadarMeter } from "@/components/spot/OffRadarMeter";
 import { PairingCard } from "@/components/spot/PairingCard";
 import { SpotCard } from "@/components/spot/SpotCard";
-import { categoryColor } from "@/components/ui/category-style";
 import { buildableLocales, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getAllSpots, getPairedSpot, getSpotBySlug, getSpotsByCity } from "@/lib/spots";
@@ -64,7 +63,7 @@ export default async function SpotPage({
           >
             <span
               className="size-2 rounded-full"
-              style={{ background: city.color }}
+              style={{ background: city.ink }}
               aria-hidden="true"
             />
             {city.name}
@@ -80,11 +79,7 @@ export default async function SpotPage({
             {spot.categories.map((category) => (
               <li
                 key={category}
-                className="rounded-full px-2 py-0.5 text-xs capitalize"
-                style={{
-                  color: categoryColor[category],
-                  border: `1px solid ${categoryColor[category]}`,
-                }}
+                className="rounded-full border border-border px-2.5 py-1 text-xs text-muted"
               >
                 {dict.categories[category]}
               </li>

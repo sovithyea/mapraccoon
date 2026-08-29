@@ -259,3 +259,28 @@ The template's load-bearing sections are the ones usually skipped: **Not done / 
 Two rules attach to it. A PR must never claim something was verified that could not be run; unrunnable checks go under *Not done*. And changes after review go in follow-up comments rather than silent body edits, because reviewers read new comments and not bodies they have already read.
 
 **Consequence:** a PR body is a truthful log of what happened, not a snapshot of what was intended when it opened.
+
+---
+
+## D21 — Cut category colour to the map, and verify every colour instead of choosing it
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes the palette in D16
+
+The first palette was assembled by eye from the competitor's register. Measured, it was bad in ways that looking at it did not reveal:
+
+- `--forest-mid` and `--cat-nature` were **the same colour** (ΔE 0), so the "nature" category read as the brand accent.
+- `--gold` and `--cat-temple` were ΔE 11.6 apart, which broke D16's own rule that gold means "where your money goes" and appears nowhere else.
+- Phnom Penh and Battambang were ΔE 24.1 apart — the four-city system read as two pairs.
+- Twelve pairs collided in total, and two combinations failed WCAG AA.
+
+The cause was structural rather than a matter of tints: four cities plus four categories plus an accent plus gold is **ten colours competing for meaning on one page**, and there is not room for ten.
+
+**The fix is a rule, not a repaint.** Category colour exists only where it distinguishes items from one another — the map's pin layers — and nowhere else. Everywhere else a category is a text label in neutral chrome. That frees the category set from having to differ from the city set, and drops the on-page count from ten to seven.
+
+City colours then moved off the brand's green and gold entirely, since those are role colours: clay red, indigo, ocean, plum. Each city gained a second `-ink` variant, because a large fill behind white text and a small mark on the page background have opposite requirements in dark mode.
+
+**Consequence:** `tools/contrast.mjs` is checked in and both the palette and any change to it are verified by measurement — WCAG AA for text, ΔE > 25 between role colours. The current palette passes at ΔE 29.6 (light) and 29.2 (dark), 0 contrast failures across four routes in both modes.
+
+**Also fixed here:** the picks list used a tinted grey swatch that carried no information and read as a broken image. It is now the item's rank in the off-radar order, which is the one number that list is sorted by.
+
+**Rules out:** adding a colour to this design without measuring it against the existing roles first.

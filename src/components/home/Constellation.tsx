@@ -93,7 +93,7 @@ export function Constellation({
                 top: `${y}%`,
                 width: size,
                 height: size,
-                background: city?.color ?? "var(--accent)",
+                background: city?.ink ?? "var(--accent)",
                 opacity: isActive ? 1 : 0.55 + (spot.offRadar / 100) * 0.35,
               }}
             />
@@ -122,7 +122,7 @@ export function Constellation({
           <span key={city.id} className="flex items-center gap-1.5 text-xs text-muted">
             <span
               className="size-2.5 rounded-full"
-              style={{ background: city.color }}
+              style={{ background: city.ink }}
               aria-hidden="true"
             />
             {city.name}
