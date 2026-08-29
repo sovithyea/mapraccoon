@@ -22,7 +22,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
-| 3 | Friends platform | — | `phase/3-friends` | — | **Next.** Decided (D27–D34) and documented; needs spec + plan before any code |
+| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **Spec written, awaiting review.** No code yet — rule 1 |
 | 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
 | 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
 
@@ -42,7 +42,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 ## Next session should
 
-1. **Write `specs/3-friends/spec.md` and `plan.md`.** The design work is done and is recorded in the approved plan — hours as a discriminated union, `isOpenAt(hours, instant)` as the primitive, `CityId` → `NeighbourhoodId`, and the ~26 delete / ~19 rewrite / ~24 survive test split. Do not re-derive it. No code before it is reviewed (rule 1).
+1. **Review `specs/3-friends/spec.md` and `plan.md`**, then execute from step 0. No code before the review (rule 1). Step 5 — authoring ~80 venues — is the long pole and should run alongside steps 6–9 rather than gate them.
 2. **Confirm the backend call.** D30 accepts one 24-hour KV endpoint because voting cannot work client-only. If the zero-backend paste-a-code fallback is wanted instead, that is a one-entry change and it should happen before the spec, not after.
 3. **Start authoring venues (B9).** This is the long pole and it is not code. Making `description` optional lets ~60 venues ship on name, neighbourhood, category, hours, price and a blurb.
 4. Choose a Khmer face and check the layout at Khmer line heights **before** filling `km.json` (B4, D32).
