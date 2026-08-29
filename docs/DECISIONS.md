@@ -525,3 +525,32 @@ The room id remains the secret: 128 bits, unguessable, the same model the existi
 **Still out of scope:** auth, accounts, group membership, RLS policy design. Those are Phase 4. Adding a login before anyone has seen the thing work once is the wrong order.
 
 **Unchanged from D30:** the ballot stays in the URL, the store holds only votes, `resolve(ballot, votes)` is a pure function with no I/O, and **the spend cap goes in on day one**.
+
+---
+
+## D36 — Venue content is imported once from Google Places, then owned
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes D2
+
+D2 ruled against bulk-pulling because OSM and Places "carry nothing at all for `pairedWith`, `community`, `offRadar` or the descriptive copy — those four fields are the product". Two of those four no longer exist (D28, D29) and a third is no longer a mechanic. **The argument does not hold, and its conclusion goes with it.**
+
+What replaced it is a different problem. A going-out product for residents needs eighty venues with *correct opening hours*, and hours are the one thing hand-authoring is worst at: they change without notice, and a resident notices a wrong closing time immediately where a visitor would not (R8).
+
+**The import is one-time.** Places supplies names, coordinates, hours and price level; from then on the seed file is ours and is maintained by hand. No API key in production, no runtime dependency, no per-request cost, and the site stays statically generated.
+
+### The risk, stated rather than discovered later
+
+**Google restricts caching Places content.** Place IDs may be stored indefinitely; most other fields generally may not be retained beyond a short window. Writing imported hours into a file committed to git is the part those terms restrict, and this decision accepts that risk knowingly rather than through ignorance of it.
+
+Two alternatives were considered and rejected for this phase: fetching at runtime with a short cache, which is the clearly compliant shape but adds a key, a route and a per-view cost; and using Places for discovery only, writing hours by hand, which sidesteps the question but is slow.
+
+**Mitigations that cost nothing and should be done anyway:**
+
+- Keep `placeId` on every imported venue. It is the one field with no retention limit, and it is what makes a later move to runtime fetching a swap rather than a re-import.
+- Carry Google attribution wherever imported data is shown.
+- Keep `lastVerified` honest. An imported hour is *fetched*, not *checked* — the date records when it was pulled, and the aim is for a human to have confirmed the ones that matter.
+- The import is a tool, not a build step. `tools/import-places.mjs` runs on demand with a key from the environment, so the key never enters the repo and the output is reviewed like any other content change.
+
+**Consequence:** the seed file becomes machine-seeded and human-owned. Nothing in the schema changes — `hours`, `priceLevel` and `coords` are the same fields either way, which is what makes the provenance swappable.
+
+**Rules out:** nothing permanently. If the retention terms turn out to prohibit this, the fix is the runtime route that was already designed, and the `placeId` field is what makes that a swap rather than starting again.

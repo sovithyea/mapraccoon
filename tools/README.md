@@ -95,3 +95,31 @@ Screenshots go through the same CDP emulation as the probe, so the image and the
 measurement always agree. `chrome --headless --screenshot` with `--window-size`
 does **not** agree — it produced images showing overflow on a page the probe
 correctly measured as clean. Do not use it.
+
+## import-places.mjs
+
+Draft seed entries from Google Places (D36). A tool you run, not a build step.
+
+```bash
+GOOGLE_PLACES_KEY=... node tools/import-places.mjs bkk1 bar
+```
+
+Neighbourhoods: `bkk1`, `riverside`, `daun-penh`, `toul-tom-poung`, `toul-kork`,
+`chroy-changvar`, `koh-pich`, `sen-sok`. Second argument is a Places type —
+`restaurant`, `cafe`, `bar`, `bakery`, `night_club`, `art_gallery`, `museum`.
+
+It writes TypeScript to stdout and **never** touches `src/data/spots.ts`. Read
+what it produced, keep what you agree with, paste that in.
+
+Three things it does that are worth knowing:
+
+- **Google's weekday is 0 = Sunday; ours is 0 = Monday.** The conversion happens
+  once, here. Getting it wrong shifts every venue by a day and looks entirely
+  plausible on screen.
+- **Every blurb comes out as `TODO`.** Deliberate. The blurb is the one field
+  that has to be yours — it is what makes the product feel written rather than
+  scraped.
+- **`hoursSource: "imported"`** marks hours as fetched rather than checked. The
+  aim is that the venues you actually care about end up `"checked"`.
+
+Unmapped Places types are printed to stderr rather than guessed at.

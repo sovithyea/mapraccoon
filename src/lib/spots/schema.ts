@@ -114,6 +114,23 @@ export const spotSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "lastVerified must be YYYY-MM-DD"),
 
     /**
+     * Where the hours came from. An imported hour was *fetched*, not *checked* —
+     * `lastVerified` records when, and this records by what. The distinction
+     * matters because R1 is about the difference between provenance and
+     * verification, and an import is provenance.
+     */
+    hoursSource: z.enum(["imported", "checked"]).default("imported"),
+
+    /**
+     * Google's place id, when the entry came from an import (D36).
+     *
+     * The one Places field with no retention limit, and the reason a later move
+     * to runtime fetching would be a swap rather than a re-import. Optional:
+     * hand-written venues have no place id and do not need one.
+     */
+    placeId: z.string().min(1).optional(),
+
+    /**
      * Phnom Penh venues publish hours on Facebook, not websites. One paste, and
      * it is the required fallback when hours are unknown.
      */
