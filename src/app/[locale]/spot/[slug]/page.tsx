@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
 import { AddToDay } from "@/components/route/AddToDay";
 import { CommunityImpact } from "@/components/spot/CommunityImpact";
-import { OffRadarMeter } from "@/components/spot/OffRadarMeter";
+import { OffRadarPanel } from "@/components/spot/OffRadarPanel";
 import { PairingCard } from "@/components/spot/PairingCard";
 import { SpotCard } from "@/components/spot/SpotCard";
 import { buildableLocales, isLocale } from "@/i18n/config";
@@ -48,7 +48,19 @@ export default async function SpotPage({
     .slice(0, 3);
 
   return (
-    <article className="mx-auto w-full max-w-5xl px-5 py-8">
+    /*
+      D25/R9. A memorial page is a different page, expressed structurally:
+      a single narrow measure with nothing beside the text, so it is quiet
+      because there is only one thing on it. The variant is driven by a
+      schema field, never by a judgement made at render time.
+    */
+    <article
+      className={
+        spot.sensitive
+          ? "mx-auto w-full max-w-[596px] px-5 py-8 [&_section]:rounded-none"
+          : "mx-auto w-full max-w-5xl px-5 py-8"
+      }
+    >
       <Link
         href={`/${locale}`}
         className="inline-flex min-h-11 items-center text-sm text-muted hover:text-foreground"
@@ -62,31 +74,51 @@ export default async function SpotPage({
             href={`/${locale}/city/${city.id}`}
             className="inline-flex min-h-9 items-center gap-2 hover:text-foreground"
           >
-            <span
-              className="size-2 rounded-full"
-              style={{ background: city.ink }}
-              aria-hidden="true"
-            />
+            {/* No city dot here: wayfinding decoration this page carries none of. */}
+            {spot.sensitive ? null : (
+              <span
+                className="size-2 rounded-full"
+                style={{ background: city.ink }}
+                aria-hidden="true"
+              />
+            )}
             {city.name}
           </Link>
         </p>
-        <h1 className="mt-1 font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{spot.name.en}</h1>
+        <h1
+          className={
+            spot.sensitive
+              ? "mt-1 font-display text-[28px] font-normal leading-tight sm:text-[33px]"
+              : "mt-1 font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl"
+          }
+        >
+          {spot.name.en}
+        </h1>
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
           {spot.blurb.en}
         </p>
 
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <ul className="flex gap-1.5">
-            {spot.categories.map((category) => (
-              <li
-                key={category}
-                className="rounded-full border border-border px-2.5 py-1 text-xs text-muted"
-              >
-                {dict.categories[category]}
-              </li>
-            ))}
-          </ul>
-          <OffRadarMeter score={spot.offRadar} showValue sensitive={spot.sensitive} />
+        {/*
+          Categories as neutral text, not outlined pills. Category colour is a
+          map pin layer and nothing else (D21); as bordered chips they put two
+          more shapes next to the city dot and the accent button, and they were
+          never a filter here — that is /discover's job.
+        */}
+        <p className="mt-3 text-xs text-muted">
+          {spot.categories.map((category) => dict.categories[category]).join(" · ")}
+          {spot.community ? (
+            <>
+              {" · "}
+              <a href="#community" className="text-gold underline underline-offset-4">
+                community-run ↓
+              </a>
+            </>
+          ) : null}
+        </p>
+
+        {/* The score is the reason to be on the page, so it gets a panel. */}
+        <div className="mt-4 max-w-md">
+          <OffRadarPanel spot={spot} caveat={dict.spot.offRadarHint} />
         </div>
         {spot.sensitive ? (
           /*
@@ -97,9 +129,7 @@ export default async function SpotPage({
           <p className="mt-3 border-y border-border py-3 text-sm leading-relaxed text-muted">
             {dict.spot.sensitiveNote}
           </p>
-        ) : (
-          <p className="mt-1 text-xs text-muted">{dict.spot.offRadarHint}</p>
-        )}
+        ) : null}
       </header>
 
       {/*
@@ -139,36 +169,57 @@ export default async function SpotPage({
         {/* Practical comes early — it is the reason to keep reading. */}
         <aside className="order-2 lg:order-2 lg:col-start-2 lg:row-start-1">
           <section className="rounded-lg border border-border bg-surface p-5">
-            <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
-              {dict.spot.practical}
+            <h2 className="eyebrow">
+              {spot.sensitive ? dict.spot.visiting : dict.spot.practical}
             </h2>
             {/*
               C18: this caveat used to live only in the footer, at 12px in the
               last of four columns. The numbers that actually go stale are the
               fee and the hours, so the warning belongs against them (R1).
-            */}
-            <p className="mt-3 border-l-2 border-gold pl-3 text-xs leading-relaxed text-muted">
-              {dict.spot.unverifiedCaveat}
-            </p>
 
-            <dl className="mt-4 space-y-3 text-sm">
+              The gold rule ties it to provenance — except on a memorial page,
+              which carries no gold at all. Gold means "where your money goes",
+              and a $5 museum ticket is not a community-impact story (D25).
+              There the caveat also moves below the rows: quieter, and the
+              rows are what a visitor came for.
+            */}
+            {spot.sensitive ? null : (
+              <p className="mt-3 border-l-2 border-gold pl-3 text-xs leading-relaxed text-muted">
+                {dict.spot.unverifiedCaveat}
+              </p>
+            )}
+
+            {/*
+              Three across below `lg`, stacked inside the 320px aside above it.
+              "Morning / Free / 1.5 hr" reads in one glance where the stacked
+              list takes three. Same DOM in both; one grid class.
+            */}
+            <dl className="mt-4 grid grid-cols-3 gap-3 text-sm lg:grid-cols-1 lg:gap-0 lg:space-y-3">
               <div>
-                <dt className="text-muted">{dict.spot.bestTime}</dt>
-                <dd>{spot.practical.bestTime.en}</dd>
+                <dt className="text-[11px] text-muted">{dict.spot.bestTime}</dt>
+                <dd className="mt-0.5 leading-snug">{spot.practical.bestTime.en}</dd>
               </div>
               <div>
-                <dt className="text-muted">{dict.spot.entryFee}</dt>
-                <dd>
+                <dt className="text-[11px] text-muted">{dict.spot.entryFee}</dt>
+                <dd className="mt-0.5 leading-snug">
                   {spot.practical.entryFeeUsd === 0
                     ? dict.spot.free
                     : `$${spot.practical.entryFeeUsd}`}
                 </dd>
               </div>
               <div>
-                <dt className="text-muted">{dict.spot.duration}</dt>
-                <dd>{formatDuration(spot.practical.typicalDurationMins, dict)}</dd>
+                <dt className="text-[11px] text-muted">{dict.spot.duration}</dt>
+                <dd className="mt-0.5 leading-snug">
+                  {formatDuration(spot.practical.typicalDurationMins, dict)}
+                </dd>
               </div>
             </dl>
+
+            {spot.sensitive ? (
+              <p className="mt-4 border-t border-border pt-3 text-xs leading-relaxed text-muted">
+                {dict.spot.unverifiedCaveat}
+              </p>
+            ) : null}
 
             {/*
               The practical card is where the planning decision happens, so the

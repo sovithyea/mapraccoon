@@ -97,6 +97,38 @@ The `.eyebrow` utility (12px, 700, uppercase, `0.14em` tracking, `--forest-mid`)
 
 **`CommunityImpact`** — gold eyebrow, impact sentence, then "Run by {name}" with an optional outbound link. Gold appears nowhere else, so the reader learns it means "this is about where the money goes".
 
+## The spot page, after Phase 2
+
+Rebuilt from the Claude Design direction (turn B). The three things that carry the page were the three buried in it: the meter was an 18px artifact in a chip row, the pairing sat after three paragraphs, and `order-1` on the whole `<aside>` dragged the map and sources above the pairing so a phone reader met it fifth.
+
+**Reading order, at every width:** name → blurb → score → pairing → practical → description → community → map → sources. The aside is split in two rather than flipped: practical early, reference material last.
+
+**Score panel** (`OffRadarPanel`) — replaces the inline meter in the header. Playfair 34px (46px at `lg`), four `offRadarBand()` segments at 7px with the active one in `--accent`, and the editorial caveat attached to the number it qualifies rather than floating beneath as a page footnote.
+
+**Two full-bleed bands** break the page's card rhythm, and nothing else does:
+- **Pairing** — `-mx-5` onto `--surface-sunk`, eyebrow naming the anchor in `--accent`, hook in Playfair 20px rising to 33px at `lg`, the anchor's own meter and link in a 210px column.
+- **Community** — same bleed, a 3px `--gold` left rule, impact sentence in Playfair. Gold appears nowhere else, and never on a memorial page.
+
+**Categories are neutral text** on this page — `Nature · Food`, not outlined pills. Category colour is a pin layer (D21) and the chips put two more shapes beside the city dot.
+
+**Practical** is three columns below `lg` and a stacked list inside the 320px aside above it. Same DOM, one grid class. The unverified-content caveat sits inside this card against the fee and the hours, which are the numbers that go stale (C18).
+
+### The memorial variant (D25)
+
+Subtraction driven by `sensitive: "memorial"`, never a judgement made at render time. Measured on `/en/spot/tuol-sleng` against `/en/spot/trapeang-sangkae`:
+
+| | Memorial | Ordinary |
+|---|---|---|
+| Article width at 1280 | 596px | 1024px |
+| `h1` | Playfair 33px / 400 | Playfair 36px / 700 |
+| Section radii | 0 | 1rem / 1.5rem |
+| City dot | absent | present |
+| Gold on the page | 0 elements | community band |
+| Score, meter, pairing | none | all three |
+| Practical heading | "Visiting" | "Practical" |
+
+The absence is stated rather than left silent — a reader who has seen five scored pages reads a missing score as a data gap, and it is not one.
+
 ## Layout
 
 - Content column caps at `max-w-6xl` (72rem); prose inside a spot page caps narrower.

@@ -103,10 +103,11 @@
     "nearby": "More in {city}",
     "communityRun": "Community-run",
     "sensitiveNote": "Not ranked, not paired, and not recommended as an alternative to anything. The off-radar score and the pairing that appear elsewhere on this site are withheld here by design.",
-    "unverifiedCaveat": "Fees and hours here are unverified and change without notice. Check the sources below before you travel."
+    "unverifiedCaveat": "Fees and hours here are unverified and change without notice. Check the sources below before you travel.",
+    "visiting": "Visiting"
   },
   "pairing": {
-    "heading": "Instead of the crowds",
+    "heading": "Instead of {name}",
     "anchorLabel": "The famous one",
     "seeAnchor": "See {name}"
   },

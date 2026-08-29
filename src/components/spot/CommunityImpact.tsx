@@ -16,12 +16,23 @@ export function CommunityImpact({
   dict: Dictionary;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-surface-sunk p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-gold">
-        {dict.community.heading}
-      </p>
+    /*
+      A full-width band with a gold rule, not a card in the prose column.
+      Inside the text it reads as an aside; at 320px in the sidebar it is
+      cramped. Full width makes it the third mechanic rather than a footnote.
+      Gold appears nowhere else on the site, so the reader learns it means
+      "this is about where the money goes" — and it never appears on a
+      memorial page, where a ticket price is not an impact story (D25).
+    */
+    <section
+      id="community"
+      className="-mx-5 border-y border-border border-l-[3px] border-l-gold bg-surface-sunk px-5 py-5 sm:py-7"
+    >
+      <p className="eyebrow text-gold">{dict.community.heading}</p>
 
-      <p className="mt-3 leading-relaxed">{community.impact.en}</p>
+      <p className="mt-3 max-w-2xl font-display text-lg leading-[1.4] sm:text-xl">
+        {community.impact.en}
+      </p>
 
       <p className="mt-3 text-sm text-muted">
         {dict.community.runBy.replace("{name}", community.name)}
