@@ -4,7 +4,7 @@ The surfaces this project exposes. Thin at Phase 1 by nature: there are no API r
 
 Verified against the Phase 1 build output on 2026-08-29, not transcribed from intent.
 
-> **The contract below describes the tourist product, and Phase 3 changes most of it.** The pivot (`docs/PIVOT.md`, D27–D34) removes `offRadar` and `pairedWith`, swaps `city` for `neighbourhood`, adds `hours`, and makes "open now" the default sort. Every claim here marked **CHANGES IN PHASE 3** is true of the shipped code today and will not be after. This document is rewritten when `specs/3-friends/` is executed, not before — it records what is, not what is planned.
+> **Rewritten on 2026-08-29, after Phase 3 shipped.** It previously described the tourist product with the changes marked as forthcoming. They have happened.
 
 ## Routes
 
@@ -13,13 +13,15 @@ All routes live under a locale segment. Only `en` builds today (D7).
 | Path | Rendering | Purpose |
 |---|---|---|
 | `/` | Proxy redirect (307) | Sends bare paths to `/en` |
-| `/[locale]` | SSG | Landing page: hero + constellation, city picks, pairing rail, community rail |
-| `/[locale]/discover` | SSG | The map and the filterable list, off-radar sorted — **CHANGES IN PHASE 3**, becomes open-now sorted |
-| `/[locale]/city/[city]` | SSG, 4 paths | One city, its spots off-radar first — **REMOVED IN PHASE 3**: with one city and ~9 neighbourhoods this is a filter, not a destination |
-| `/[locale]/spot/[slug]` | SSG, 42 paths | Destination page: pairing card, community block, practical info, mini-map, sources |
+| `/[locale]` | SSG | Landing page. A shell since D28/D29 removed what it argued — the constellation and a community rail. Step 9 of the next phase rebuilds it |
+| `/[locale]/discover` | SSG | The map and the filterable list, off-radar sorted|
+| `/[locale]/spot/[slug]` | SSG, 11 paths | A venue: live open state (client island), the weekly table (server), practical info, map, sources. Memorial sites render a sober variant (D25, D33) |
+| `/[locale]/vote/[id]` | Dynamic, `noindex` | A ballot, opened from a link. Carries its candidates, slot and room secret |
+| `/[locale]/plan/[id]` | Dynamic, `noindex` | A shared day |
+| `/api/room/[id]` | Dynamic | The vote store. `POST` appends, `GET` reads. The only server-side thing here (D30, D35) |
 | `/_not-found` | Static | 404 |
 
-50 pages generated. `params` is a `Promise` in Next 16 and is awaited in every one.
+16 pages generated. `params` is a `Promise` in Next 16 and is awaited in every one.
 
 `src/proxy.ts` is the Next 16 proxy (**not** `middleware.ts` — see the Corrections table in `VERIFIED.md`). It does exactly one job today: redirect a bare or unknown-locale path to `/{defaultLocale}`. Its matcher excludes `_next`, `api`, `favicon.ico` and anything with a file extension.
 
@@ -29,22 +31,30 @@ All routes live under a locale segment. Only `en` builds today (D7).
 
 ```ts
 Spot {
-  id, slug, city, categories[], name, coords: [lng, lat],
-  blurb, description, offRadar: 0–100,
-  pairedWith?: { spotId, hook },
+  id, slug, neighbourhood, categories[], name, coords: [lng, lat],
+  blurb, description?,            // optional — see the schema for why
+  hours,                          // always | unknown | weekly, minutes after parse
+  priceLevel: 1 | 2 | 3 | 4,
+  lastVerified: "YYYY-MM-DD",
+  hoursSource: "imported" | "checked",
+  placeId?, links?: { maps?, facebook?, instagram?, phone? },
+  sensitive?: "memorial",
   community?: { name, impact, url? },
-  practical: { bestTime, entryFeeUsd, typicalDurationMins },
+  practical: { typicalDurationMins },
   sources: url[]   // min 1
 }
 ```
+
+Authors write `SpotInput`, where hours are `"HH:MM"` strings. `Spot` is the
+parsed output, where they are minutes.
 
 Invariants beyond the schema, enforced by `src/lib/spots/spots.test.ts`:
 
 - `id` and `slug` are unique
 - every coordinate falls inside `CAMBODIA_BBOX` = `[102.3, 9.8, 107.7, 14.8]`
 - every `pairedWith.spotId` resolves, and never to itself
-- a pairing always points at a **better-known** spot (lower `offRadar`) — **REMOVED IN PHASE 3** with `pairedWith` (D29)
-- every city has at least one spot and at least one anchor (`offRadar < 30`) — **REMOVED IN PHASE 3** with the score (D28)
+- a pairing always points at a **better-known** spot (lower `offRadar`)
+- every city has at least one spot and at least one anchor (`offRadar < 30`)
 - a `sensitive: "memorial"` spot cannot carry a pairing, rejected at parse time (D25). **The field stays in Phase 3 and its exclusions get stronger** — memorial sites must never appear as a swipe candidate, in a suggestion tray, or in a match result (D33)
 
 `coords` is `[longitude, latitude]` — GeoJSON order, matching Mapbox. Getting this backwards is the classic bug; the bbox check in the schema catches it at build time because Cambodia's longitude and latitude ranges do not overlap.
@@ -55,7 +65,6 @@ Invariants beyond the schema, enforced by `src/lib/spots/spots.test.ts`:
 
 `src/lib/scoring.ts` — `sortSpots(spots, mode)` is the single entry point for ordering; `sortByOffRadar` is the default everywhere. `offRadarBand()` maps a score to the label the meter shows.
 
-**CHANGES IN PHASE 3.** The entry point survives; what it sorts by does not. `sortByOffRadar`, `sortByPopularity` and `offRadarBand` are removed with the score (D28), and the signature gains an explicit instant so ordering stays a pure function of its inputs rather than reading the clock — `sortSpots(spots, mode, ctx?)`.
 
 ## Client state
 

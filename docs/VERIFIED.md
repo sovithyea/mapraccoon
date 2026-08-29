@@ -242,3 +242,37 @@ The whole product, driven end to end in a browser:
 - **The 24-hour expiry has never been observed deleting a row.**
 - **The venue content is eleven tourist landmarks** (B9). Every flow above was exercised against markets and temples, not the bars and restaurants the product is for.
 - Passing the whole `dict` into client components ships ~10.7 KB of strings to the browser, including copy for pages the reader is not on. Not a defect; worth trimming.
+
+## Phase 3 — the seventeen acceptance criteria
+
+Closed on 2026-08-29 against `specs/3-friends/spec.md`. Each names what was run, not what was intended.
+
+| # | Criterion | Evidence |
+|---|---|---|
+| 1 | build, lint, typecheck, test clean | `npm run verify` — 133 tests, 25 client files scanned for secrets |
+| 2 | Phnom Penh only; the tight bbox rejects a stray coordinate | `bbox.test.ts`. A BKK1 venue at Siem Reap coordinates is rejected; the same coordinates pass as `out-of-town`; reversed lat/lng is rejected |
+| 3 | `isOpenAt` defined across a 7 × 24 sweep | `spots.test.ts` sweeps every venue × every day × every hour |
+| 4 | No fake timers in the hours suite | `hours.test.ts` passes explicit instants throughout; `phnomPenhNow` is the only clock read in the repo, by grep |
+| 5 | Unknown hours without a link fail to parse | `spots.test.ts` — rejected without `links`, accepted with one |
+| 6 | `lastVerified` never in the future; staleness warns only | `spots.test.ts`. Warn-only is deliberate: a suite that goes red on a calendar date with no code change teaches people to ignore red |
+| 7 | `/discover` defaults to open-now, server and client agree | Default is `open-now` in the filter store; **0 hydration warnings** read from the dev-server log across five routes |
+| 8 | open → closing-soon → unknown → closed ordering | `scoring.test.ts` at a fixed instant, including the deliberate unknown-above-closed rule |
+| 9 | A memorial is never a ballot candidate | `vote.test.ts`, and `createBallot` refuses to encode one at all |
+| 10 | A memorial never appears in a suggestion tray | `DayTail` sorts through `sortSpots`; memorial spots carry no score and are excluded at ballot creation |
+| 11 | A memorial never appears in a match result | `vote.test.ts` — it cannot be tallied because it cannot be a candidate. Removing the filter fails exactly two tests, checked by mutation |
+| 12 | A ballot round-trips; three voters resolve to one winner; `resolve` does no I/O | Four voters against the live project → `DECIDED / Russian Market / 1 person said no.` |
+| 13 | 404 on unknown ids, no enumeration, service key absent from the bundle | 404 for malformed and unknown alike; `npm run check:secrets` matches secret *shape*, and is proven to fail on a planted `sb_secret_` (C24) |
+| 14 | A second browser sees a vote without refreshing; a dead socket degrades | **Two tabs**: B showed "1 voted so far", A voted, B moved to "2" in ~1.5s with no reload. **Sockets blocked** via CDP: an out-of-band vote still arrived within 4s on the poll |
+| 15 | Rows older than 24 hours are deleted | Planted a row dated 25h ago; it read back once, then a fresh vote elsewhere triggered the sweep and it was gone |
+| 16 | 0 horizontal overflow at 390 / 768 / 1280 | 15 measurements across five routes, all 0 |
+| 17 | 0 contrast failures, both modes and the explicit dark path | 5 routes × light, dark, and `data-theme="dark"` — 0 of 306 text nodes fail |
+
+**All seventeen pass.**
+
+## What Phase 3 still does not have
+
+- **Real content.** Eleven tourist landmarks, no bars or restaurants (B9). Every flow above was exercised against markets and temples. The importer works and is verified against 20 real BKK1 bars, but nothing has been written into the seed file.
+- **Khmer.** Untouched, and this phase added more English strings (B4, D32).
+- **Photographs.** Voting between venues from text alone works mechanically; whether people will do it is untested (B8, R11).
+- The whole `dict` is passed into client components — ~10.7 KB of strings, including copy for pages the reader is not on. Not a defect; worth trimming.
+- Nothing is deployed (B5).

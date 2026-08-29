@@ -2,7 +2,7 @@
 
 Running ledger. Updated at the end of every working session so state survives across sessions.
 
-**Last updated:** 2026-08-29 (sixth session — the pivot)
+**Last updated:** 2026-08-29 (seventh session — Phase 3 built)
 
 ## Where things stand
 
@@ -22,7 +22,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
-| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **In progress** — steps 0–4 and 6–9 done; the full loop works. Step 5 (venue content) is the long pole and the only thing between this and real use; step 10 is verification and the PR |
+| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **Code complete, all 17 criteria closed.** Step 5 (venue content) is outstanding and is the only thing between this and real use (B9) |
 | 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
 | 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
 
@@ -44,11 +44,12 @@ Running ledger. Updated at the end of every working session so state survives ac
 
 ## Next session should
 
-1. **Review `specs/3-friends/spec.md` and `plan.md`**, then execute from step 0. No code before the review (rule 1). Step 5 — authoring ~80 venues — is the long pole and should run alongside steps 6–9 rather than gate them.
-2. **Confirm the backend call.** D30 accepts one 24-hour KV endpoint because voting cannot work client-only. If the zero-backend paste-a-code fallback is wanted instead, that is a one-entry change and it should happen before the spec, not after.
-3. **Start authoring venues (B9).** This is the long pole and it is not code. Making `description` optional lets ~60 venues ship on name, neighbourhood, category, hours, price and a blurb.
-4. Choose a Khmer face and check the layout at Khmer line heights **before** filling `km.json` (B4, D32).
-5. Still open from Phase 2, unaffected by the pivot: the builder has never been driven click-by-click in a browser, and the reorder tab's controls have never been clicked.
+1. **Write venue content (B9).** This is the only thing between a working product and using it. `GOOGLE_PLACES_KEY=... node tools/import-places.mjs bkk1 bar` drafts twenty entries; blurbs come out as `TODO` because that field has to be a person's. Twenty places you actually go beats eighty you cannot vouch for.
+2. **Try it with real friends on a real Friday.** Everything below is verified mechanically and nothing is verified as *good*. D31 sets the bar at "better than someone typing where should we go tonight", and that is not a bar a test can clear.
+3. Choose a Khmer face and check the layout at Khmer line heights **before** filling `km.json` (B4, D32). Phase 3 added more English strings, so the gap grew again.
+4. Rebuild the landing page. It is a shell — D28 and D29 removed what it argued and nothing replaced it.
+5. Decide on photographs (B8, R11). Voting from text works mechanically; whether people will do it is untested.
+6. Trim the dictionary passed into client components — ~10.7 KB, including copy for pages the reader is not on.
 
 ## Session log
 
@@ -75,3 +76,11 @@ The three calls that took the most argument. **The off-radar score is removed en
 Risk re-scoring found the pivot trades two content risks for two harder product risks: R1 and R5 improve, R2 and R4 become moot, but R6 (Khmer) becomes a launch blocker because the audience is majority Khmer-speaking by construction, and R11 (photographs) becomes near-blocking because voting between bars from text alone is untested. R8 arrives much sooner: 80+ venues that close and change hours cannot live in a TypeScript module.
 
 Also fixed two staleness bugs in `CLAUDE.md` that predate the pivot: the decision range said D1–D21 against 26, and the status line said Phases 2–7 had no docs against a merged Phase 2.
+
+**2026-08-29 (seventh session — Phase 3 built)** — The pivot, executed. Spec first, then eleven steps: deleting the tourist model, fixtures, the hours system, the venue schema and neighbourhoods, open-now sorting, vote logic, the Supabase store, the voting screen, and the loop that joins them. All seventeen acceptance criteria closed with evidence in `VERIFIED.md`. 133 tests, up from 70.
+
+**The product works end to end**: build a day on `/discover`, press *Ask the others*, share the link, everyone marks yes/maybe/no, and it settles — `DECIDED / Central Market / Nobody objected.` Verified with two independent browser tabs, one of them with every websocket blocked to prove the polling fallback carries it.
+
+Six defects found, and five of them only by running the thing rather than reading it. C23: the theme toggle had been logging a hydration mismatch on every page since it shipped, and nobody had read the dev log. C24 is the worst — acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained, so when the two Supabase keys were swapped it passed while the real secret sat in a `NEXT_PUBLIC_` variable. A check that depends on the thing it checks is not a check. C25: `VoteScreen` read `localStorage` during render, and React recovered into a state where the button was disabled over an input that visibly showed a name — unusable, and perfect in a screenshot. C26: nine dead links in the chrome of every page, because a route and its inbound links were deleted in different steps.
+
+What is not done is the half that matters now. The seed file still holds eleven tourist landmarks — no bars, no restaurants (B9) — so every flow above was exercised against markets and temples. The importer works and was checked against twenty real BKK1 bars, but nothing has been written in. Khmer is untouched and grew worse. Nothing is deployed.

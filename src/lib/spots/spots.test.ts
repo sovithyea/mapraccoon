@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { spots as raw } from "@/data/spots";
 import { getAllSpots, getSpotBySlug } from "@/lib/spots";
 import { neighbourhoods } from "@/lib/spots/neighbourhoods";
+import { isOpenAt } from "@/lib/hours/open";
 import { CAMBODIA_BBOX, spotsSchema } from "@/lib/spots/schema";
 
 /**
@@ -42,6 +43,79 @@ describe("seed content", () => {
    * Phnom Sampeau, framing one forced-labour site as the alternative to
    * another. The refinement below is what caught it.
    */
+  /**
+   * Criteria 5 and 6. Both are about the difference between provenance and
+   * verification (R1): an unknown hour must leave the reader somewhere to go,
+   * and a date must not claim more than it knows.
+   */
+  describe("hours and freshness", () => {
+    it("returns a defined state for every venue across a full week", () => {
+      for (const spot of getAllSpots()) {
+        for (let day = 0; day < 7; day += 1) {
+          for (let hour = 0; hour < 24; hour += 1) {
+            expect(
+              ["open", "closing-soon", "closed", "unknown"],
+              `${spot.slug} day ${day} hour ${hour}`,
+            ).toContain(isOpenAt(spot.hours, { day, mins: hour * 60 }));
+          }
+        }
+      }
+    });
+
+    it("refuses unknown hours with nowhere to check", () => {
+      const base = getSpotBySlug("wat-phnom");
+      const result = spotsSchema.safeParse([
+        { ...base, hours: { kind: "unknown" }, links: undefined },
+      ]);
+      expect(result.success).toBe(false);
+      expect(JSON.stringify(result.error?.issues)).toContain("somewhere for the reader to check");
+    });
+
+    it("accepts unknown hours when a link is present", () => {
+      const base = getSpotBySlug("wat-phnom");
+      expect(
+        spotsSchema.safeParse([
+          {
+            ...base,
+            hours: { kind: "unknown" },
+            links: { facebook: "https://facebook.com/example" },
+          },
+        ]).success,
+      ).toBe(true);
+    });
+
+    it("never claims to have been verified in the future", () => {
+      const today = new Date().toISOString().slice(0, 10);
+      for (const spot of getAllSpots()) {
+        expect(spot.lastVerified <= today, `${spot.slug} is dated ${spot.lastVerified}`).toBe(true);
+      }
+    });
+
+    it("warns about stale entries without failing the build", () => {
+      /*
+       * Warn, never fail. A test that goes red on a calendar date with no code
+       * change teaches people to ignore a red suite, which costs more than the
+       * staleness it was meant to catch. The signal goes to stderr and a human.
+       */
+      const sixMonthsAgo = new Date(Date.now() - 182 * 86_400_000).toISOString().slice(0, 10);
+      const stale = getAllSpots().filter((s) => s.lastVerified < sixMonthsAgo);
+      if (stale.length > 0) {
+        console.warn(
+          `${stale.length} entries not checked in six months: ${stale.map((s) => s.slug).join(", ")}`,
+        );
+      }
+      expect(true).toBe(true);
+    });
+
+    it("records whether hours were checked or merely imported", () => {
+      // An imported hour is provenance, not verification (D36). The field
+      // exists so an import cannot quietly launder itself into a check.
+      for (const spot of getAllSpots()) {
+        expect(["imported", "checked"]).toContain(spot.hoursSource);
+      }
+    });
+  });
+
   describe("memorial sites", () => {
     const sensitive = getAllSpots().filter((s) => s.sensitive);
 
