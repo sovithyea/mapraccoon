@@ -489,3 +489,39 @@ Recorded because "just use `Intl`" will come up in review and the justification 
 **The consequence that actually matters is not performance.** The computation must be in Phnom Penh time *regardless of the viewer's device*. A friend deciding from Bangkok, or on a phone with a wrong clock, must still see Phnom Penh opening hours. A fixed offset gives that; `date.getHours()` would not.
 
 **Consequence:** only one module reads the clock. Everything above it takes an explicit instant, so the hours test suite is table-driven with no fake timers and no midnight-boundary flakes. The primitive is `isOpenAt(hours, instant)` rather than `isOpenNow(hours)` — "open now" is then one call, and "we are deciding for Friday 8pm" gets its filter for free rather than needing a second code path.
+
+---
+
+## D35 — Supabase with Realtime, not a hand-rolled key-value store
+
+**Date:** 2026-08-29 · **Status:** Accepted · Supersedes the storage choice inside D30; D30's argument stands
+
+D30 established that voting needs a server — a URL is one-way, so N voters produce N isolated states with no merge point. That reasoning is untouched. What it got wrong was the storage.
+
+D30 specified a key-value store with a 24-hour TTL, reasoning from "make the smallest possible hole in the no-backend rule". **That optimised the wrong thing.** Once a server exists at all, a slightly smaller one buys little, and it costs something real: **Phase 4 needs Supabase regardless** — standing groups, accounts, history. A throwaway KV now means doing the integration twice and deleting the first.
+
+Three reasons it is better rather than merely equivalent:
+
+- **Less code, not more.** A table insert through the client is fewer lines than a route handler plus a KV client. The "sixty lines" in D30 was the price of avoiding a real backend, not a saving.
+- **Realtime may be what clears the bar.** D31 sets the test as "better than the group chat". Votes landing live as friends tap is materially better; a tally you refresh is the group chat with extra steps.
+- **There is a dashboard.** When someone says their vote did not count, that is worth more than a KV you must write a script against.
+
+### The security model, stated exactly
+
+Realtime moves a read path into the browser, which is the part worth getting right.
+
+**Writes go through an API route holding the service key server-side.** The route validates the room id and inserts. The service key never reaches the browser and no RLS policy is involved in the write path.
+
+**Reads use Realtime Broadcast, not `postgres_changes`.** The channel is named by the room id. Broadcast avoids exposing table reads to the anon key entirely — a `postgres_changes` subscription would need an RLS policy expressing "knows the room id", which is not an auth claim and is the shape of policy people get wrong. The route broadcasts after a successful insert; clients subscribe to the channel and also fetch once on load through the route.
+
+The room id remains the secret: 128 bits, unguessable, the same model the existing share links already use.
+
+**Consequence — three things this obliges that a KV did not:**
+
+1. **Reconnection and a poll fallback.** A dropped socket must degrade to the fetch-on-load path, not to a screen that silently stops updating. A vote that lands and is never shown is worse than no live updates.
+2. **Expiry is now a scheduled job.** Postgres has no TTL. D30's 24-hour window was what made "v1 has no history" architectural rather than a policy, so it must be preserved deliberately — a scheduled delete, not an intention.
+3. **Free-tier projects pause after a stretch of inactivity.** A group that goes out weekly is fine; a longer gap means a cold start on the exact evening someone is trying to use it. Verify the current threshold rather than trusting this sentence.
+
+**Still out of scope:** auth, accounts, group membership, RLS policy design. Those are Phase 4. Adding a login before anyone has seen the thing work once is the wrong order.
+
+**Unchanged from D30:** the ballot stays in the URL, the store holds only votes, `resolve(ballot, votes)` is a pure function with no I/O, and **the spend cap goes in on day one**.

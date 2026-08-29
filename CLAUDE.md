@@ -58,7 +58,7 @@ Dropping Tuol Sleng and Choeung Ek from the dataset was recommended and rejected
 
 **6. There is almost no backend, and the exception is exact.** No Supabase, no Claude API, no Google Cloud, no auth, no database. Standing one up "so it's ready" puts a billable account behind an app with no users (D1).
 
-~~There is no backend, deliberately.~~ **Phase 3 adds exactly one thing (D30):** a key-value store with two operations, append a vote and read the votes, keyed by an unguessable room id with a 24-hour TTL. That is not preparation — a URL is one-way, so without it several people cannot vote on the same ballot at all. Nothing else. **Spend caps go in on day one of the phase that needs them, which is now.**
+~~There is no backend, deliberately.~~ **Phase 3 adds Supabase, narrowly (D30, D35).** A URL is one-way, so without a server several people cannot vote on the same ballot at all. What lands is one `votes` table, one API route holding the service key server-side, and a Realtime Broadcast channel — **not** `postgres_changes`, which would need an RLS policy expressing "knows the room id", and that is not an auth claim. No accounts, no group membership, no RLS design; those are Phase 4. **The spend cap goes in on day one of the phase that needs it, which is now.**
 
 **7. Append to `docs/DECISIONS.md`, never rewrite it.** Reversals get a new entry superseding the old one. Fixing a stale status or a wrong cross-reference is not a rewrite — leaving a wrong pointer is worse.
 

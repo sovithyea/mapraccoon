@@ -60,11 +60,16 @@ The build goes red partway through this step and comes back. That is expected; i
 - [ ] `src/lib/vote/resolve.ts` — `resolve(ballot, votes)`. Pure, no I/O. Approval voting, `yes | maybe | no`, no hard veto, dissent surfaced, the four-way tie-break.
 - [ ] Tests including the one that matters: **a `sensitive` spot is never a candidate** (criteria 9–11).
 
-## Step 7 — The room endpoint
+## Step 7 — Supabase, the route, and Realtime
 
-- [ ] `POST` / `GET /api/room/:id`. Append and read, nothing else.
-- [ ] 128-bit ids, 24-hour TTL, 404 on unknown, no enumeration.
-- [ ] **The spend cap, on the same day** (hard rule 6).
+- [ ] Create the project. **Spend cap and budget alert on the same day** (hard rule 6). Add `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (server-only) and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.example` with setup notes, as `NEXT_PUBLIC_MAPBOX_TOKEN` already has.
+- [ ] `votes` table: `room_id`, `voter`, `marks`, `created_at`.
+- [ ] `POST /api/room/:id` — validate the id, insert with the **service key server-side**, then broadcast on `room:<id>`. `GET` returns the votes for load and for fallback.
+- [ ] Client subscribes to the Broadcast channel. **Not `postgres_changes`** — that needs an RLS policy expressing "knows the room id", which is not an auth claim and is the policy shape people get wrong (D35).
+- [ ] Reconnection, and degrade to polling the `GET` when the socket is down. **Test the failure, not just the happy path** — a vote that lands and is never shown is the worst outcome here.
+- [ ] Scheduled delete for rows older than 24 hours. Postgres has no TTL, so the property D30 wanted has to be built rather than intended.
+- [ ] Verify the service key is absent from the client bundle.
+- [ ] `docs/SECURITY.md` gains its first real content — it has been written to be filled in since Phase 1, and its "current state: no user data, no authentication, no database" claim becomes false at this step.
 
 ## Step 8 — The voting UI
 

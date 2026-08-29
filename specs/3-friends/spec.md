@@ -95,17 +95,26 @@ Rule = { days: DayToken[], open: "HH:MM", close: "HH:MM" }
 
 ### Voting
 
-**A URL is one-way, so this needs a server** (D30). The minimum, and nothing more:
+**A URL is one-way, so this needs a server** (D30). It is **Supabase with Realtime**, not a hand-rolled key-value store (D35) — Phase 4 needs Supabase regardless, and live votes are plausibly what clears D31's "better than the group chat" bar.
 
 ```
-POST /api/room/:id   { voter, marks }   → append
-GET  /api/room/:id                      → { votes }
+votes  ( room_id, voter, marks, created_at )
+
+POST /api/room/:id   { voter, marks }   → insert, then broadcast
+GET  /api/room/:id                      → { votes }        (load, and fallback)
+Realtime Broadcast on channel `room:<id>`                   (live updates)
 ```
 
-- No accounts, no user table, no schema. The **room id is the secret** — 128 bits, unguessable — the same auth model the existing share links use.
-- **24-hour TTL.** This makes "v1 has no history" an architectural property rather than a policy, keeps the store near-empty, and makes Phase 4's standing groups additive rather than a data-retention conversation.
-- **The ballot stays in the URL.** The server stores only votes, keyed by a hash of the ballot. The candidate list is never a row; the link is self-describing; the store can be wiped without losing anything an organiser cannot regenerate by re-sending their link.
+**The write path holds the service key server-side.** The route validates the room id and inserts; the key never reaches the browser and no RLS policy is in the write path.
+
+**The read path uses Broadcast, not `postgres_changes`.** A `postgres_changes` subscription would need an RLS policy expressing "knows the room id", which is not an auth claim and is the shape of policy people get wrong. Broadcast keeps table reads away from the anon key entirely. The channel is named by the room id, which stays the secret — 128 bits, unguessable, the same model the share links use.
+
+- **A dropped socket must degrade to the fetch path, not to a screen that silently stops updating.** A vote that lands and is never shown is worse than having no live updates at all.
+- **24-hour expiry is a scheduled delete**, because Postgres has no TTL. It is what makes "v1 has no history" architectural rather than a policy someone has to remember, so it is built, not intended.
+- **No auth, no accounts, no group membership, no RLS design.** Phase 4. A login before anyone has seen the thing work once is the wrong order.
+- **The ballot stays in the URL.** The store holds only votes. The candidate list is never a row, the link is self-describing, and the store can be wiped without losing anything an organiser cannot regenerate by re-sending their link.
 - **The spend cap goes in on day one**, per hard rule 6's own last sentence.
+- **Free-tier projects pause after a stretch of inactivity.** Weekly use is fine; a longer gap means a cold start on the evening someone is trying to use it. Verify the current threshold.
 
 `resolve(ballot, votes)` is a **pure function** in `src/lib/vote/resolve.ts` — no I/O, so it is testable without infrastructure and the zero-backend fallback stays viable.
 
@@ -126,7 +135,7 @@ Each has its own acceptance criterion below. None may be upheld by prose — C19
 
 ## Acceptance criteria
 
-Each closes in `docs/VERIFIED.md` with the evidence, not an assertion.
+Seventeen. Each closes in `docs/VERIFIED.md` with the evidence, not an assertion.
 
 1. `npm run build`, `lint`, `typecheck` and `test` clean.
 2. The dataset is Phnom Penh only; the tight bbox rejects a coordinate outside it unless `neighbourhood` is `out-of-town`.
@@ -140,13 +149,17 @@ Each closes in `docs/VERIFIED.md` with the evidence, not an assertion.
 10. **A `sensitive` spot never appears in a suggestion tray** — test.
 11. **A `sensitive` spot never appears in a match result** — test.
 12. A ballot round-trips through a URL; three voters' marks resolve to one winner with a dissent count; `resolve` is called with no I/O in the test.
-13. The room endpoint returns 404 for an unknown id and never enumerates ids.
-14. `tools/probe.mjs` reports zero horizontal overflow at 390 / 768 / 1280 on every route.
-15. `tools/contrast.mjs` reports zero failures on every route, in light and dark, and under explicit `data-theme="dark"`.
+13. The room endpoint returns 404 for an unknown id and never enumerates ids, and the **service key is absent from the client bundle** — verified by grepping the build output, not by inspection.
+14. A second browser sees a vote appear **without a refresh**; killing the socket degrades to the fetch path rather than to a screen that silently stops updating.
+15. Rows older than 24 hours are deleted by the scheduled job — demonstrated, not asserted.
+16. `tools/probe.mjs` reports zero horizontal overflow at 390 / 768 / 1280 on every route.
+17. `tools/contrast.mjs` reports zero failures on every route, in light and dark, and under explicit `data-theme="dark"`.
 
 ## Out of scope
 
-Accounts, standing groups, history, "where haven't we been", Supabase, realtime, photographs, Khmer translation, moving content out of the seed file, and any deployment.
+Accounts, authentication, group membership, history, "where haven't we been", RLS policy design, photographs, Khmer translation, moving venue content out of the seed file, and any deployment.
+
+Supabase itself is **in** scope (D35), but only a `votes` table, one API route and a Broadcast channel. Everything else Supabase offers is Phase 4.
 
 ## Known incomplete on delivery
 
