@@ -60,19 +60,28 @@ function toHours(regular) {
     return { kind: "unknown", why: "Google had no opening hours for this place." };
   }
 
-  const rules = [];
+  // Google returns one period per day. Collapse identical spans into one rule
+  // so the seed file reads as "Mon-Thu 17:00-02:00" rather than four near
+  // duplicates — this file is maintained by hand from here on (D36).
+  const bySpan = new Map();
   for (const p of regular.periods) {
     if (!p.open || !p.close) {
       // A period with no close is 24h in Google's model.
       return { kind: "always" };
     }
-    const day = DAYS[(p.open.day + 6) % 7];
-    rules.push({
-      days: [day],
-      open: `${pad(p.open.hour)}:${pad(p.open.minute ?? 0)}`,
-      close: `${pad(p.close.hour)}:${pad(p.close.minute ?? 0)}`,
-    });
+    const open = `${pad(p.open.hour)}:${pad(p.open.minute ?? 0)}`;
+    const close = `${pad(p.close.hour)}:${pad(p.close.minute ?? 0)}`;
+    const key = `${open}-${close}`;
+    if (!bySpan.has(key)) bySpan.set(key, { days: [], open, close });
+    bySpan.get(key).days.push(DAYS[(p.open.day + 6) % 7]);
   }
+
+  // Monday-first within each rule, so a reader can scan it.
+  const rules = [...bySpan.values()].map((r) => ({
+    ...r,
+    days: r.days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)),
+  }));
+
   return { kind: "weekly", rules };
 }
 

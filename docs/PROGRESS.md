@@ -22,7 +22,7 @@ Running ledger. Updated at the end of every working session so state survives ac
 |---|---|---|---|---|---|
 | 1 | Foundation | ✅ spec + plan (back-filled) | merged to `main` | Vithyea | **Complete** and merged. The R1 content-verification pass is still outstanding and blocks any public launch (B2) |
 | 2 | Itinerary builder | ✅ spec + plan | merged to `main` | Vithyea | **Complete** — merged via PR #1, then to `main` with Phase 1. Criterion 9 still open (needs a token, B1); the builder has not been driven click-by-click in a browser |
-| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **In progress** — steps 0–4 and 6 done. Step 5 (venue content) is the long pole and needs local knowledge; step 7 needs Supabase (B10); 8–10 remain |
+| 3 | Friends platform | ✅ spec + plan | `phase/3-friends` | Vithyea | **In progress** — steps 0–4, 6 and 7 done. Step 5 (venue content) is the long pole; steps 8–10 remain. The `votes` table still needs creating (B10) |
 | 4 | Standing groups | — | `phase/4-groups` | — | Not started — needs Phase 3 and real use |
 | 5 | Content at scale | — | `phase/5-content` | — | Not started — driven by R8 |
 
@@ -35,12 +35,12 @@ Running ledger. Updated at the end of every working session so state survives ac
 | B3 | ~~Community-impact claims unconfirmed (R4)~~ | **Closed by D27.** All five named organisations are outside Phnom Penh and leave with their cities | — |
 | B4 | No Khmer typeface loaded; Playfair and DM Sans have no Khmer coverage (R6) | **Launch (D32).** The audience is majority Khmer-speaking by construction, so this stopped being a scheduled defect. Phase 2 added ~60 English-only strings, so it grew | Design |
 | B5 | Nothing is deployed; no hosting decided | First public URL | User |
-| B10 | No Supabase project exists (D35) | Phase 3 step 7 — the vote store, the API route and Realtime. **Spend cap on the same day** | User |
+| B10 | Supabase project exists and is reachable; the `votes` table is not created yet | Voting end to end. Run `supabase/migrations/0001_votes.sql` in the SQL editor | User |
 | B6 | ~~Design direction for Phase 2 was out with Claude Design~~ | **Closed.** Returned, implemented and merged. Note it was produced against a stale commit and its colours are pre-D21 — do not take hex values out of that file | — |
 | B7 | ~~No schema field marks a memorial site (C17)~~ | **Closed in Phase 2 by D25.** But R9 got *worse* at the pivot, not better — see D33 | — |
 | B8 | No photographs, and voting between four bars from text alone is untested (R11) | A real v1 with real friends. No solution chosen | User |
 | B9 | `src/data/spots.ts` has 11 Phnom Penh places and every one is a tourist landmark — no restaurants, bars or cafés at all | All of Phase 3. `tools/import-places.mjs` drafts entries from Google Places (D36); blurbs and the hours that matter still need a person | User |
-| B11 | No Google Places key. The importer needs one, restricted to the Places API with a daily quota, on the day it is created | Seeding venues (B9) | User |
+| B11 | ~~No Google Places key~~ | **Closed.** Key works; a BKK1 bar import returned 20 venues that all parse | — |
 
 ## Next session should
 
