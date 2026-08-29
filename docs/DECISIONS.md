@@ -243,3 +243,19 @@ That class is idiomatic Tailwind and reads as harmless. It was found by cloning 
 **Also recorded:** `chrome --headless --screenshot` with `--window-size` does **not** agree with CDP measurement — it showed content cut off on a page measured as clean. Screenshots go through `Page.captureScreenshot` under the same emulation as the probe, so image and measurement cannot diverge.
 
 **Rules out:** signing off responsive work from a desktop browser window or from reading the source.
+
+---
+
+## D20 — Every PR carries a handover description written for an agent starting cold
+
+**Date:** 2026-08-29 · **Status:** Accepted
+
+`.github/pull_request_template.md` is required on every PR, and `docs/WORKFLOW.md` gives the rules.
+
+The reasoning is specific to how this repo is worked on. Much of the work is done by agents in separate sessions with no shared memory, and the sibling repos already show what happens without a handover: `ass-hub/foodraccoon` records that its predecessor's documentation was wrong in eight places, and this repo's own `docs/VERIFIED.md` logs eleven corrections in a single phase. Commit bodies carry the *why* of one change; nothing was carrying the state of the work as a whole.
+
+The template's load-bearing sections are the ones usually skipped: **Not done / known gaps** and **For whoever picks this up next**. A PR that lists only what works hands the next reader a false picture, and in this repo a false picture becomes an assumed fact — which is the exact failure `VERIFIED.md` exists to prevent.
+
+Two rules attach to it. A PR must never claim something was verified that could not be run; unrunnable checks go under *Not done*. And changes after review go in follow-up comments rather than silent body edits, because reviewers read new comments and not bodies they have already read.
+
+**Consequence:** a PR body is a truthful log of what happened, not a snapshot of what was intended when it opened.

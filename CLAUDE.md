@@ -54,6 +54,8 @@ Run `build` and `lint` after every step of a plan, not just at the end. Plan ste
 
 **8. Conventional Commits 1.0.0.** `<type>[scope]: <description>`, scope naming the phase directory. A commit carrying a decision, a reversal, a discovered defect or a non-obvious trade-off MUST have a body explaining *why*. `Refs:` footers name decision and risk IDs.
 
+**9. Every PR carries a written description, following `.github/pull_request_template.md`.** Assume the next reader is an agent starting cold with none of your context — that is what the body is for. It MUST cover what changed, what you actually ran and observed, what is *not* done, which `D`/`R` IDs were touched, and where the next person should pick up. Never claim something was verified that you could not run; put it under *Not done* instead, or it becomes an assumed fact three sessions later. Add follow-up comments when things change after review rather than silently editing the body — reviewers read new comments, not bodies they have already read. Full rules in `docs/WORKFLOW.md`.
+
 **Process docs use RFC 2119 keywords.** In `docs/WORKFLOW.md` and the specs, MUST is rejectable at review, SHOULD needs a stated reason to depart from, MAY is your call.
 
 ## This is not the Next.js in your training data

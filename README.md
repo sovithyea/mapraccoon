@@ -77,6 +77,8 @@ The "off-radar score" is an editorial 0–100 integer, not an algorithm output. 
 
 **No application code before that phase's `specs/N-name/spec.md` and `plan.md` are written and reviewed.** Read `docs/WORKFLOW.md` before starting. Contributors and agents should start at `AGENTS.md` / `CLAUDE.md`.
 
+Every PR carries a written description following `.github/pull_request_template.md` — what changed, what was actually verified, what is *not* done, and where the next person picks up. Much of the work here is done by agents starting cold, so the PR body is often the only handover they get.
+
 | Doc | What it gives you |
 |---|---|
 | `docs/ARCHITECTURE.md` | What the product is and how the pieces fit |

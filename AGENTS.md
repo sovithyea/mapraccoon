@@ -10,5 +10,6 @@ Short version, so you do not start on the wrong footing:
 4. **The content makes factual claims about real places people will travel to, and it is unverified.** Do not add a spot you cannot source. Do not write memorial sites in the product's promotional voice. See R1, R4, R9.
 5. **Off-radar is the default sort, everywhere, with no interaction.** Changing that breaks the product, not a preference.
 6. **There is no backend.** No Supabase, no Claude API, no Google Cloud. Do not add one before Phase 3.
+7. **Every PR gets a real description** — `.github/pull_request_template.md`. What changed, what you actually verified, what is *not* done, and where the next agent should pick up. You are writing it for someone with none of your context.
 
 Start with [`README.md`](README.md), then [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
