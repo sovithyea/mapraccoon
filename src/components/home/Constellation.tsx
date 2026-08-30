@@ -3,6 +3,15 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import {
+  GREEN,
+  LAKES,
+  ROADS_MAJOR,
+  ROADS_MINOR,
+  WATER_INNER,
+  WATER_OUTER,
+  type Ring,
+} from "@/data/basemap";
 import { boundsOf, projectInto } from "@/lib/geo/project";
 import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import { plottableSpots } from "@/lib/spots/plottable";
@@ -36,7 +45,7 @@ export function Constellation({
 }) {
   const [active, setActive] = useState<Spot | null>(null);
 
-  const { points, areas } = useMemo(() => {
+  const { points, areas, base } = useMemo(() => {
     // Memorials are not dots on a going-out map — see `plottableSpots`, which
     // is where that rule lives now that two surfaces need it. Excluding
     // Choeung Ek also stops one place five kilometres south of everything else
@@ -76,41 +85,103 @@ export function Constellation({
       if (here.y - above.y < GAP) here.y = above.y + GAP;
     }
 
-    return { points: plotted.map((spot) => ({ spot, ...project(spot.coords) })), areas };
+    /**
+     * The rivers, through the same projection as the dots.
+     *
+     * That is the whole reason the geometry is stored as raw `[lon, lat]`
+     * rather than as pre-baked path data: `boundsOf` frames on whatever is
+     * actually plotted, so a frame that moves when the dataset changes moves
+     * the water with it. Baked coordinates would silently slide out of
+     * register the first time a venue was added outside the current frame.
+     *
+     * Outer rings and islands go into ONE path so `fill-rule: evenodd` can cut
+     * the islands out. Two paths would paint Koh Pich over the channel either
+     * side of it instead of through it.
+     */
+    const path = (r: Ring, close: boolean) =>
+      r
+        .map((c, i) => {
+          const { x, y } = project(c);
+          return `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .join("") + (close ? "Z" : "");
+
+    const rings = (list: readonly Ring[]) => list.map((r) => path(r, true)).join("");
+    const lines = (list: readonly Ring[]) => list.map((r) => path(r, false)).join("");
+
+    const base = {
+      // One path so `fill-rule: evenodd` can cut the islands out. Two paths
+      // would paint Koh Pich over the channel either side of it.
+      river: rings([...WATER_OUTER, ...WATER_INNER]),
+      lakes: rings(LAKES),
+      green: rings(GREEN),
+      roadsMajor: lines(ROADS_MAJOR),
+      roadsMinor: lines(ROADS_MINOR),
+    };
+
+    return { points: plotted.map((spot) => ({ spot, ...project(spot.coords) })), areas, base };
   }, [spots]);
 
   return (
     <figure className="m-0">
       <div className="relative aspect-square w-full overflow-hidden rounded-3xl border border-border bg-surface-sunk">
-        {/* Graticule, so the scatter reads as a plot rather than a pattern. */}
+        {/*
+          The rivers, replacing the graticule that used to sit here.
+
+          The grid was there "so the scatter reads as a plot rather than a
+          pattern", and it did that job badly — the panel read as an empty
+          chart with dots on it, which is what the user called it. The
+          Chaktomuk confluence does the same job properly: it is the shape that
+          makes Phnom Penh recognisable, and it explains the dots. Riverside
+          runs along the water, Chroy Changvar is the cluster across it, and
+          neither is legible without this.
+
+          `preserveAspectRatio="none"` is safe because `boundsOf` returns a
+          SQUARE frame and the container is `aspect-square` — the scale is the
+          same on both axes, so nothing is stretched.
+        */}
         <svg
-          className="absolute inset-0 h-full w-full text-border"
+          className="absolute inset-0 h-full w-full"
           aria-hidden="true"
           preserveAspectRatio="none"
           viewBox="0 0 100 100"
         >
-          {[1, 2, 3, 4, 5].map((i) => (
-            <line
-              key={`v${i}`}
-              x1={i * (100 / 6)}
-              y1="0"
-              x2={i * (100 / 6)}
-              y2="100"
+          {/*
+            Drawn in the order a real map is: ground cover, then water, then
+            the road network on top. Every layer takes its colour from a token
+            via `currentColor`, so all four palettes and both appearances are
+            correct without a single new colour role entering the system (D21).
+          */}
+          <path d={base.green} className="text-brand" fill="currentColor" fillOpacity="0.11" />
+
+          <g className="text-brand">
+            <path
+              d={base.river}
+              fillRule="evenodd"
+              fill="currentColor"
+              fillOpacity="0.22"
               stroke="currentColor"
-              strokeWidth="0.15"
+              strokeOpacity="0.45"
+              strokeWidth="0.25"
             />
-          ))}
-          {[1, 2, 3, 4, 5].map((i) => (
-            <line
-              key={`h${i}`}
-              x1="0"
-              y1={i * (100 / 6)}
-              x2="100"
-              y2={i * (100 / 6)}
-              stroke="currentColor"
-              strokeWidth="0.15"
-            />
-          ))}
+            <path d={base.lakes} fill="currentColor" fillOpacity="0.22" />
+          </g>
+
+          {/*
+            Roads are the layer that turns water and parks into a city. Two
+            weights only — a hierarchy finer than "big road / other road" is
+            unreadable at this size and costs bundle for nothing.
+          */}
+          <g
+            className="text-muted"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d={base.roadsMinor} strokeWidth="0.18" strokeOpacity="0.28" />
+            <path d={base.roadsMajor} strokeWidth="0.32" strokeOpacity="0.45" />
+          </g>
         </svg>
 
         {/* Under the dots, deliberately: orientation, not content. */}
@@ -153,6 +224,14 @@ export function Constellation({
           );
         })}
 
+        {/*
+          ODbL attribution. Required wherever this geometry is drawn, so it
+          lives with the drawing rather than in a footer someone may reuse the
+          component without.
+        */}
+        <span className="pointer-events-none absolute bottom-1.5 right-2 text-[9px] text-muted/70">
+          © OpenStreetMap
+        </span>
       </div>
 
       {/*
