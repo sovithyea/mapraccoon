@@ -339,3 +339,30 @@ body {
 .mapboxgl-ctrl-attrib a {
   color: var(--muted);
 }
+
+/*
+ * The map popup (D46).
+ *
+ * Mapbox ships its own white card with a white tip, which is a light-mode
+ * literal sitting inside a themed app — in dark mode it was a white slab.
+ * Restyled from the same tokens as everything else, so all four palettes and
+ * both appearances are correct and no colour is defined only in a dark block.
+ */
+.mapraccoon-popup .mapboxgl-popup-content {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.35);
+}
+
+/* The tip is a CSS triangle, so its colour is a border colour, and which
+   border depends on the anchor. Only `bottom` is used here. */
+.mapraccoon-popup .mapboxgl-popup-tip {
+  border-top-color: var(--surface);
+}
+
+.mapraccoon-popup .mapboxgl-popup-close-button {
+  display: none;
+}
