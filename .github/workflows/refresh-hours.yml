@@ -1,0 +1,148 @@
+# Re-check every venue's opening hours against Google Places, weekly, and open a
+# pull request when something actually changed.
+#
+# This is the standing answer to R8. The seed file is a TypeScript module, and
+# until this existed nothing ever re-read it: hours were correct on the day they
+# were imported and drifted silently from then on. A group turning up somewhere
+# shut is the failure that loses them, and it is not a failure anyone reports —
+# they just stop using the thing.
+#
+# **It opens a PR; it never pushes to `main`.** The content is editorial (rule
+# 4) and a venue's hours are a claim about a real business, so a person reads
+# the change before it ships. The PR body carries the tool's own report, which
+# is the part worth reading — the diff is mostly `lastVerified` dates moving.
+
+name: Refresh opening hours
+
+on:
+  schedule:
+    # Mondays, 02:00 UTC — 09:00 in Phnom Penh, so a failure is noticed during
+    # the day it happens rather than overnight.
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # A slow run must not race the next week's.
+  group: refresh-hours
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Re-check hours against Google Places
+        env:
+          GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+        run: |
+          if [ -z "$GOOGLE_PLACES_KEY" ]; then
+            echo "::error::GOOGLE_PLACES_KEY is not set. Add it under Settings → Secrets → Actions."
+            exit 1
+          fi
+          node tools/refresh-hours.mjs | tee refresh-report.txt
+
+      - name: Stop early when nothing changed
+        id: diff
+        run: |
+          if git diff --quiet -- src/data/spots.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing changed. This is the expected result most weeks."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The whole point of content-as-a-typed-module (D3) is that bad content
+      # fails the build rather than a request. Proposing a change that does not
+      # build would waste the reviewer's time and train them to skim.
+      - name: Validate the change
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Open a pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          DATE=$(date -u +%Y-%m-%d)
+          BRANCH="data/hours-$DATE"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add src/data/spots.ts
+          git commit -F - <<EOF
+          chore(content): re-check opening hours against Google Places
+
+          Automated by .github/workflows/refresh-hours.yml. Only the volatile
+          fields move — hours, price, phone and lastVerified. Names, blurbs,
+          categories and coordinates are never touched, so hand edits survive.
+
+          \`lastVerified\` advances only where a source actually confirmed the
+          venue, so a venue Google has stopped publishing hours for keeps ageing
+          until a person checks it.
+
+          $(head -1 refresh-report.txt)
+
+          Refs: D47, R8
+          EOF
+
+          git push -u origin "$BRANCH"
+
+          {
+            echo "## What this is"
+            echo
+            echo "The weekly re-check of every venue's opening hours against Google Places."
+            echo "Opened automatically; **read the report below rather than the diff** — most"
+            echo "of the diff is \`lastVerified\` dates moving, which is not the interesting part."
+            echo
+            echo "## Report"
+            echo
+            echo '```'
+            cat refresh-report.txt
+            echo '```'
+            echo
+            echo "## What to do with it"
+            echo
+            echo "- **Hours changed** — usually just merge."
+            echo "- **No longer operational** — decide whether the venue leaves the dataset."
+            echo "  Nothing is deleted automatically; shrinking the dataset is a content"
+            echo "  decision, not a script's."
+            echo "- **Google disagrees with a hand-checked entry** — a person set"
+            echo "  \`hoursSource: \"checked\"\` and was not overwritten. Settle it by ringing"
+            echo "  the venue, then update the entry yourself."
+            echo "- **Google dropped its hours** — ours were kept and the date deliberately"
+            echo "  did NOT advance, so the staleness test keeps counting."
+            echo
+            echo "## Verified"
+            echo
+            echo "\`lint\`, \`typecheck\`, \`test\` and \`build\` all ran green in this workflow"
+            echo "before the PR was opened. Nothing was checked on the ground — these are"
+            echo "Google's hours, not confirmed ones (rule 4)."
+            echo
+            echo "Refs: D47, R8"
+          } > pr-body.md
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Content: opening hours re-checked, $DATE" \
+            --body-file pr-body.md
