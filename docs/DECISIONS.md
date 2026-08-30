@@ -634,3 +634,229 @@ Tompong Market and nobody calls it that, and Google types the Night Market
 `tourist_attraction`, which the importer mapped to `nature`.
 
 Refs: D36, R1
+
+## D40 — One vote per person, keyed on the typed name
+
+**Decided 2026-08-30.** Reverses the vote-integrity position stated in
+`docs/SECURITY.md` and the test that encoded it.
+
+`appendVote` inserted a row per POST and `resolve` counted every row, so
+reopening a link and voting again counted twice. That was not an oversight — it
+was written down as an accepted limit ("vote integrity is weak in Phase 3,
+deliberately") and asserted by a test. The test was called *"counts each voter
+once even if they submit twice"* and asserted `yes` was `2`. **The name said the
+opposite of the assertion, which is how it survived review** (C32).
+
+What made it worse than the written trade-off admits is that it was not just a
+weak defence against a bad actor. It punished normal use. A friend who taps the
+wrong button, changes their mind, or reloads on bad signal is counted twice, and
+the same screen showed a de-duplicated voter count beside a tally that was not —
+four people, five marks. And because there was no way to see the result without
+marking every card again (C33), *checking the poll was itself a re-vote*: the
+person most likely to look was the person most likely to be counted four times.
+
+Votes now upsert on `(room_id, voter)`, with a unique index in migration 0002.
+The identity is the typed name because that is the only identity this product
+has; a device id was considered and rejected, since a friend on two phones then
+counts twice and clearing site data loses their vote — both worse failures than
+the one being fixed. **The cost is real and stated: two friends who both type
+"Sok" overwrite each other, and nothing can distinguish that from one person
+changing their mind.** Right at five friends, wrong the moment a room is bigger
+than a table.
+
+The rule is enforced twice on purpose. The unique index is the guarantee; a
+de-duplication pass in `resolve` is the same rule where the suite can test it
+without a database. Either alone is removable without a failing test.
+
+Refs: D30, D35, C32, C33, R9
+
+## D41 — The product does not presume it is night
+
+**Decided 2026-08-30.**
+
+Ten strings assumed the group was going out after dark: "Start a night", "Plan
+the night", "How many places tonight?", "The night". The dataset is bars,
+restaurants **and cafés**, the default sort is what is open *right now*, and the
+day frame the itinerary builder ships with is 08:00–17:00 — so the copy was
+contradicted by the product's own defaults on the same screen.
+
+All ten are now time-neutral. `categories.night-market` stays, because that is
+the name of a thing rather than an assumption about the reader.
+
+This is voice, not scope: nothing about the product changes, and a group going
+out at 9pm reads the same screens. What goes is the copy telling someone
+choosing a café at 10am that they are doing it wrong.
+
+Two defaults still presume evening and are **not** fixed here: `StartVote` puts
+every ballot at 20:00, and the day frame opens at 08:00 — which is the opposite
+presumption, and no more chosen than the other. Both belong with the work that
+makes the timeline directly editable.
+
+Refs: D28, D37
+
+## D42 — Browsing is a place you go, not a column you scroll past
+
+**Decided 2026-08-30.**
+
+`/discover` put all 87 places in a permanent left column with no search, so
+finding a restaurant meant scrolling past every bar and café on the way, and the
+list held half the screen after you had stopped looking. The user's words:
+"you had to go all the way down just to find restaurants."
+
+A `PlacePicker` overlay now does the browsing — search, filters, add as many as
+you like, leave. Search matches name, blurb, neighbourhood and category, so
+"bkk1" and "coffee" both work; people type where and what, not only names.
+
+**Adds commit immediately and there is no Cancel.** Staging changes would need
+an explicit save, and the worst outcome here is choosing twice and then losing
+it. *Done* closes, it does not confirm — which is also why the footer states
+what you have rather than what you are about to get.
+
+The left column stays. Removing it would take the map and the day with it, and
+the overlay is additive: the trigger looks like a search field and behaves like
+a button, because what it opens *is* the search field. Two real inputs would
+mean one that searches a visible list and one that does not.
+
+**Memorial sites are excluded from the picker, enforced by a test** (C38). The
+first run offered Tuol Sleng, because it matched a search for its own
+neighbourhood.
+
+Refs: D23, D24, D33, R9, C38
+
+## D43 — The landing page shows a drawn map, not a graticule
+
+**Decided 2026-08-30.**
+
+The constellation plotted 85 venues on a six-by-six grid. The grid was there "so
+the scatter reads as a plot rather than a pattern" and did that badly — the user
+called it "a blank nothing with dots on it".
+
+The Chaktomuk confluence replaces it. It is the shape that makes Phnom Penh
+recognisable, and it is what makes the dots mean something: Riverside runs along
+the water, Chroy Changvar is the cluster across it, and neither is legible
+without the rivers.
+
+**Not Mapbox.** D11 says the map degrades without a token and that this is the
+repo's default state; putting a tiled map in the hero would make the landing
+page's main image blank for exactly that case. Drawing the water ourselves keeps
+the panel working with no token, no network and no account.
+
+**Not drawn by hand either.** Rule 4 — a river sketched from memory is a wrong
+map. `tools/import-basemap.mjs` pulls five layers from OpenStreetMap in one
+query: the rivers and their islands, lakes, parks, and the road network split
+into two weights. It stitches multipolygon members into rings, clips them to the
+query box, drops slivers, applies a per-layer simplification, and rounds to four
+decimals — about 11 m, which is under one plot pixel. 37 KB for 13 river rings,
+5 islands, 53 lakes, 18 parks and 460 road segments. Attribution is rendered
+with the drawing rather than in a footer, because ODbL follows the geometry.
+
+The roads are what turn water and parks into a city, and they carry two weights
+only: a hierarchy finer than "big road / other road" is unreadable at 600 px and
+costs bundle for nothing. Every layer takes its colour from an existing token
+through `currentColor`, so all four palettes and both appearances are correct
+with no new colour role (D21).
+
+Rings are stored as raw `[lon, lat]` and projected at render time by the same
+`projectInto` the dots use — `boundsOf` frames on whatever is plotted, so baked
+path data would slide out of register the first time a venue landed outside the
+current frame.
+
+Refs: D11, D36, D27, R1
+
+
+## D44 — A stop can be pinned to a clock time
+
+**Decided 2026-08-30.**
+
+The day could only be *packed*: stop one began when the day began and everything
+else fell in behind it. That answers "how long does this take" and never "we're
+meeting them at nine" — and the user's complaint was exactly that, that
+everything sat at 08:00 and 08:00 is not when anyone goes out.
+
+`RouteStop.startMins` is an optional pin. Unpinned stops still pack, which keeps
+the old behaviour as the default. Two ways to set one, both writing the same
+state: dragging the block on the day bar, and typing into the time cell on the
+row. Drag is the fast way and the one that was asked for; the time cell is the
+keyboard and screen-reader path, and neither is a second-class citizen.
+
+**A pin is honoured exactly, never clamped.** Clamping to the earliest reachable
+time would be the tidy choice and the wrong one — it would silently move a stop
+the group deliberately placed, and the screen would then show a time nobody
+chose. So the schedule reports the consequence instead: `slackMins` is positive
+when there is time to kill and negative when the pin overlaps the stop before
+it, and the leg row says which in words.
+
+Unpinning is a visible control, because a day you can pin but not unpin is a
+trap: the only way back would be deleting the stop, which loses its dwell.
+
+This forced the day bar's layout to change. Blocks were laid out with flex, one
+after another, which *encoded* the packing assumption — there was no position a
+block could occupy except the next one. They are absolutely positioned from
+their scheduled arrival now, and a drawable gap is what makes a pin expressible.
+
+Refs: D22, D24, D37
+
+## D45 — `/discover` is one pane, and the list is gone
+
+**Decided 2026-08-30.** Completes D42.
+
+The page was a 26 rem column of all 87 places beside a map that got the
+remainder. That column was the cause of C37 — it is what gave the map an
+18,019 px canvas — it was the reason there was nowhere to put a search field,
+and it is what the user meant by "you had to go all the way down just to find
+restaurants".
+
+With browsing in the picker (D42) the column had nothing left to do. What
+remains is a toolbar — search, and the `[Map | Route]` tabs — over one
+full-width pane. The neighbourhood, category and sort controls moved into the
+picker rather than being deleted; the filter store now backs only the map's
+selection.
+
+**Known consequence, recorded rather than discovered later (C40): memorial spot
+pages are no longer linked from anywhere.** The list was the last route to them.
+The picker excludes them by design (C38) and the constellation always did. Their
+pages still render and still hold the sober treatment D25 built; nothing in the
+product points at them. That is a smaller wrong than offering Choeung Ek an
+*Add* button next to a hotpot restaurant, which is what C39 described — but it
+is a wrong, and it wants a deliberate answer rather than this side effect.
+
+Refs: D23, D33, D42, C37, C39, C40
+
+
+## D46 — The map shows everything and opens each place; the picker offers only what you can go to
+
+**Decided 2026-08-30.** This is the deliberate answer C39 and C40 were asking
+for, and it supersedes the ad-hoc split those two recorded.
+
+The question left open was what a memorial's place in this product is now that
+the product is "where shall we go out". Two surfaces had drifted apart: the
+picker excluded memorials (C38) while `/discover`'s list still gave Choeung Ek
+an *Add* button (C39), and then removing that list left their pages linked from
+nowhere at all (C40).
+
+The line is **offer versus show.**
+
+*Offering* is any surface that proposes a place for tonight — the picker, the
+suggestion tray, a swipe candidate, a ballot. Memorials never appear there, and
+each exclusion is enforced by a test rather than by how the copy reads.
+
+*Showing* is the map. It draws every pin in the dataset because it is a map, not
+an invitation, and a map of Phnom Penh that silently omits Tuol Sleng is its own
+kind of dishonesty. Pressing a pin opens a card and the card links to the
+place's page — which also restores the route C40 removed, and makes the map the
+only one.
+
+**How a memorial reads in that card is part of the decision, not a detail.** It
+gets its name, its neighbourhood and a link. No price row, no "open now" badge,
+no invitation — because the card is where the two registers would otherwise
+collide, and C19 is what that collision produced last time. `SpotMap.test.tsx`
+holds the branch, mutation-checked: adding a price row to the memorial branch
+fails it.
+
+The framing follows from the same split. Bounds are fitted to the *venues*, not
+to every pin: Choeung Ek is 15 km south, and fitting all 87 zoomed out until the
+city was a cluster in the top third of the frame with the rest given to
+farmland — C30 biting a second surface. Every pin is still drawn and still
+reachable; the memorial starts outside the viewport rather than dictating it.
+
+Refs: D11, D25, D33, D42, D45, R9, C19, C30, C38, C39, C40
