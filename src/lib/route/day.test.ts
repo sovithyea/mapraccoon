@@ -138,3 +138,81 @@ describe("costOfAdding", () => {
   });
 });
 
+
+/**
+ * Pinned start times (D44).
+ *
+ * The day used to be packable and nothing else: stop one began when the day
+ * began, and everything else fell in behind it. These cover the property that
+ * replaced that — a pin is honoured *exactly*, and the consequence is reported
+ * rather than absorbed.
+ */
+describe("pinning a stop to a time", () => {
+  const a = makeSpot({ id: "a", coords: [104.92, 11.55] });
+  const b = makeSpot({ id: "b", coords: [104.93, 11.56] });
+
+  const frame = { start: 8 * 60, frameStart: 8 * 60, frameEnd: 22 * 60 };
+
+  it("still packs when nothing is pinned", () => {
+    const { stops } = dayBudget(
+      [
+        { spot: a, dwellMins: 60 },
+        { spot: b, dwellMins: 60 },
+      ],
+      frame,
+    );
+    expect(stops[0]?.arrivalMins).toBe(8 * 60);
+    expect(stops[0]?.slackMins).toBe(0);
+    expect(stops[1]?.arrivalMins).toBeGreaterThan(9 * 60);
+  });
+
+  it("starts a pinned stop at exactly the time asked for", () => {
+    const { stops } = dayBudget(
+      [
+        { spot: a, dwellMins: 60 },
+        { spot: b, dwellMins: 60, startMins: 20 * 60 },
+      ],
+      frame,
+    );
+    // Not "as close as it could get". The group said 20:00.
+    expect(stops[1]?.arrivalMins).toBe(20 * 60);
+    expect(stops[1]?.departureMins).toBe(21 * 60);
+  });
+
+  it("reports the wait rather than hiding it", () => {
+    const { stops, waitMins } = dayBudget(
+      [
+        { spot: a, dwellMins: 60 },
+        { spot: b, dwellMins: 60, startMins: 20 * 60 },
+      ],
+      frame,
+    );
+    const gap = 20 * 60 - (stops[1]?.earliestMins ?? 0);
+    expect(stops[1]?.slackMins).toBe(gap);
+    expect(waitMins).toBe(gap);
+  });
+
+  it("reports a clash instead of quietly moving the pin", () => {
+    // Pinned before it is reachable. Clamping would show a time nobody chose,
+    // which is worse than showing an impossible one and saying so.
+    const { stops, clashMins } = dayBudget(
+      [
+        { spot: a, dwellMins: 120 },
+        { spot: b, dwellMins: 60, startMins: 8 * 60 + 30 },
+      ],
+      frame,
+    );
+    expect(stops[1]?.arrivalMins).toBe(8 * 60 + 30);
+    expect(stops[1]?.slackMins).toBeLessThan(0);
+    expect(clashMins).toBeGreaterThan(0);
+  });
+
+  it("lets a pin push the day past the frame, and counts it as overrun", () => {
+    const { overrunMins, state } = dayBudget(
+      [{ spot: a, dwellMins: 60, startMins: 21 * 60 + 30 }],
+      frame,
+    );
+    expect(overrunMins).toBe(30);
+    expect(state).toBe("over");
+  });
+});
