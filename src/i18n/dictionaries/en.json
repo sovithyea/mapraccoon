@@ -15,8 +15,8 @@
     "headingA": "Let's finally plan",
     "headingB": "an actual",
     "headingC": "hangout, eh?",
-    "lead": "Bars, restaurants and cafés across Phnom Penh, sorted by what’s open right now. Pick a few, send one link, and everyone votes on their own phone — so the night gets decided by the group, not by whoever answers the chat first.",
-    "cta": "Start a night",
+    "lead": "Bars, restaurants and cafés across Phnom Penh, sorted by what’s open right now. Pick a few, send one link, and everyone votes on their own phone — so it gets decided by the group, not by whoever answers the chat first.",
+    "cta": "Find somewhere to go",
     "ctaNote": "Nothing to sign up for. The link is the whole thing.",
     "howLabel": "How it works",
     "steps": [
@@ -26,10 +26,10 @@
       },
       {
         "title": "Send one link",
-        "body": "Everyone opens it, puts in a name, and votes yes or no. No account, no app, no arguing in the chat."
+        "body": "Everyone opens it, puts in a name, and taps yes, maybe or no. No account, no app — and you can watch the votes land as they come in."
       },
       {
-        "title": "Plan the night",
+        "title": "Lay out the plan",
         "body": "The places the group approved become a schedule. Set how long you want at each one and it retimes itself."
       }
     ],
@@ -79,7 +79,9 @@
     "neighbourhood": "Neighbourhood",
     "allNeighbourhoods": "Anywhere",
     "sortOpenNow": "Open now",
-    "sortPrice": "Cheapest first"
+    "sortPrice": "Cheapest first",
+    "searchPlaceholder": "Search bars, restaurants, cafés…",
+    "openPicker": "Search {count} places"
   },
   "categories": {
     "restaurant": "Restaurant",
@@ -144,7 +146,8 @@
     "missingTokenTitle": "No map here yet",
     "missingTokenBody": "Every place on this site has real coordinates, and nothing here needs a map to work — the route builder included. Open the coordinates in your own maps app instead.",
     "selectHint": "Select a pin to see the place.",
-    "viewDetails": "View details"
+    "viewDetails": "View details",
+    "seeDetails": "See the place"
   },
   "footer": {
     "blurb": "A going-out planner for friends in Phnom Penh. Pick a few places, send one link, let everyone vote.",
@@ -214,12 +217,17 @@
     "putToVoteHint": "Sends everyone a link. They mark yes, maybe or no; it settles itself.",
     "voteLinkCopied": "Link copied — paste it in the group chat",
     "voteNeedsTwo": "Add at least two places to vote between.",
-    "howManyStops": "How many places tonight?",
-    "stopsHint": "The most-approved this many become the night. You arrange the times after.",
+    "howManyStops": "How many places?",
+    "stopsHint": "The most-approved this many become the plan. You arrange the times after.",
     "shorterAt": "Less time at {name}",
     "longerAt": "More time at {name}",
-    "shareTitle": "The plan for tonight",
-    "shareDescription": "Where the group landed, and what time you are at each place."
+    "shareTitle": "The plan",
+    "shareDescription": "Where the group landed, and what time you are at each place.",
+    "pinLabel": "Start time for {name}",
+    "unpin": "unpin",
+    "dragHint": "Drag a block, or type a time, to fix when a stop starts.",
+    "waiting": "{duration} spare before this",
+    "clash": "overlaps the stop before by {duration}"
   },
   "vote": {
     "eyebrow": "Deciding together",
@@ -228,7 +236,7 @@
     "byLine": "{name} started this",
     "whoAreYou": "First — who are you?",
     "namePlaceholder": "Your name",
-    "nameHint": "So everyone can see who voted. Nothing is saved beyond tomorrow.",
+    "nameHint": "{count} cards, one tap each — about a minute. Everyone sees who voted; nothing else is kept, and it's all gone tomorrow.",
     "start": "Start voting",
     "progress": "{done} of {total}",
     "yes": "Yes",
@@ -239,8 +247,6 @@
     "submitting": "Sending…",
     "submitted": "Sent. Waiting on the others.",
     "failed": "That didn't send. Try again?",
-    "waiting": "{count} voted so far",
-    "waitingOne": "1 voted so far",
     "seeResult": "See where we're going",
     "resultEyebrow": "Decided",
     "winner": "{name}",
@@ -257,10 +263,34 @@
     "openAtSlot": "open then",
     "hoursUnknown": "hours unknown",
     "openLink": "Open the vote",
-    "planTheNight": "Plan the night",
-    "chosenHeading": "The night",
+    "planTheNight": "Lay out the plan",
+    "chosenHeading": "The plan",
     "chosenOf": "{count} of {total} places, in approval order",
-    "shareTitle": "Where are we going tonight?",
-    "shareDescription": "Someone put a shortlist up. Tap yes or no on each place — it takes a minute, and there is nothing to sign up for."
+    "shareTitle": "Where are we going?",
+    "shareDescription": "Someone put a shortlist up. Tap yes or no on each place — it takes a minute, and there is nothing to sign up for.",
+    "pickingOne": "Together you're picking one of them.",
+    "pickingMany": "Together you're picking the {stops} you'll actually go to.",
+    "you": "You",
+    "nobodyYet": "Nobody has voted yet.",
+    "youFirst": "Yours is the first vote in.",
+    "hasVoted": "{names} has voted.",
+    "haveVoted": "{names} have voted.",
+    "yoursNotIn": "Yours isn't in yet.",
+    "alreadyVoted": "You've already voted. Sending again replaces your answers.",
+    "changeAnswers": "Change my answers",
+    "seeHeading": "See where it's heading"
+  },
+  "picker": {
+    "title": "Find places to add",
+    "done": "Done",
+    "close": "Close",
+    "add": "Add",
+    "addedOne": "Added",
+    "openNow": "open now",
+    "nothingYet": "Nothing added yet",
+    "addedCountOne": "1 place in your day",
+    "addedCount": "{count} places in your day",
+    "backToDay": "Back to your day",
+    "none": "Nothing matches “{query}”. Try a neighbourhood, or clear the filters."
   }
 }

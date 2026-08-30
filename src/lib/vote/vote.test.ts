@@ -184,16 +184,59 @@ describe("resolve", () => {
     expect(result.dissent).toEqual([]);
   });
 
-  it("counts each voter once even if they submit twice", () => {
+  /*
+    These three replace a test called "counts each voter once even if they
+    submit twice" which asserted `yes` was 2 — the name said one thing and the
+    assertion said the opposite, and that is how the double-count survived
+    review (C32). D40 reverses it: a second send replaces the first.
+  */
+  it("counts each voter once when they submit twice", () => {
     const a = makeSpot();
     const result = resolve(ballotOf([a]), [
       vote("Sok", { [a.id]: "yes" }),
       vote("Sok", { [a.id]: "yes" }),
     ]);
-    // Vote integrity is weak with no accounts (SECURITY.md) — the tally still
-    // double-counts, and the voter list is what makes that visible.
     expect(result.voters).toEqual(["Sok"]);
-    expect(result.tally[0]?.yes).toBe(2);
+    expect(result.tally[0]?.yes).toBe(1);
+  });
+
+  it("keeps the later vote when someone changes their mind", () => {
+    const a = makeSpot();
+    const result = resolve(ballotOf([a]), [
+      vote("Sok", { [a.id]: "no" }),
+      vote("Sok", { [a.id]: "yes" }),
+    ]);
+    // `readVotes` orders ascending by created_at, so last means newest. A
+    // resolver that kept the first would silently ignore every change of mind.
+    expect(result.tally[0]?.yes).toBe(1);
+    expect(result.tally[0]?.no).toBe(0);
+  });
+
+  it("does not let a re-vote make the tally disagree with the voter list", () => {
+    // The exact shape observed against the live store: four people, five rows.
+    const a = makeSpot();
+    const result = resolve(ballotOf([a]), [
+      vote("Ana", { [a.id]: "maybe" }),
+      vote("Bo", { [a.id]: "yes" }),
+      vote("Chey", { [a.id]: "yes" }),
+      vote("Ana", { [a.id]: "yes" }),
+      vote("Dara", { [a.id]: "yes" }),
+    ]);
+    const t = result.tally[0];
+    expect(result.voters).toHaveLength(4);
+    expect((t?.yes ?? 0) + (t?.maybe ?? 0) + (t?.no ?? 0)).toBe(result.voters.length);
+  });
+
+  it("drops a stale vote from the dissent list too", () => {
+    const a = makeSpot();
+    const result = resolve(ballotOf([a]), [
+      vote("Sok", { [a.id]: "no" }),
+      vote("Sok", { [a.id]: "yes" }),
+      vote("Ana", { [a.id]: "yes" }),
+    ]);
+    // Naming someone as an objector over a vote they replaced would be worse
+    // than not naming them at all.
+    expect(result.dissent).toEqual([]);
   });
 
   it("does no I/O, so it runs anywhere", () => {

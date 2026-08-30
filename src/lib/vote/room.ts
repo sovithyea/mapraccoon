@@ -51,6 +51,26 @@ export async function readVotes(roomId: string): Promise<Vote[] | null> {
   }));
 }
 
+/**
+ * Record one person's marks. Sending again replaces what they sent before.
+ *
+ * **This was an insert, and that was a real defect (C32, D40).** Every POST
+ * appended a row and `resolve()` counted every row, so a friend who reopened
+ * the link and voted again was counted twice — while the voter count on screen
+ * de-duplicated by name, so one screen showed two different totals for the same
+ * room. Observed here: four distinct names, five rows, and a candidate tallying
+ * five marks from four people.
+ *
+ * The conflict target is `(room_id, voter)`, so the identity is the typed name.
+ * That is the only identity this product has, and inventing a second one means
+ * inventing accounts. The cost is stated rather than left to be found: two
+ * friends who both type "Sok" overwrite each other, and nothing here can tell
+ * that from one person changing their mind.
+ *
+ * `created_at` is sent explicitly so the 24-hour window runs from the latest
+ * vote rather than the first. Leaving it would let a re-vote cast at hour 23 be
+ * swept an hour later.
+ */
 export async function appendVote(
   roomId: string,
   voter: string,
@@ -59,8 +79,33 @@ export async function appendVote(
   const db = client();
   if (!db) return false;
 
-  const { error } = await db.from("votes").insert({ room_id: roomId, voter, marks });
-  if (error) return false;
+  const row = { room_id: roomId, voter, marks, created_at: new Date().toISOString() };
+
+  const { error } = await db.from("votes").upsert(row, { onConflict: "room_id,voter" });
+
+  if (error) {
+    /**
+     * `42P10` is Postgres saying there is no unique constraint matching the
+     * ON CONFLICT target — i.e. migration 0002 has not been applied to this
+     * project yet.
+     *
+     * **This fallback exists because the alternative is a silent outage.**
+     * Deploying the upsert against a database still on 0001 makes every single
+     * POST return 502; the app would look exactly as if the store were down,
+     * on the one route the product cannot work without. Verified by doing it:
+     * the first write after this change 502'd against the live project.
+     *
+     * Remove-then-insert gets the same result without the constraint. It is
+     * two round trips and leaves a race if one person submits twice at once —
+     * both of which the index closes once it is applied, and `resolve`'s own
+     * de-duplication covers in the meantime (D40).
+     */
+    if (error.code !== "42P10") return false;
+
+    await db.from("votes").delete().eq("room_id", roomId).eq("voter", voter);
+    const { error: retry } = await db.from("votes").insert(row);
+    if (retry) return false;
+  }
 
   /**
    * Opportunistic expiry, on top of the scheduled sweep in the migration.

@@ -68,8 +68,27 @@ function centrality(spot: Spot, all: readonly Spot[]): number {
     .reduce((total, other) => total + estimateLeg(spot, other).minutes, 0);
 }
 
-export function resolve(ballot: ResolvedBallot, votes: readonly Vote[]): Result {
+/**
+ * One vote per person, and the last one is the one that counts.
+ *
+ * The unique index in migration 0002 is the real guarantee — this is the same
+ * rule expressed where it can be *tested* without a database. Both exist on
+ * purpose: a store-only guarantee cannot be asserted by the suite, and a
+ * resolver-only one is undone by the first writer that is not this route.
+ *
+ * `readVotes` orders by `created_at` ascending, so later entries overwrite
+ * earlier ones and the newest marks win. That ordering is load-bearing; a
+ * descending read would silently keep the stale vote.
+ */
+function oneEach(votes: readonly Vote[]): Vote[] {
+  const latest = new Map<string, Vote>();
+  for (const vote of votes) latest.set(vote.voter, vote);
+  return [...latest.values()];
+}
+
+export function resolve(ballot: ResolvedBallot, allVotes: readonly Vote[]): Result {
   const at = slotInstant(ballot.slot);
+  const votes = oneEach(allVotes);
 
   const tally: Tally[] = ballot.candidates.map((spot) => {
     let yes = 0;
@@ -129,7 +148,8 @@ export function resolve(ballot: ResolvedBallot, votes: readonly Vote[]): Result 
     dissent: winner
       ? votes.filter((v) => v.marks[winner.id] === "no").map((v) => v.voter)
       : [],
-    voters: [...new Set(votes.map((v) => v.voter))],
+    // Already unique: `oneEach` keys by voter.
+    voters: votes.map((v) => v.voter),
     empty: !anyMarks,
   };
 }
