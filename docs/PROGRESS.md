@@ -103,3 +103,65 @@ Also fixed two staleness bugs in `CLAUDE.md` that predate the pivot: the decisio
 Six defects found, and five of them only by running the thing rather than reading it. C23: the theme toggle had been logging a hydration mismatch on every page since it shipped, and nobody had read the dev log. C24 is the worst — acceptance criterion 13 grepped the build for whatever `SUPABASE_SERVICE_KEY` contained, so when the two Supabase keys were swapped it passed while the real secret sat in a `NEXT_PUBLIC_` variable. A check that depends on the thing it checks is not a check. C25: `VoteScreen` read `localStorage` during render, and React recovered into a state where the button was disabled over an input that visibly showed a name — unusable, and perfect in a screenshot. C26: nine dead links in the chrome of every page, because a route and its inbound links were deleted in different steps.
 
 What is not done is the half that matters now. The seed file still holds eleven tourist landmarks — no bars, no restaurants (B9) — so every flow above was exercised against markets and temples. The importer works and was checked against twenty real BKK1 bars, but nothing has been written in. Khmer is untouched and grew worse. Nothing is deployed.
+
+**2026-08-30 (ninth session — the vote flow, checked with more than one person)** — The user asked whether the vote flow actually works *with friends*, and for the instructions to be shown rather than described. It works: a ballot built by hand, four voters POSTed to the live store, and the screens driven end to end in headless Chrome settled on a winner, a runner-up, a two-stop plan and a dissent count.
+
+Four defects, all of which need a second person or a returning one, which is why a single pass through the flow read as fine. **C32 is the one that matters**: a second vote from the same person counted twice — 4 names, 5 rows, a candidate tallying `4 · 1 · 0` — and it was *known*, written into `SECURITY.md` as an accepted limit and asserted by a test called "counts each voter once even if they submit twice" that asserted `yes` was `2`. The name said the opposite of the assertion, and that is how it passed review. It compounded with C33: reopening a ballot offered only "Start voting", so checking the result meant re-marking every card, which meant re-voting. The person most likely to look was the person most likely to be counted four times. C34: "{n} voted so far" silently meant "the others" then "the others and me". C35: `stops` reached `VoteResult` and no screen a voter ever sees.
+
+Fixed by D40 — upsert on `(room_id, voter)`, plus the same rule in `resolve` where the suite can test it without a database. **The migration is written and NOT applied**, so `appendVote` falls back to remove-then-insert on `42P10`; without that fallback the upsert 502s every write against a database still on 0001, which was verified by doing it.
+
+Two things came from the user reading the screens. The `/discover` map was building an **18,019px-tall canvas** — `h-full` against a column sized by 87 cards — so it painted as a small tile with its own pins trailing down the page below it (C37). Now `822 × 748`. And ten strings presumed the group was going out at night, on a product whose dataset includes cafés and whose day frame opens at 08:00 (D41).
+
+Also: the "How it works" section was three paragraphs asking a first-time reader to picture a link fanning out to four phones; each step now carries a drawing, token-driven so it follows all four palettes and both themes.
+
+194 tests across 17 files, build/lint/typecheck clean, 0 overflow at 390/768/1280.
+
+Then two more of the user's asks landed in the same session.
+
+**The landing page has a real map** (D43). The constellation was a six-by-six graticule the user called "a blank nothing with dots on it"; it now draws the Chaktomuk confluence underneath the venues, so Riverside reads as the bank and Chroy Changvar as the cluster across the water. Imported from OpenStreetMap by `tools/import-water.mjs` rather than drawn from memory — 9.5 KB for 13 river rings and 5 islands, clipped to the query box so no force-closed chord crosses the frame, and projected at render time by the same `projectInto` the dots use so the two cannot drift apart. Not Mapbox: D11's token-less state is the repo's default, and a hero image that goes blank without an account is worse than no hero image.
+
+**Browsing moved into a picker** (D42). Search matches name, blurb, neighbourhood and category, so "bkk1" and "coffee" both work. Driven end to end: autofocus, scroll lock, Escape, multi-add, and the day intact on the other side.
+
+That surfaced C38, which is the one to read. **The picker offered Tuol Sleng** — a memorial with an *Add* button beside a hotpot restaurant — because it matched a search for its own neighbourhood. C19's shape on a new surface and C30's cause exactly: `sensitive` exists and a component written after D33 did not consult it. Now filtered through `plottableSpots()` and enforced by a mutation-checked test.
+
+201 tests across 19 files, build/lint/typecheck clean, 0 overflow at 390/768/1280 including with the picker open.
+
+**Where to pick up.**
+
+1. **Migration `0002` still has to be run against the Supabase project.** The app works without it — `appendVote` falls back to remove-then-insert on `42P10` — but with two round trips and a race that the index closes.
+2. **C39, which is a decision rather than a bug to fix quietly.** `/discover`'s own list still offers memorials with an *Add* button, so Choeung Ek can go into a day and then be silently stripped by `createBallot` at ballot time. The picker beside it now excludes them, so two adjacent surfaces disagree. Removing memorials from `/discover` changes what that page is, and D33 kept them on purpose — this needs a call, not a patch.
+3. **Draggable timeline blocks**, still not built: the user wants to move a stop to a chosen time rather than accept the packing. The two evening-presuming defaults belong with it — `StartVote` fixes every ballot at 20:00 and the day frame opens at 08:00, and D41 deliberately left both alone because they are behaviour, not copy.
+
+**2026-08-30 (tenth session — the map, the picker, the timeline)** — Three of the user's asks, in one pass.
+
+**`/discover` is one pane** (D45). The 26 rem list column is gone; a toolbar carries the search trigger and the `[Map | Route]` tabs over a full-width pane. That column was the cause of C37 and the reason there was nowhere to put a search field. It took a consequence with it, recorded before shipping rather than found later: **C40 — nothing in the product now links to a memorial spot page.** The list was the last route to them. Smaller than the wrong C39 describes, but open.
+
+**The landing page draws a real map** (D43, extended). `tools/import-basemap.mjs` pulls five layers from OpenStreetMap in one query — rivers and their islands, lakes, parks, and roads in two weights — 37 KB after clipping, sliver-dropping, per-layer simplification and rounding to four decimals. Not Mapbox, deliberately: D11's token-less state is the repo's default and a hero that goes blank without an account is worse than no hero. Two importer bugs found by looking at the output rather than the code — Overpass 406s a request with no User-Agent, and the first park threshold was set at nearly four hectares, which is larger than every park in Phnom Penh and silently emitted an empty layer. The basemap test now asserts every layer is non-empty for exactly that reason.
+
+**Stops can be pinned to a time** (D44). Drag the block on the day bar, or type into the time cell. A pin is honoured *exactly* rather than clamped, and the schedule reports the consequence — `slackMins` positive is time to kill, negative is an overlap, and the leg row says which. Unpinning is a visible control. This forced the day bar off flex: contiguous blocks *encoded* the packing assumption, and a drawable gap is what makes a pin expressible. Verified by driving a real drag over CDP — a block moved 10:05 → 11:30, only that stop pinned, the one after it reflowed to 13:15, and the leg row read "1h 25m spare before this".
+
+Two defects in my own first attempt, both found by looking at the rendered page: the time cell clipped `<input type="time">` to "08:3(", and a browser set to en-US drew "01:15 PM" directly above a departure reading "14:45" — one row, two clock conventions. The cell now shows `clock()` and swaps to the native input only while editing.
+
+206 tests across 19 files, build/lint/typecheck clean, 0 overflow at 390.
+
+**Where to pick up.**
+
+1. **Migration `0002` still has to be run against Supabase.** Voting works without it via the `42P10` fallback, with two round trips and a race.
+2. **C39 and C40 together are one decision, not two patches.** Memorials are excluded from every going-out surface and now unlinked entirely, while `/discover`'s map still draws their pins. Someone should decide what a memorial's place in this product is, post-pivot, and make every surface follow it.
+3. The day frame still opens at 08:00 and `StartVote` still fixes ballots at 20:00. Pinning makes both editable per stop, but the *defaults* are still the evening-presuming ones D41 left alone.
+
+**2026-08-30 (eleventh session — the map is the surface)** — The user sent a screenshot of an empty box where the map should be, and a reference: FoodRaccoon's full-bleed Mapbox with pins.
+
+**The blank pane was a regression I had just shipped (C41).** The tab worked, the box measured 483 px, and the Mapbox div inside it measured **0** — `height: 100%` against a flex item whose height comes from `flex-grow`, which is indefinite, so the percentage resolved to auto. It is C37's mirror image: that one gave the map 18,019 px from an unbounded parent, this one gave it none from an indefinite one, and both looked to a reader like the map was simply missing. Fixed with `relative` + `absolute inset-0`.
+
+**Pins now open the place** (D46). A card with name, neighbourhood, price and open-now, and a link through to the spot page. Bounds are fitted to the venues rather than every pin — Choeung Ek is 15 km south and fitting all 87 squeezed the city into the top third of the frame, which is C30 biting a second surface. A second defect found by driving two clicks in a row: Mapbox counts a click on another marker as an outside click, so selecting a second pin closed the popup rather than moving it (C42).
+
+**D46 is the answer to the C39/C40 question** rather than another patch. The line is **offer versus show**. Offering — the picker, the tray, a ballot — never includes a memorial, enforced by tests. Showing is the map, which draws every pin because it is a map and not an invitation, and which is now the only route to a memorial's page. How a memorial reads in that card is part of the decision: name, neighbourhood, link, and no price row or open-now badge, because the card is exactly where the two registers would collide. Mutation-checked — adding a price row to the memorial branch fails the suite.
+
+209 tests across 19 files, build/lint/typecheck clean, 0 overflow at 390.
+
+**Where to pick up.**
+
+1. **Migration `0002` still has to be run against Supabase.** Everything else on this list is code; this one is not, and it is the only outstanding item that needs an account.
+2. The day frame still opens at 08:00 and `StartVote` still fixes ballots at 20:00 — the last two evening-presuming defaults D41 left alone.
+3. The map popup was checked in dark mode — computed `#171b16` on `#ece5d8`, straight from the tokens. It has **not** been checked in the three non-default palettes; the CSS is token-driven so it should follow, but that is an expectation rather than an observation.

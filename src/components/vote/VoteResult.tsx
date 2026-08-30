@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import type { Dictionary } from "@/i18n/get-dictionary";
+import { phnomPenhNow } from "@/lib/hours/now";
 import { getNeighbourhood } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
 import type { Slot } from "@/lib/vote/ballot";
@@ -45,10 +46,24 @@ export function VoteResult({
   const result = resolve({ slot, candidates, roomId: "", stops }, votes);
 
   if (result.empty || !result.winner) {
+    /*
+      An empty room has two causes that look identical and are not: nobody has
+      voted yet, or the votes were swept. `dict.vote.expired` was written for
+      the second and had no reader anywhere in the app (C36), so a group reopening
+      last night's link was told "nobody has voted yet" about a vote they
+      remembered casting.
+
+      The slot's own date decides it, which needs no extra state: the ballot
+      travels in the link and already carries the day it was for.
+    */
+    const gone = slot.isoDate < phnomPenhNow().isoDate;
+
     return (
       <section className="mx-auto w-full max-w-lg px-5 py-12">
         <p className="eyebrow">{dict.vote.resultEyebrow}</p>
-        <h1 className="mt-3 font-display text-2xl font-bold">{dict.vote.nobodyVoted}</h1>
+        <h1 className="mt-3 font-display text-2xl font-bold">
+          {gone ? dict.vote.expired : dict.vote.nobodyVoted}
+        </h1>
         <button
           type="button"
           onClick={onBack}

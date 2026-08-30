@@ -23,7 +23,12 @@ import type { Spot } from "@/lib/spots/schema";
  * moment its content was edited.
  */
 
-export type StoredStop = { spotId: string; dwellMins: number };
+export type StoredStop = {
+  spotId: string;
+  dwellMins: number;
+  /** Pinned start, minutes past midnight. Absent means "as soon as you can" (D44). */
+  startMins?: number;
+};
 
 /** Minutes past 17:00 the frame may be pushed to, via "run the day later". */
 const MAX_FRAME_END_MINS = 22 * 60;
@@ -37,6 +42,10 @@ type RouteState = {
   move: (spotId: string, direction: -1 | 1) => void;
   setStops: (spots: readonly Spot[]) => void;
   setDwell: (spotId: string, dwellMins: number) => void;
+  /** Pin a stop to a clock time, or `null` to let it pack again. */
+  setStopStart: (spotId: string, startMins: number | null) => void;
+  /** Drop every pin, so the day packs from the start again. */
+  unpinAll: () => void;
   setStart: (startMins: number) => void;
   setFrameEnd: (endMins: number) => void;
   reverse: () => void;
@@ -49,6 +58,18 @@ const initialFrame: DayFrame = {
   frameStart: DEFAULT_FRAME_START_MINS,
   frameEnd: DEFAULT_FRAME_END_MINS,
 };
+
+/**
+ * The same stop with no pin.
+ *
+ * Built explicitly rather than by rest-destructuring the key away: the omission
+ * is the whole point of the function, and a discarded binding states it as a
+ * side effect of syntax where this states it as the return value.
+ */
+const unpinned = (stop: StoredStop): StoredStop => ({
+  spotId: stop.spotId,
+  dwellMins: stop.dwellMins,
+});
 
 const resolve = (stops: readonly StoredStop[]): Spot[] =>
   stops.map((s) => getSpotById(s.spotId)).filter((s): s is Spot => s !== undefined);
@@ -181,6 +202,26 @@ export const useRoute = create<RouteState>()(
           stops: state.stops.map((s) =>
             s.spotId === spotId ? { ...s, dwellMins: Math.max(15, dwellMins) } : s,
           ),
+        })),
+
+      /**
+       * Pinning is per stop and reversible, and `null` is a first-class value —
+       * a day you can pin but not unpin is a trap, because the only way back
+       * would be removing the stop and adding it again, which loses its dwell.
+       */
+      setStopStart: (spotId, startMins) =>
+        set((state) => ({
+          stops: state.stops.map((stop) => {
+            if (stop.spotId !== spotId) return stop;
+            if (startMins === null) return unpinned(stop);
+            // A day is 24 hours; anything else is a bug upstream, not input.
+            return { ...stop, startMins: Math.max(0, Math.min(24 * 60 - 1, startMins)) };
+          }),
+        })),
+
+      unpinAll: () =>
+        set((state) => ({
+          stops: state.stops.map(unpinned),
         })),
 
       setStart: (startMins) =>

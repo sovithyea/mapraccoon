@@ -35,7 +35,15 @@ export function useRouteStops(): { stops: RouteStop[]; hydrated: boolean } {
     const spot = getSpotById(entry.spotId);
     // A spot removed from the seed file since the day was saved. Drop it rather
     // than rendering a hole — the same call decodeDay makes for shared links.
-    if (spot) stops.push({ spot, dwellMins: entry.dwellMins });
+    if (spot) {
+      stops.push({
+        spot,
+        dwellMins: entry.dwellMins,
+        // Spread rather than always setting the key: `startMins: undefined` and
+        // an absent key differ once this is serialised into a shared link.
+        ...(entry.startMins === undefined ? {} : { startMins: entry.startMins }),
+      });
+    }
   }
 
   return { stops, hydrated };

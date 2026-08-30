@@ -43,6 +43,7 @@ export function RoutePane({
   const move = useRoute((s) => s.move);
   const remove = useRoute((s) => s.remove);
   const setDwell = useRoute((s) => s.setDwell);
+  const setStopStart = useRoute((s) => s.setStopStart);
   const setFrameEnd = useRoute((s) => s.setFrameEnd);
   const [copied, setCopied] = useState(false);
 
@@ -138,6 +139,8 @@ export function RoutePane({
           onMove={move}
           onRemove={remove}
           onDwell={setDwell}
+          onPin={(spotId, startMins) => setStopStart(spotId, startMins)}
+          onUnpin={(spotId) => setStopStart(spotId, null)}
         />
       </div>
 

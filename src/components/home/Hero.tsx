@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Constellation } from "@/components/home/Constellation";
+import { STEP_ART } from "@/components/home/StepArt";
 import type { Dictionary } from "@/i18n/get-dictionary";
 import type { Spot } from "@/lib/spots/schema";
 
@@ -98,6 +99,17 @@ export function Hero({
  * Three steps, because someone opening a shared link has never seen this and
  * the product only makes sense as a loop — pick, vote, plan. Any one screen on
  * its own reads as a list of bars.
+ *
+ * Each step carries a drawing (`StepArt`). Three paragraphs side by side asked
+ * the reader to picture a link fanning out to four phones and coming back as a
+ * schedule, which is a lot to ask of prose from someone who has not seen the
+ * product — the section read as broad because the mechanic was described
+ * rather than shown.
+ *
+ * The art sits BELOW the copy and is pushed to the bottom of the card, so the
+ * three drawings line up with each other whatever the length of the sentence
+ * above them. Reading order is unchanged: title, then explanation, then the
+ * picture that confirms it.
  */
 export function HowItWorks({ dict }: { dict: Dictionary }) {
   return (
@@ -105,23 +117,38 @@ export function HowItWorks({ dict }: { dict: Dictionary }) {
       <div className="mx-auto w-full max-w-6xl px-5 py-10 lg:py-14">
         <h2 className="eyebrow">{dict.hero.howLabel}</h2>
         <ol className="mt-5 grid gap-3 sm:grid-cols-3">
-          {dict.hero.steps.map((step, i) => (
-            <li
-              key={step.title}
-              className="rounded-2xl border border-border bg-surface p-5"
-            >
-              <span
-                aria-hidden="true"
-                className="flex size-7 items-center justify-center rounded-full bg-accent font-display text-sm font-bold text-accent-contrast"
+          {dict.hero.steps.map((step, i) => {
+            const Art = STEP_ART[i];
+            return (
+              <li
+                key={step.title}
+                className="flex flex-col rounded-2xl border border-border bg-surface p-5"
               >
-                {i + 1}
-              </span>
-              <h3 className="mt-3.5 font-display text-lg font-bold leading-tight">
-                {step.title}
-              </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
-            </li>
-          ))}
+                <span
+                  aria-hidden="true"
+                  className="flex size-7 items-center justify-center rounded-full bg-accent font-display text-sm font-bold text-accent-contrast"
+                >
+                  {i + 1}
+                </span>
+                <h3 className="mt-3.5 font-display text-lg font-bold leading-tight">
+                  {step.title}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
+
+                {/*
+                  `mt-auto` is what aligns the three drawings across the row.
+                  The rule above it reads as a caption divider rather than a
+                  second card edge, which is why it is inset to the padding
+                  rather than run full-bleed.
+                */}
+                {Art ? (
+                  <div className="mt-auto border-t border-border pt-5">
+                    <Art />
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
         </ol>
       </div>
     </section>

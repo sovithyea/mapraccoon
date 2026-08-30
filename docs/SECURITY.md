@@ -60,7 +60,9 @@ Collaborative voting is the first feature where one person's action changes what
 
 **Realtime broadcasts are only as private as the channel policy makes them.** The channel is named by the room id, so channel names must never be logged, enumerated, or included in error messages or analytics.
 
-**Vote integrity is weak in Phase 3, deliberately.** With no accounts there is nothing to bind a voter to, so a determined participant can vote twice under two names. That is a real limitation and it is the right trade at this size — the failure mode is a friend being annoying, not a breach. Phase 4's accounts are what make one-vote-per-person enforceable.
+**Vote integrity is weak in Phase 3, deliberately — but one vote per *name* is now enforced (D40).** With no accounts there is nothing to bind a voter to, so a determined participant can still vote twice by typing two names. That remains the right trade at this size: the failure mode is a friend being annoying, not a breach, and Phase 4's accounts are what make one-vote-per-*person* enforceable.
+
+What changed is that the store no longer punishes honest use. Until 2026-08-30 every POST appended a row and every row was counted, so reopening a link and voting again counted twice — and since checking the result required marking every card again (C33), *looking at the poll was itself a second vote*. Votes now upsert on `(room_id, voter)`. The new cost is the mirror of the old one and is stated rather than left to be found: **two friends who both type "Sok" overwrite each other**, and nothing here can distinguish that from one person changing their mind.
 
 **Rate limiting on the insert route** is required, not optional. It is the only mutation surface and there is no auth in front of it.
 

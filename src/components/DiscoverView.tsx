@@ -1,16 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-import { SpotCard } from "@/components/spot/SpotCard";
-import { groupOrder } from "@/components/ui/category-style";
-import { groupLabel, inGroup } from "@/lib/spots/categories";
+import { PlacePicker } from "@/components/discover/PlacePicker";
 import type { Dictionary } from "@/i18n/get-dictionary";
-import { sortSpots, type SortMode } from "@/lib/scoring";
-import { neighbourhoods } from "@/lib/spots/neighbourhoods";
 import type { Spot } from "@/lib/spots/schema";
-import { useNow } from "@/components/hooks/useNow";
 import { RoutePane } from "@/components/route/RoutePane";
 import { useRouteStops } from "@/components/route/useRouteStops";
 import { useFilters } from "@/store/filters";
@@ -20,11 +15,6 @@ const SpotMap = dynamic(
   () => import("@/components/map/SpotMap").then((m) => m.SpotMap),
   { ssr: false },
 );
-
-const sortModes: SortMode[] = ["open-now", "price", "name"];
-
-/** Display state, not filter state — deliberately not in the filter store. */
-type MobileView = "list" | "map" | "route";
 
 /**
  * The right pane's third state (D23). The route is never a page you navigate
@@ -41,23 +31,12 @@ export function DiscoverView({
   locale: string;
   dict: Dictionary;
 }) {
-  const {
-    city,
-    categories,
-    sort,
-    selectedId,
-    hoveredId,
-    setCity,
-    toggleCategory,
-    setSort,
-    setSelected,
-    setHovered,
-    reset,
-  } = useFilters();
+  // Only the map's selection survives the column's removal; the filter chips
+  // and the sort now live in the picker, which is the only thing that lists.
+  const { selectedId, hoveredId, setSelected, setHovered } = useFilters();
 
-  const [view, setView] = useState<MobileView>("list");
+  const [picking, setPicking] = useState(false);
   const { stops } = useRouteStops();
-  const at = useNow();
 
   /**
    * Route wins the default once a stop exists, and also when there is no
@@ -68,161 +47,51 @@ export function DiscoverView({
   const [pane, setPane] = useState<Pane | null>(null);
   const activePane: Pane = pane ?? (stops.length > 0 || !hasToken ? "route" : "map");
 
-  /*
-    Only the neighbourhoods that hold something. The enum has nine members and
-    the dataset covers seven, so Koh Pich and Sen Sok were offering a filter
-    that could only ever return "no places match these filters" — the footer had
-    the same bug, from the same cause: a constant describing the content without
-    reading it.
-  */
-  const occupied = useMemo(() => {
-    const ids = new Set(spots.map((spot) => spot.neighbourhood));
-    return neighbourhoods.filter((n) => ids.has(n.id));
-  }, [spots]);
-
-  const visible = useMemo(() => {
-    const filtered = spots.filter((spot) => {
-      if (city && spot.neighbourhood !== city) return false;
-      if (categories.length && !categories.some((g) => inGroup(spot.categories, g)))
-        return false;
-      return true;
-    });
-    // `at` is undefined until after mount, so the first paint orders by name
-    // and the client re-sorts once it has a clock. See useNow().
-    return sortSpots(filtered, sort, { at: at ?? undefined });
-  }, [spots, city, categories, sort, at]);
-
-  const sortLabel: Record<SortMode, string> = {
-    "open-now": dict.filters.sortOpenNow,
-    price: dict.filters.sortPrice,
-    name: dict.filters.sortName,
-  };
-
-  const count =
-    visible.length === 1
-      ? dict.home.resultCountOne
-      : dict.home.resultCount.replace("{count}", String(visible.length));
-
   return (
-    <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
-      <div className="flex flex-col border-border lg:w-[26rem] lg:shrink-0 lg:overflow-y-auto lg:border-r">
-        <div className="space-y-3.5 border-b border-border p-5">
-          {/*
-            Each group is a single scrolling line on mobile. Wrapped, these
-            three groups pushed the first result ~600px down the page.
-          */}
-          <Group label={dict.filters.city}>
-            <Chip active={city === null} onClick={() => setCity(null)}>
-              {dict.filters.allCities}
-            </Chip>
-            {occupied.map((c) => (
-              <Chip key={c.id} active={city === c.id} onClick={() => setCity(c.id)}>
-                {c.name}
-              </Chip>
-            ))}
-          </Group>
+    /*
+      One pane, full width (D45).
 
-          <Group label={dict.filters.category}>
-            {/* Four group chips, not eighteen category chips (see categories.ts). */}
-            {groupOrder.map((group) => (
-              <Chip
-                key={group}
-                active={categories.includes(group)}
-                onClick={() => toggleCategory(group)}
-              >
-                {groupLabel[group]}
-              </Chip>
-            ))}
-          </Group>
+      `/discover` was a 26rem column of all 87 places beside a map that got what
+      was left. The column was the reason the map built an 18,019px canvas
+      (C37), the reason there was nowhere to put a search field, and — the
+      user's words — the reason "you had to go all the way down just to find
+      restaurants". Browsing lives in the picker now (D42), so the column had
+      nothing left to do that the picker does not do better.
 
-          <Group label={dict.filters.sort}>
-            {sortModes.map((mode) => (
-              <Chip key={mode} active={sort === mode} onClick={() => setSort(mode)}>
-                {sortLabel[mode]}
-              </Chip>
-            ))}
-          </Group>
+      What remains is the thing you came to build: the day, or the map of it.
+    */
+    <div className="flex flex-1 flex-col">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3">
+        {/*
+          The way into browsing. It looks like a search field and behaves like a
+          button, because what it opens IS the search field.
+        */}
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="flex min-h-11 flex-1 items-center gap-3 rounded-full border border-border bg-surface px-4 text-left text-sm text-muted transition-colors hover:border-muted sm:max-w-sm"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0"
+          >
+            <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.6" />
+            <path
+              d="M11 11l3.2 3.2"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
+          {dict.filters.openPicker.replace("{count}", String(spots.length))}
+        </button>
 
-          <div className="flex items-center justify-between gap-3 pt-0.5">
-            <p className="text-xs text-muted">{count}</p>
-
-            {/*
-              Without this the map sits below all 42 cards on a phone, which
-              makes it effectively unreachable. Desktop shows both at once.
-            */}
-            <div
-              className="flex rounded-full border border-border p-0.5 lg:hidden"
-              role="group"
-              aria-label={dict.filters.viewToggle}
-            >
-              {(["list", "map", "route"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  aria-pressed={view === mode}
-                  onClick={() => setView(mode)}
-                  className={`min-h-9 rounded-full px-3.5 text-xs font-semibold transition-colors ${
-                    view === mode
-                      ? "bg-accent text-accent-contrast"
-                      : "text-muted hover:text-foreground"
-                  } ${
-                    // Three buttons plus the result count do not fit legibly at
-                    // 390. Below sm the route is reached through the dock bar
-                    // instead — two ways in to one view, by width (D23).
-                    mode === "route" ? "hidden sm:block" : ""
-                  }`}
-                >
-                  {mode === "list"
-                    ? dict.filters.viewList
-                    : mode === "map"
-                      ? dict.filters.viewMap
-                      : dict.route.tabRoute}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className={view === "list" ? undefined : "hidden lg:block"}>
-          {visible.length === 0 ? (
-            <div className="p-5">
-              <p className="text-sm text-muted">{dict.home.empty}</p>
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-3 min-h-11 text-sm text-accent underline underline-offset-4"
-              >
-                {dict.home.clearFilters}
-              </button>
-            </div>
-          ) : (
-            <ul className="space-y-3 p-5">
-              {visible.map((spot) => (
-                <SpotCard
-                  key={spot.id}
-                  spot={spot}
-                  locale={locale}
-                  active={spot.id === hoveredId || spot.id === selectedId}
-                  onHover={setHovered}
-                  onSelect={setSelected}
-                  dict={dict}
-                />
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-
-      <div
-        className={`flex-1 p-5 lg:block lg:h-auto ${
-          view === "map" || view === "route" ? "min-h-[70vh]" : "hidden lg:block"
-        }`}
-      >
-        {/* Tabs, not a third column: splitting the lg remainder in two costs
-            the timeline its time column, and the map is absent by default
-            with no token anyway (D23). */}
         <div
-          className="mb-3 hidden rounded-full border border-border p-0.5 lg:inline-flex"
+          className="ml-auto flex rounded-full border border-border p-0.5"
           role="group"
           aria-label={dict.filters.viewToggle}
         >
@@ -243,80 +112,51 @@ export function DiscoverView({
             </button>
           ))}
         </div>
+      </div>
 
-        <div className="h-full min-h-64 overflow-hidden rounded-lg border border-border">
-          {/*
-            Two independent visibility rules, not one: below `lg` the pane
-            follows the mobile `view` toggle, and at `lg` it follows the pane
-            tabs. Written out rather than composed, because the composed
-            version was unreadable and this is the kind of thing that ships a
-            layout bug nobody notices until the probe runs.
-          */}
-          <div
-            className={`${view === "route" ? "block" : "hidden"} ${
-              activePane === "route" ? "lg:block" : "lg:hidden"
-            }`}
-          >
-            <RoutePane candidates={visible} dict={dict} />
-          </div>
+      <div className="flex min-h-[62dvh] flex-1 flex-col p-5">
+        {/*
+          `relative` + `absolute inset-0`, not `h-full` (C41).
 
-          <div
-            className={`h-full ${view === "map" ? "block" : "hidden"} ${
-              activePane === "map" ? "lg:block" : "lg:hidden"
-            }`}
-          >
-            <SpotMap
-              spots={visible}
-              selectedId={selectedId}
-              hoveredId={hoveredId}
-              onSelect={setSelected}
-              onHover={setHovered}
-              missingTokenTitle={dict.map.missingTokenTitle}
-              missingTokenBody={dict.map.missingTokenBody}
-              legend={dict.categories}
-            />
-          </div>
+          The box is a flex item, so its height comes from `flex-grow` and its
+          `height` property stays `auto` — and a percentage height against an
+          indefinite parent resolves to auto, which for Mapbox's `height: 100%`
+          div means **zero**. The pane measured 483px and the map inside it
+          measured 0, so the tab worked and the map was simply invisible.
+
+          Absolute positioning against a positioned ancestor sidesteps the
+          question: the box is definite whatever the flex maths does.
+        */}
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-border">
+          {activePane === "route" ? (
+            <div className="absolute inset-0 overflow-y-auto">
+              <RoutePane candidates={spots} dict={dict} />
+            </div>
+          ) : (
+            <div className="absolute inset-0">
+              <SpotMap
+                spots={spots}
+                selectedId={selectedId}
+                hoveredId={hoveredId}
+                onSelect={setSelected}
+                onHover={setHovered}
+                missingTokenTitle={dict.map.missingTokenTitle}
+                missingTokenBody={dict.map.missingTokenBody}
+                legend={dict.categories}
+                locale={locale}
+                dict={dict}
+              />
+            </div>
+          )}
         </div>
       </div>
-    </div>
-  );
-}
 
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-        {label}
-      </p>
-      {/* Scrolls on mobile, wraps from sm up. */}
-      <div className="rail -mx-5 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-        {children}
-      </div>
+      <PlacePicker
+        spots={spots}
+        dict={dict}
+        open={picking}
+        onClose={() => setPicking(false)}
+      />
     </div>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors ${
-        active
-          ? "border-accent bg-accent text-accent-contrast"
-          : "border-border bg-surface text-foreground hover:border-muted"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

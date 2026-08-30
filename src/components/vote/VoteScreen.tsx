@@ -39,8 +39,8 @@ const readNameOnServer = (): string => "";
  * chat that is already open on everyone's phone (D31).
  *
  * So: one decision on screen at a time rather than a grid to scan, a name asked
- * once rather than an account, and a running count of who has voted so nobody
- * wonders whether it worked.
+ * once rather than an account, and the voters NAMED so nobody wonders whether it
+ * worked or who is still missing (C34).
  */
 export function VoteScreen({
   roomId,
@@ -167,7 +167,53 @@ export function VoteScreen({
     }
   };
 
-  const voterCount = votes ? new Set(votes.map((v) => v.voter)).size : 0;
+  /**
+   * Who has voted — named, not counted (C34).
+   *
+   * It was "{n} voted so far", and the number silently meant two different
+   * things: before you sent, it was the others; afterwards, the others and you.
+   * Nothing on screen marked the switch. Worse, a count does not answer the
+   * question the line exists for, which is *who are we still waiting on* — and
+   * the names were already on the client, unused.
+   */
+  const joinNames = (names: readonly string[]): string => {
+    try {
+      return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(
+        names,
+      );
+    } catch {
+      // Not every locale this app may add has list-format data.
+      return names.join(", ");
+    }
+  };
+
+  const myName = voter.trim();
+  const voterNames = votes ? [...new Set(votes.map((v) => v.voter))] : [];
+  const iHaveVoted = myName.length > 0 && voterNames.includes(myName);
+
+  // "You" first, so the answer to "is mine in?" is never something to search a
+  // list for.
+  const displayNames = [
+    ...(iHaveVoted ? [dict.vote.you] : []),
+    ...voterNames.filter((name) => name !== myName),
+  ];
+
+  const votedLine = ((): string => {
+    if (displayNames.length === 0) return dict.vote.nobodyYet;
+    if (displayNames.length === 1 && iHaveVoted) return dict.vote.youFirst;
+    const template = displayNames.length === 1 ? dict.vote.hasVoted : dict.vote.haveVoted;
+    return fill(template, { names: joinNames(displayNames) });
+  })();
+
+  /**
+   * What the group is actually deciding (C35).
+   *
+   * `stops` was passed into this component and forwarded straight to the
+   * result, so the marking screens never mentioned it — yet it is the one
+   * number that tells a voter how generous to be. Approving a single place is
+   * right for one destination and wrong for a three-stop night.
+   */
+  const pickingLine = stops > 1 ? fill(dict.vote.pickingMany, { stops }) : dict.vote.pickingOne;
 
   if (showResult && votes) {
     return (
@@ -198,8 +244,20 @@ export function VoteScreen({
           })}
           {by ? ` · ${fill(dict.vote.byLine, { name: by })}` : ""}
         </p>
+        <p className="mt-1.5 text-sm font-semibold">{pickingLine}</p>
 
-        <label className="mt-8 block">
+        {/*
+          Who is already in, before anyone is asked for anything. A ballot with
+          three votes on it used to look identical to an empty one, so the first
+          thing this screen told a late voter was nothing at all.
+        */}
+        {votes ? (
+          <p className="mt-4 text-sm text-muted" role="status">
+            {votedLine}
+          </p>
+        ) : null}
+
+        <label className="mt-6 block">
           <span className="text-sm font-semibold">{dict.vote.whoAreYou}</span>
           <input
             value={voter}
@@ -207,16 +265,42 @@ export function VoteScreen({
             placeholder={dict.vote.namePlaceholder}
             className="mt-2 min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-base"
           />
-          <span className="mt-2 block text-xs text-muted">{dict.vote.nameHint}</span>
+          <span className="mt-2 block text-xs text-muted">
+            {fill(dict.vote.nameHint, { count: candidates.length })}
+          </span>
         </label>
+
+        {/*
+          Says what the button is about to do. Now that a second send REPLACES
+          the first (D40) rather than counting twice, that is a promise worth
+          making before it is kept.
+        */}
+        {iHaveVoted ? (
+          <p className="mt-4 text-sm text-muted">{dict.vote.alreadyVoted}</p>
+        ) : null}
 
         <button
           type="button"
           disabled={voter.trim().length === 0}
           onClick={() => setStarted(true)}
-          className="mt-6 min-h-12 w-full rounded-full bg-accent px-5 text-sm font-bold text-accent-contrast disabled:opacity-40"
+          className="mt-4 min-h-12 w-full rounded-full bg-accent px-5 text-sm font-bold text-accent-contrast disabled:opacity-40"
         >
-          {dict.vote.start}
+          {iHaveVoted ? dict.vote.changeAnswers : dict.vote.start}
+        </button>
+
+        {/*
+          The way out of the loop (C33). Reaching the result used to require
+          marking every card again, which then counted you a second time — the
+          person most likely to check was the person most likely to be counted
+          twice. Looking must not be a vote.
+        */}
+        <button
+          type="button"
+          onClick={() => setShowResult(true)}
+          disabled={!votes || votes.length === 0}
+          className="mt-3 min-h-12 w-full rounded-full border border-border px-5 text-sm font-semibold disabled:opacity-40"
+        >
+          {dict.vote.seeHeading}
         </button>
       </section>
     );
@@ -232,9 +316,8 @@ export function VoteScreen({
         </h1>
 
         <p className="mt-3 text-sm text-muted" role="status">
-          {voterCount === 1
-            ? dict.vote.waitingOne
-            : fill(dict.vote.waiting, { count: voterCount })}
+          {votedLine}
+          {state !== "sent" ? ` ${dict.vote.yoursNotIn}` : ""}
         </p>
 
         {state !== "sent" ? (
@@ -275,6 +358,10 @@ export function VoteScreen({
           {fill(dict.vote.progress, { done: index + 1, total: candidates.length })}
         </p>
       </div>
+
+      {/* Carried onto the card screen too: it is the number that tells you how
+          generous to be, and it is needed while marking, not afterwards. */}
+      <p className="mt-2 text-xs text-muted">{pickingLine}</p>
 
       <article className="mt-5 rounded-3xl border border-border bg-surface p-6">
         <p className="text-xs text-muted">

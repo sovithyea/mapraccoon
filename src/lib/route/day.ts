@@ -29,13 +29,29 @@ export const defaultFrame: DayFrame = {
 };
 
 /** A spot in the day, with the dwell the traveller actually chose. */
+/**
+ * A stop, optionally pinned to a clock time (D44).
+ *
+ * Without `startMins` a day can only ever be packed: the first stop begins when
+ * the day begins and everything else falls in behind it. That answers "how long
+ * does this take" and never "we are meeting them at nine".
+ */
 export type RouteStop = {
   spot: Spot;
   /** Defaults to `practical.typicalDurationMins`; editable per stop. */
   dwellMins: number;
+  /**
+   * Pinned start, in minutes past midnight. Absent means "as soon as you can
+   * get here", which is the old behaviour and stays the default.
+   */
+  startMins?: number;
 };
 
 export type ScheduledStop = RouteStop & {
+  /** When you could get here if nothing were pinned. */
+  earliestMins: number;
+  /** `arrivalMins - earliestMins`. Positive is waiting, negative is a clash. */
+  slackMins: number;
   arrivalMins: number;
   departureMins: number;
   /** The leg travelled to reach this stop. Undefined for the first. */
@@ -57,6 +73,10 @@ export type DayBudget = {
   travelMins: number;
   /** Minutes left inside the frame. Zero once the day is over. */
   remainingMins: number;
+  /** Time spent waiting because a later stop is pinned. */
+  waitMins: number;
+  /** Minutes a pin overlaps the stop before it. Zero when the day is feasible. */
+  clashMins: number;
   /** Minutes past `frameEnd`. Zero unless the state is "over". */
   overrunMins: number;
   endMins: number;
@@ -106,6 +126,8 @@ export function dayBudget(
   const scheduled: ScheduledStop[] = [];
   let cursor = frame.start;
   let travelMins = 0;
+  let waitMins = 0;
+  let clashMins = 0;
 
   for (const [index, stop] of stops.entries()) {
     const previous = stops[index - 1];
@@ -116,14 +138,31 @@ export function dayBudget(
       travelMins += legFrom.minutes;
     }
 
-    const arrivalMins = cursor;
+    /**
+     * A pin wins over the packing, and the difference is reported rather than
+     * absorbed.
+     *
+     * Clamping a pin to the earliest reachable time would be the tidy choice
+     * and the wrong one: it would silently move a stop the group deliberately
+     * placed, and the screen would then show a time nobody chose. So a pin is
+     * honoured exactly, and `slackMins` carries the consequence — positive is
+     * time to kill, negative means the previous stop has to be cut short.
+     */
+    const earliestMins = cursor;
+    const arrivalMins = stop.startMins ?? earliestMins;
+    const slackMins = arrivalMins - earliestMins;
     const departureMins = arrivalMins + stop.dwellMins;
     cursor = departureMins;
+
+    if (slackMins > 0) waitMins += slackMins;
+    else if (slackMins < 0) clashMins += -slackMins;
 
     scheduled.push({
       ...stop,
       arrivalMins,
       departureMins,
+      earliestMins,
+      slackMins,
       legFrom,
       isSensitive: stop.spot.sensitive !== undefined,
     });
@@ -145,7 +184,17 @@ export function dayBudget(
           ? "full"
           : "room";
 
-  return { stops: scheduled, plannedMins, travelMins, remainingMins, overrunMins, endMins, state };
+  return {
+    stops: scheduled,
+    plannedMins,
+    travelMins,
+    waitMins,
+    clashMins,
+    remainingMins,
+    overrunMins,
+    endMins,
+    state,
+  };
 }
 
 /** Whether a spot would fit, and what it would cost — the add affordance's label. */
