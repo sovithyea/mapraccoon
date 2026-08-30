@@ -860,3 +860,62 @@ farmland — C30 biting a second surface. Every pin is still drawn and still
 reachable; the memorial starts outside the viewport rather than dictating it.
 
 Refs: D11, D25, D33, D42, D45, R9, C19, C30, C38, C39, C40
+
+
+## D47 — Opening hours are re-checked weekly, and the check opens a PR
+
+**Decided 2026-08-30.** Extends D36. This is the standing answer to R8.
+
+The seed file is a TypeScript module and **nothing ever re-read it**. Hours were
+right on the day they were imported and drifted silently from then on. R8 is
+scored as the risk that ends this product, and it is the one failure nobody
+reports: a group turns up somewhere shut and simply stops using the thing.
+
+`tools/refresh-hours.mjs` takes the `placeId` each venue already carries and
+asks Google Places what changed. It is not `import-places.mjs`, which discovers
+venues and prints a draft for a human to paste — discovery invents entries, this
+only refreshes them.
+
+**It touches four fields and no others**: `hours`, `priceLevel`, the phone in
+`links`, and `lastVerified`. Never name, slug, blurb, categories, neighbourhood
+or coordinates. D39 records two entries edited by hand after import, and a
+refresh that rewrote whole entries would undo that class of work every week. The
+narrow field list is what makes it safe to run unattended.
+
+Three rules carry the honesty of the thing:
+
+- **`lastVerified` advances only on a real confirmation.** Where Google has
+  dropped its hours, ours are kept — they were sourced once — but the date does
+  not move, so the staleness test in `spots.test.ts` keeps counting and the
+  venue eventually surfaces as needing a person. A script that stamped today's
+  date on everything it looked at would turn the freshness guarantee into a lie
+  that gets harder to detect each week.
+- **`hoursSource: "checked"` is never overwritten.** That value means a person
+  confirmed the hours, and a person outranks the API; the disagreement is
+  reported for someone to settle.
+- **A venue Google marks non-operational is reported, never deleted.** Shrinking
+  the dataset is a content decision, not a script's.
+
+**It opens a pull request and never pushes to `main`.** Hours are a claim about
+a real business (rule 4), so a person reads the change before it ships. The PR
+body carries the tool's report, because the diff is mostly `lastVerified` dates
+moving and the report is the part worth reading.
+
+Two defects were found by running it against the live API rather than reasoning
+about it, and both would have made the weekly report untrustworthy — which is
+the only failure mode that matters for a report a human is meant to skim. It
+first reported `links` as changed on all 85 venues, because Place Details
+returns the same maps URI with a different tracking parameter than
+`searchNearby` did; `links.maps` is now left alone and only the phone is
+refreshed. It then reported a venue's hours as changed when the only difference
+was rule order, because Google returns periods in no fixed order; rules are now
+sorted Monday-first. A second run reports "No field changed", so the tool is
+idempotent and any future report is a real change.
+
+Cost is roughly 85 Place Details calls a week — about 370 a month.
+
+**Requires `GOOGLE_PLACES_KEY` as a repository secret** (Settings → Secrets and
+variables → Actions). Without it the workflow fails loudly rather than opening
+an empty PR.
+
+Refs: D3, D36, D39, R1, R4, R8

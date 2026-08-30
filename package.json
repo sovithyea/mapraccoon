@@ -11,7 +11,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "check:secrets": "node tools/check-secrets.mjs",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:secrets"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:secrets",
+    "refresh:hours": "node tools/refresh-hours.mjs",
+    "refresh:hours:check": "node tools/refresh-hours.mjs --check"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

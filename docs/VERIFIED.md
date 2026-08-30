@@ -267,6 +267,26 @@ Measured against `https://mapraccoon.vercel.app`:
 - The live build is still `b558b5b`; the landing page serves "Start a night",
   which D41 replaced — **VERIFIED**, and the reason a deploy is outstanding
 
+### The weekly hours refresh (D47)
+
+Run against the live Google Places API with the key from `.env.local`.
+
+- 85 of 87 venues carry a `placeId` and were re-checked; the two without one are
+  the memorials, which are hand-written — **VERIFIED**
+- First run reported `links` changed on all 85, from a differing `&g_mp=`
+  tracking parameter between `searchNearby` and Place Details. Fixed by leaving
+  `links.maps` alone — **VERIFIED, and fixed**
+- Second run reported one venue's hours as changed when the only difference was
+  rule order. Fixed by sorting rules Monday-first — **VERIFIED, and fixed**
+- After applying the normalisation, a further run reports `No field changed`, so
+  the tool is idempotent — **VERIFIED**
+- `npm run build`, `npm test` (209) green on the refreshed seed file — **VERIFIED**
+- Every `run:` block in the workflow passes `bash -n`, and the commit message and
+  PR body were generated from a synthetic report to prove the heredocs — **VERIFIED**
+- The workflow itself has **NOT** been run on GitHub. It needs
+  `GOOGLE_PLACES_KEY` as a repository secret, which cannot be set from here —
+  **NOT VERIFIED**
+
 ### Step 11 — the map as the surface (D46)
 
 - `/discover` map pane measures 1238 × 481 with 87 markers, after measuring 1238 × 0 before the fix (C41) — **VERIFIED**
